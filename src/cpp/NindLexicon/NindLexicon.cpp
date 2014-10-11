@@ -10,7 +10,7 @@
 // Cette classe donne la correspondance entre un mot et son identifiant
 // utilise dans le moteur
 //
-// Author: Jean-Yves Sage <jean-yves.sage@antinno.fr>, (C) 2012
+// Author: Jean-Yves Sage <jean-yves.sage@orange.fr>, (C) LATECON 2014
 //
 // Copyright: See COPYING file that comes with this distribution
 //
@@ -19,7 +19,7 @@
 #include <time.h>
 #include <list>
 #include <iostream>
-using namespace antinno::nindex;
+using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
 //brief This class maintains correspondance between words and their indentifiant
@@ -29,7 +29,7 @@ using namespace std;
 //param isLexiconWriter true if lexicon writer, false if lexicon reader  */
 NindLexicon::NindLexicon(const std::string &fileName,
                          const bool isLexiconWriter)
-    throw(OpenFileException, EofException, ReadFileException, InvalidFileException, WriteFileException) :
+    throw(OpenFileException, EofException, ReadFileException, InvalidFileException, WriteFileException, OutReadBufferException) :
     m_isLexiconWriter(isLexiconWriter),
     m_fileName(fileName),
     m_currentId(0),
@@ -57,7 +57,7 @@ NindLexicon::~NindLexicon()
 //param componants list of componants of a word (1 componant = simple word, more componants = compound word)
 //return ident of word */
 unsigned int NindLexicon::addWord(const list<string> &componants)
-    throw(WriteFileException, BadUseException)
+    throw(WriteFileException, BadUseException, OutWriteBufferException)
 {
     if (!m_isLexiconWriter) throw BadUseException("lexicon is not writable");
     //flag pour eviter les recherches inutiles sur les mots composes quand il y a eu insertion d'un sous ensemble
@@ -119,6 +119,7 @@ unsigned int NindLexicon::addWord(const list<string> &componants)
 //param componants list of componants of a word (1 componant = simple word, more componants = compound word)
 //return ident of word */
 unsigned int NindLexicon::getId(const list<string> &componants) 
+    throw(EofException, ReadFileException, InvalidFileException, OutReadBufferException)
 {
     //si lecteur, verifie s'il y a eu maj
     if (!m_isLexiconWriter && m_nextRefreshTime < (time_t)time(NULL)) {
@@ -234,7 +235,7 @@ void NindLexicon::dump(std::ostream &out)
 ////////////////////////////////////////////////////////////
 //met a jour le lexique lecteur avec le fichier lexique
 void NindLexicon::updateFromFile()
-    throw(EofException, ReadFileException, InvalidFileException)
+    throw(EofException, ReadFileException, InvalidFileException, OutReadBufferException)
 {
     //fait un clear du buffer du fichier, sinon, ca ne bougera jamais
     m_lexiconFile.clearBuffer();
@@ -244,7 +245,6 @@ void NindLexicon::updateFromFile()
         string simpleWord;
         pair<unsigned int, unsigned int> compoundWord;
         const bool isWord = m_lexiconFile.readNextRecordAsWordDefinition(ident, isSimpleWord, simpleWord, compoundWord);
-        //cerr<<"isWord="<<isWord<<" ident="<<ident<<" isSimpleWord="<<isSimpleWord<<" simpleWord="<<simpleWord<<endl;
         if (!isWord) break;   //fin du fichier atteinte
         if (isSimpleWord) m_lexiconSW[simpleWord] = ident;
         else m_lexiconCW[compoundWord] = ident;

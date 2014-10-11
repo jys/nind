@@ -45,3 +45,36 @@ target_link_libraries(NindLexicon_testLimites NindLexicon NindBasics)
 install(TARGETS NindLexicon_testLimites DESTINATION bin)
 
 ########### next target ###############
+SET(NindLexicon_testLimitesB_SRCS
+   NindLexicon_testLimitesB.cpp
+)
+
+add_executable(NindLexicon_testLimitesB ${NindLexicon_testLimitesB_SRCS})
+
+target_link_libraries(NindLexicon_testLimitesB NindLexicon NindBasics)
+
+install(TARGETS NindLexicon_testLimitesB DESTINATION bin)
+
+########### next target ###############
+SET(NindLexicon_testLimitesC_SRCS
+   NindLexicon_testLimitesC.cpp
+)
+
+add_executable(NindLexicon_testLimitesC ${NindLexicon_testLimitesC_SRCS})
+
+target_link_libraries(NindLexicon_testLimitesC NindLexicon NindBasics)
+
+install(TARGETS NindLexicon_testLimitesC DESTINATION bin)
+
+########### next target ###############
+SET(NindLexicon_testMemoire_SRCS
+   NindLexicon_testMemoire.cpp
+)
+
+add_executable(NindLexicon_testMemoire ${NindLexicon_testMemoire_SRCS})
+
+target_link_libraries(NindLexicon_testMemoire NindLexicon NindBasics)
+
+install(TARGETS NindLexicon_testMemoire DESTINATION bin)
+
+########### next target ###############

@@ -7,7 +7,7 @@
 // Cette classe donne la correspondance entre un mot et son identifiant
 // utilise dans le moteur
 //
-// Author: Jean-Yves Sage <jean-yves.sage@antinno.fr>, (C) 2012
+// Author: Jean-Yves Sage <jean-yves.sage@orange.fr>, (C) LATECON 2014
 //
 // Copyright: See COPYING file that comes with this distribution
 //
@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <string>
 ////////////////////////////////////////////////////////////
-namespace antinno {
+namespace latecon {
     namespace nindex {
 ////////////////////////////////////////////////////////////
 class DLLExportLexicon NindLexiconFile {
@@ -32,7 +32,7 @@ public:
     *\param fromLexiconWriter true if from lexicon writer, false if from lexicon reader  */
     NindLexiconFile(const std::string &fileName,
                     const bool fromLexiconWriter)
-        throw(OpenFileException, WriteFileException);
+        throw(OpenFileException, WriteFileException, OutWriteBufferException);
 
     virtual ~NindLexiconFile();
 
@@ -57,7 +57,7 @@ public:
     *\return true if next record is lexicon identification, false otherwise */
     bool readNextRecordAsLexiconIdentification(unsigned int &maxIdent,
                                                unsigned int &identification)
-        throw(EofException, ReadFileException, InvalidFileException);
+        throw(EofException, ReadFileException, InvalidFileException, OutReadBufferException);
 
     /**\brief Write simple word definition on lexicon file.
     *\param ident word ident
@@ -68,7 +68,7 @@ public:
                                    const std::string &simpleWord,
                                    const unsigned int maxIdent,
                                    const unsigned int identification)
-        throw(WriteFileException, BadUseException);
+        throw(WriteFileException, BadUseException, OutWriteBufferException);
 
     /**\brief Write compound word definition on lexicon file.
     *\param ident word ident
@@ -79,7 +79,7 @@ public:
                                      const std::pair<unsigned int, unsigned int> compoundWord,
                                      const unsigned int maxIdent,
                                      const unsigned int identification)
-        throw(WriteFileException, BadUseException);
+        throw(WriteFileException, BadUseException, OutWriteBufferException);
 
     /**\brief Perform a clear buffer for reading the true file and not its buffer */
     void clearBuffer();

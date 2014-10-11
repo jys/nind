@@ -7,7 +7,7 @@
 // Cette classe donne la correspondance entre un mot et son identifiant
 // utilise dans le moteur
 //
-// Author: Jean-Yves Sage <jean-yves.sage@antinno.fr>, (C) 2012
+// Author: Jean-Yves Sage <jean-yves.sage@orange.fr>, (C) LATECON 2014
 //
 // Copyright: See COPYING file that comes with this distribution
 //
@@ -15,7 +15,7 @@
 #include "NindLexiconFile.h"
 //#include <iostream>
 #include <string.h>
-using namespace antinno::nindex;
+using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
 // <fichierLexique>        ::= <lexique> <identification>
@@ -48,12 +48,14 @@ using namespace std;
 //param fromLexiconWriter true if from lexicon writer, false if from lexicon reader  */
 NindLexiconFile::NindLexiconFile(const std::string &fileName,
                                  const bool fromLexiconWriter)
-    throw(OpenFileException, WriteFileException):
+    throw(OpenFileException, WriteFileException, OutWriteBufferException):
     m_fromLexiconWriter(fromLexiconWriter),
     m_fileName(fileName),
-    m_file(fileName, fromLexiconWriter, BUFFER_SIZE)
+    m_file(fileName, fromLexiconWriter)
 {
     if (m_fromLexiconWriter) {
+        //si lexique memoire ecrivain, cree un buffer intermediaire d'ecriture
+        m_file.createBuffer(BUFFER_SIZE);
         //si lexique memoire ecrivain, ouvre en lecture + ecriture
         bool isOpened = m_file.open("r+b");
         //si fichier absent, cree un fichier vide en ecriture + lecture
@@ -61,11 +63,10 @@ NindLexiconFile::NindLexiconFile(const std::string &fileName,
             isOpened = m_file.open("w+b");
             if (!isOpened) throw OpenFileException(m_fileName);
             //lui colle une identification bidon pour uniformiser les cas
-            const unsigned char flag = IDENTIFICATION_FLAG;
-            m_file.writeBytes(&flag, 1);
-            m_file.writeInt4(0);
-            m_file.writeInt4((time_t)time(NULL));  //date de creation du fichier
-            m_file.write();
+            m_file.putChar(IDENTIFICATION_FLAG);
+            m_file.putInt4(0);
+            m_file.putInt4((time_t)time(NULL));  //date de creation du fichier
+            m_file.writeBuffer();               //ecriture effective sur le fichier
         }
     }
     else {
@@ -97,19 +98,18 @@ bool NindLexiconFile::readNextRecordAsWordDefinition(unsigned int &ident,
 {
     //on peut lire au fil de l'eau car l'ecrivain ne peut modifier qu'a partir de l'identification
     //lit le premier byte qui est le flag
-    unsigned char flag;
-    m_file.readBytes(&flag, 1);
+    const unsigned char flag = m_file.readChar();
     if (flag == SIMPLE_WORD_FLAG) {
-        m_file.readInt4(ident);
+        ident = m_file.readInt4();
         isSimpleWord = true;
-        m_file.readString(simpleWord);
+        simpleWord = m_file.readString();
         return true;
     }
     if (flag == COMPOUND_WORD_FLAG) {
-        m_file.readInt4(ident);
+        ident = m_file.readInt4();
         isSimpleWord = false;
-        m_file.readInt4(compoundWord.first);
-        m_file.readInt4(compoundWord.second);
+        compoundWord.first = m_file.readInt4();
+        compoundWord.second = m_file.readInt4();
         return true;
     }
     if (flag == IDENTIFICATION_FLAG) {
@@ -127,16 +127,15 @@ bool NindLexiconFile::readNextRecordAsWordDefinition(unsigned int &ident,
 //return true if next record is lexicon identification, false otherwise */
 bool NindLexiconFile::readNextRecordAsLexiconIdentification(unsigned int &maxIdent,
                                                             unsigned int &identification)
-    throw(EofException, ReadFileException, InvalidFileException)
+    throw(EofException, ReadFileException, InvalidFileException, OutReadBufferException)
 {
     //lit le paquet d'identification en une seule fois pour garder la section critique
-    unsigned char bytes[IDENT_SIZE];
-    m_file.readBytes(bytes, IDENT_SIZE);
+    m_file.readBuffer(IDENT_SIZE);
     //lit le premier byte qui est le flag
-    unsigned char flag = bytes[0];
+    const unsigned char flag = m_file.getChar();
     if (flag == IDENTIFICATION_FLAG) {
-        m_file.readInt4(maxIdent, &bytes[1]);
-        m_file.readInt4(identification, &bytes[5]);
+        maxIdent = m_file.getInt4();
+        identification = m_file.getInt4();
         m_file.setPos(-IDENT_SIZE, SEEK_CUR);  //pour pointer sur l'identification
         return true;
     }
@@ -157,18 +156,16 @@ void NindLexiconFile::writeSimpleWordDefinition(const unsigned int ident,
                                                 const string &simpleWord,
                                                 const unsigned int maxIdent,
                                                 const unsigned int identification)
-    throw(WriteFileException, BadUseException)
+    throw(WriteFileException, BadUseException, OutWriteBufferException)
 {
     if (!m_fromLexiconWriter) throw BadUseException("lexicon file is not writable");
-    unsigned char flag = SIMPLE_WORD_FLAG;
-    m_file.writeBytes(&flag, 1);
-    m_file.writeInt4(ident);
-    m_file.writeString(simpleWord);
-    flag = IDENTIFICATION_FLAG;
-    m_file.writeBytes(&flag, 1);
-    m_file.writeInt4(maxIdent);
-    m_file.writeInt4(identification);
-    m_file.write();
+    m_file.putChar(SIMPLE_WORD_FLAG);
+    m_file.putInt4(ident);
+    m_file.putString(simpleWord);
+    m_file.putChar(IDENTIFICATION_FLAG);
+    m_file.putInt4(maxIdent);
+    m_file.putInt4(identification);
+    m_file.writeBuffer();
     m_file.setPos(-IDENT_SIZE, SEEK_CUR);  //pour pointer sur l'identification
 }
 ////////////////////////////////////////////////////////////
@@ -181,19 +178,17 @@ void NindLexiconFile::writeCompoundWordDefinition(const unsigned int ident,
                                                   const pair<unsigned int, unsigned int> compoundWord,
                                                   const unsigned int maxIdent,
                                                   const unsigned int identification)
-    throw(WriteFileException, BadUseException)
+    throw(WriteFileException, BadUseException, OutWriteBufferException)
 {
     if (!m_fromLexiconWriter) throw BadUseException("lexicon file is not writable");
-    unsigned char flag = COMPOUND_WORD_FLAG;
-    m_file.writeBytes(&flag, 1);
-    m_file.writeInt4(ident);
-    m_file.writeInt4(compoundWord.first);
-    m_file.writeInt4(compoundWord.second);
-    flag = IDENTIFICATION_FLAG;
-    m_file.writeBytes(&flag, 1);
-    m_file.writeInt4(maxIdent);
-    m_file.writeInt4(identification);
-    m_file.write();
+    m_file.putChar(COMPOUND_WORD_FLAG);
+    m_file.putInt4(ident);
+    m_file.putInt4(compoundWord.first);
+    m_file.putInt4(compoundWord.second);
+    m_file.putChar(IDENTIFICATION_FLAG);
+    m_file.putInt4(maxIdent);
+    m_file.putInt4(identification);
+    m_file.writeBuffer();
     m_file.setPos(-IDENT_SIZE, SEEK_CUR);  //pour pointer sur l'identification
 }
 ////////////////////////////////////////////////////////////

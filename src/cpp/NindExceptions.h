@@ -3,7 +3,7 @@
 //
 // Description: les exceptions du projet NIND (nouvel index)
 //
-// Author: Jean-Yves Sage <jean-yves.sage@antinno.fr>, (C) 2012
+// Author: Jean-Yves Sage <jean-yves.sage@orange.fr>, (C) LATECON 2014
 //
 // Copyright: See COPYING file that comes with this distribution
 //
@@ -14,7 +14,7 @@
 #include <stdexcept>
 #include <string>
 ////////////////////////////////////////////////////////////
-namespace antinno {
+namespace latecon {
     namespace nindex {
 ////////////////////////////////////////////////////////////
 /**\brief when something on file fails  */
@@ -42,7 +42,7 @@ public:
     FormatFileException(const std::string fileName) :
         FileException("Format file error", fileName) {}
 };
-/**\brief when an invalid file is used  */
+/**\brief when an incompatible file is used  */
 class IncompatibleFileException : public FileException {
     public:
     IncompatibleFileException() :
@@ -89,6 +89,30 @@ class WriteFileException : public FileException {
         FileException("Write file error", "") {}
     WriteFileException(const std::string fileName) :
         FileException("Write file error", fileName) {}
+};
+/**\brief when attemp to read over buffer  */
+class OutReadBufferException : public FileException {
+    public:
+    OutReadBufferException() :
+        FileException("Out read buffer error", "") {}
+    OutReadBufferException(const std::string fileName) :
+        FileException("Out read buffer error", fileName) {}
+};
+/**\brief when attemp to write over buffer  */
+class OutWriteBufferException : public FileException {
+    public:
+    OutWriteBufferException() :
+        FileException("Out write buffer error", "") {}
+    OutWriteBufferException(const std::string fileName) :
+        FileException("Out write buffer error", fileName) {}
+};
+/**\brief when a bad alloc occurs in allocating buffer  */
+class BadAllocException : public FileException {
+    public:
+    BadAllocException() :
+        FileException("Bad alloc error", "") {}
+    BadAllocException(const std::string fileName) :
+        FileException("Bad alloc error", fileName) {}
 };
 ////////////////////////////////////////////////////////////
 /**\brief when something on lexicon fails  */

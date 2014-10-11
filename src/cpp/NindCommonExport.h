@@ -3,7 +3,7 @@
 //
 // Description: pour compiler en DLL windows
 //
-// Author: Jean-Yves Sage <jean-yves.sage@antinno.fr>, (C) 2011
+// Author: Jean-Yves Sage <jean-yves.sage@orange.fr>, (C) 2014
 //
 // Copyright: See COPYING file that comes with this distribution
 //

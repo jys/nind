@@ -4,7 +4,7 @@
 // Description: un test pour remplir le lexique et faire differentes mesures.
 // idem NindLexicon_test2 mais avec fichier lexique
 //
-// Author: Jean-Yves Sage <jean-yves.sage@antinno.fr>, (C) 2012
+// Author: Jean-Yves Sage <jean-yves.sage@orange.fr>, (C) LATECON 2014
 //
 // Copyright: See COPYING file that comes with this distribution
 //
@@ -17,7 +17,7 @@
 #include <set>
 #include <iostream>
 #include <fstream>
-using namespace antinno::nindex;
+using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
 static void displayHelp(char* arg0) {
@@ -33,7 +33,7 @@ static void displayHelp(char* arg0) {
     cout<<"ex :   "<<arg0<<" fre-theJysBox.fdb-DumpByDocuments.txt"<<endl;
 }
 ////////////////////////////////////////////////////////////
-#define LINE_SIZE 65536*128
+#define LINE_SIZE 65536*100
 static void getWords(const string &dumpLine, list<string> &wordsList);
 static void split(const string &word, list<string> &simpleWords);
 ////////////////////////////////////////////////////////////
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
         end = clock();
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
         //affiche les données de l'indexation
-        cout<<allWords.size()<<" mots de "<<docsNb<<" documents soumis à l'indexation en ";
+        cout<<allWords.size()<<" mots de "<<docsNb<<" documents soumis au lexique en ";
         cout<<cpuTimeUsed<<" secondes"<<endl;
         //nindLexicon.dump(std::cerr);
 

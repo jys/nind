@@ -3,7 +3,7 @@
 //
 // Description: Les acces basiques a un fichier binaire sequentiel avec possibilites de bufferisation
 //
-// Author: Jean-Yves Sage <jean-yves.sage@antinno.fr>, (C) 2012
+// Author: Jean-Yves Sage <jean-yves.sage@orange.fr>, (C) LATECON 2014
 //
 // Copyright: See COPYING file that comes with this distribution
 //
@@ -11,7 +11,7 @@
 #include "NindFile.h"
 #include <string.h>
 //#include <iostream>
-using namespace antinno::nindex;
+using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
 //brief Creates NindFile with a specified name associated with.

@@ -3,7 +3,7 @@
 //
 // Description: un test pour remplir le lexique et faire differentes mesures. VERSION ALTENATIVE ECARTEE
 //
-// Author: Jean-Yves Sage <jean-yves.sage@antinno.fr>, (C) 2012
+// Author: Jean-Yves Sage <jean-yves.sage@orange.fr>, (C) LATECON 2014
 //
 // Copyright: See COPYING file that comes with this distribution
 //
@@ -15,7 +15,7 @@
 #include <list>
 #include <iostream>
 #include <fstream>
-using namespace antinno::nindex;
+using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
 static void displayHelp(char* arg0) {

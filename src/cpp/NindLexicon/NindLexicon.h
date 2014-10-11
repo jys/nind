@@ -10,7 +10,7 @@
 // Cette classe donne la correspondance entre un mot et son identifiant
 // utilise dans le moteur
 //
-// Author: Jean-Yves Sage <jean-yves.sage@antinno.fr>, (C) 2012
+// Author: Jean-Yves Sage <jean-yves.sage@orange.fr>, (C) LATECON 2014
 //
 // Copyright: See COPYING file that comes with this distribution
 //
@@ -28,7 +28,7 @@
 #include <map>
 #include <list>
 ////////////////////////////////////////////////////////////
-namespace antinno {
+namespace latecon {
     namespace nindex {
 ////////////////////////////////////////////////////////////
 /**\brief This class maintains correspondance between words and their indentifiant
@@ -40,25 +40,25 @@ public:
     *\param isLexiconWriter true if lexicon writer, false if lexicon reader  */
     NindLexicon(const std::string &fileName,
                 const bool isLexiconWriter)
-        throw(OpenFileException, EofException, ReadFileException, InvalidFileException, WriteFileException);
+        throw(OpenFileException, EofException, ReadFileException, InvalidFileException, WriteFileException, OutReadBufferException);
 
     virtual ~NindLexicon();
 
-    /**\brief add specified word in lexicon and return its ident
-     * if word still exists in lexicon,
+    /**\brief add specified word in lexicon and return its ident if word still exists in lexicon,
      * else, word is created in lexicon
      * in both cases, word ident is returned.
      * \param componants list of componants of a word (1 componant = simple word, more componants = compound word)
      * \return ident of word */
     unsigned int addWord(const std::list<std::string> &componants)
-        throw(WriteFileException, BadUseException);
+        throw(WriteFileException, BadUseException, OutWriteBufferException);
 
     /**\brief get ident of the specified word
      * if word exists in lexicon, its ident is returned
      * else, return 0 (0 is not a valid ident !)
      * \param componants list of componants of a word (1 componant = simple word, more componants = compound word)
      * \return ident of word */
-    unsigned int getId(const std::list<std::string> &componants);
+    unsigned int getId(const std::list<std::string> &componants)
+        throw(EofException, ReadFileException, InvalidFileException, OutReadBufferException);
 
     /**\brief get identification of lexicon
      * \param wordsNb where number of words contained in lexicon is returned
@@ -88,7 +88,7 @@ public:
 private:
     //met a jour le lexique lecteur avec le fichier lexique
     void updateFromFile()
-        throw(EofException, ReadFileException, InvalidFileException);
+        throw(EofException, ReadFileException, InvalidFileException, OutReadBufferException);
     
 #ifdef _MSC_VER
     struct HashString : public stdext::hash_compare<std::string> {

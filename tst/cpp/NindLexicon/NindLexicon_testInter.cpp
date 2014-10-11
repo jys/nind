@@ -3,7 +3,7 @@
 //
 // Description: un test pour tester les relations lexique ecrivain lexique lecteur.
 //
-// Author: Jean-Yves Sage <jean-yves.sage@antinno.fr>, (C) 2012
+// Author: Jean-Yves Sage <jean-yves.sage@orange.fr>, (C) LATECON 2014
 //
 // Copyright: See COPYING file that comes with this distribution
 //
@@ -17,7 +17,8 @@
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
-using namespace antinno::nindex;
+#include <unistd.h>
+using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
 static void displayHelp(char* arg0) {
@@ -33,13 +34,14 @@ static void displayHelp(char* arg0) {
     cout<<"ex :   "<<arg0<<" fre-theJysBox.fdb-DumpByDocuments.txt"<<endl;
 }
 ////////////////////////////////////////////////////////////
-#define LINE_SIZE 65536*128
+#define LINE_SIZE 65536*100
 static void displayChar(const struct NindLexicon::LexiconChar &lexiconChar,
                         const string &title);
 static string asciiDate(const time_t date);
 static void fillWords(NindLexicon &nindLexiconEcrivain,
                       list<string>::const_iterator &wordsToInsertIt,
-                      unsigned int count);
+                      unsigned int count,
+                      const list<string>::const_iterator &limit);
 static void getWords(const string &dumpLine,
                      list<string> &wordsList);
 static void split(const string &word,
@@ -76,7 +78,8 @@ int main(int argc, char *argv[]) {
         list<string> wordsToInsert;   //pour l'ecrivain
         //lit le fichier dump de documents
         unsigned int docsNb = 0;
-        char charBuff[LINE_SIZE];
+        //char charBuff[LINE_SIZE];
+        char *charBuff = new char[LINE_SIZE];
         ifstream docsFile(docsFileName.c_str(), ifstream::in);
         if (docsFile.fail()) throw OpenFileException(docsFileName);
         while (docsFile.good()) {
@@ -91,6 +94,7 @@ int main(int argc, char *argv[]) {
             }
         }
         docsFile.close();
+        delete charBuff;
         cout<<docsNb<<" documents lus, "<<wordsToInsert.size()<<" mots"<<endl;
         
         /////////////////////////////////////
@@ -110,7 +114,7 @@ int main(int argc, char *argv[]) {
         cout<<"4) entre le 1/3 des mots dans le lexique"<<endl;
         list<string>::const_iterator  wordsToInsertIt = wordsToInsert.begin();
         unsigned int count = wordsToInsert.size()/3;
-        fillWords(nindLexiconEcrivain, wordsToInsertIt, count);
+        fillWords(nindLexiconEcrivain, wordsToInsertIt, count, wordsToInsert.end());
         //verifie que c'est ok
         isOk = nindLexiconEcrivain.integrityAndCounts(lexiconChar);
         displayChar(lexiconChar, "ECRIVAIN");
@@ -135,7 +139,7 @@ int main(int argc, char *argv[]) {
         /////////////////////////////////////
         cout<<"6) entre les 2/3 des mots dans le lexique"<<endl;
         count = wordsToInsert.size()/3;
-        fillWords(nindLexiconEcrivain, wordsToInsertIt, count);
+        fillWords(nindLexiconEcrivain, wordsToInsertIt, count, wordsToInsert.end());
         //verifie que c'est ok
         isOk = nindLexiconEcrivain.integrityAndCounts(lexiconChar);
         displayChar(lexiconChar, "ECRIVAIN");
@@ -168,8 +172,7 @@ int main(int argc, char *argv[]) {
         
         /////////////////////////////////////
         cout<<"9) entre le reste des mots dans le lexique"<<endl;
-        count = wordsToInsert.size() - count;
-        fillWords(nindLexiconEcrivain, wordsToInsertIt, count);
+        fillWords(nindLexiconEcrivain, wordsToInsertIt, wordsToInsert.size(), wordsToInsert.end());
         //verifie que c'est ok
         isOk = nindLexiconEcrivain.integrityAndCounts(lexiconChar);
         displayChar(lexiconChar, "ECRIVAIN");
@@ -201,7 +204,7 @@ static void displayChar(const struct NindLexicon::LexiconChar &lexiconChar, cons
 {
     cout<<title<<" "<<lexiconChar.isOk<<" <"<<lexiconChar.swNb<<", "<<lexiconChar.cwNb;
     cout<<"> mots, <"<<lexiconChar.wordsNb<<", "<<lexiconChar.identification;
-    cout<<">  "<<asciiDate((time_t)lexiconChar.identification)<<endl;
+    cout<<"> "<<asciiDate((time_t)lexiconChar.identification)<<endl;
 }
 ////////////////////////////////////////////////////////////
 static string asciiDate(const time_t date)
@@ -213,9 +216,10 @@ static string asciiDate(const time_t date)
 ////////////////////////////////////////////////////////////
 static void fillWords(NindLexicon &nindLexiconEcrivain,
                       list<string>::const_iterator &wordsToInsertIt,
-                      unsigned int count)
+                      unsigned int count,
+                      const list<string>::const_iterator &limit)
 {
-    while (count) {
+    while (count && wordsToInsertIt != limit) {
         list<string> componants;
         split(*wordsToInsertIt++, componants);
         count--;

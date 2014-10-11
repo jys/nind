@@ -1,17 +1,13 @@
 //
 // C++ Interface: NindTermIndex
 //
-// Description: La gestion du fichier inversé
-// Étude de la représentation du fichier inversé et des index locaux ANT2012.JYS.R358 revA
-// N'importe quel jargonneux de la syntaxe C++ verra une invitation a mettre un niveau
-// d'abstraction pour indexer n'importe quoi. Arriere, manants, seule compte l'algorithmique,
-// la syntaxe C++, on s'en cogne.
+// Description: La gestion du fichier inverse en fichier
+// Étude de la représentation du fichier inversé et des index locaux ANT2012.JYS.R358
 //
-// Cette classe ajoute une nouvelle correspondance entre un identifiant de terme et
-// un identifiant de document. Elle donne aussi tous les identifiants de documents
-// associés à un terme spécifique
+// Cette classe gere la complexite du fichier inverse qui doit rester coherent pour ses lecteurs
+// pendant que son ecrivain l'enrichit en fonction des nouvelles indexations.
 //
-// Author: Jean-Yves Sage <jean-yves.sage@antinno.fr>, (C) 2012
+// Author: Jean-Yves Sage <jean-yves.sage@orange.fr>, (C) LATECON 2014
 //
 // Copyright: See COPYING file that comes with this distribution
 //
@@ -19,78 +15,86 @@
 #ifndef NindTermIndex_H
 #define NindTermIndex_H
 ////////////////////////////////////////////////////////////
-#include "NindTerm.h"
 #include "NindBasics/NindFile.h"
 #include "NindCommonExport.h"
 #include "NindExceptions.h"
-#include <ostream>
+#include <stdio.h>
 #include <string>
-#include <vector>
 #include <list>
 ////////////////////////////////////////////////////////////
-namespace antinno {
+namespace latecon {
     namespace nindex {
 ////////////////////////////////////////////////////////////
-/**\brief This class maintains correspondance between term idents and document idents
-*/
 class DLLExportLexicon NindTermIndex {
 public:
-    /**\brief Creates NindTermIndex.
+
+    /**\brief Creates NindTermIndex with a specified name associated with.
     *\param fileName absolute path file name
-    *\param isTermIndexWriter true if termIndex writer, false if termIndex reader  */
+    *\param isTermIndexWriter true if termIndex writer, false if termIndex reader  
+    *\param lexiconWordsNb number of words contained in lexicon 
+    *\param lexiconIdentification unique identification of lexicon */
     NindTermIndex(const std::string &fileName,
-                  const bool isTermIndexWriter)
-        throw(OpenFileException, EofException, ReadFileException, WriteFileException, InvalidFileException);
+                  const bool isTermIndexWriter,
+                  const unsigned int lexiconWordsNb,
+                  const unsigned int lexiconIdentification)
+        throw(OpenFileException, EofException, ReadFileException, WriteFileException, IncompatibleFileException, InvalidFileException, OutOfBoundException);
 
     virtual ~NindTermIndex();
+    
+    /**\brief Structures to hold datas of a term */
+    struct Document {
+        unsigned int ident;
+        unsigned int frequency;
+        Document(): ident(0), frequency(0) {}
+        Document(const unsigned int id, const unsigned int freq): ident(id), frequency(freq) {}
+        ~Document() {}
+    };
+    struct TermCG {
+        unsigned int cg;
+        unsigned int frequency;
+        std::list<Document> documents;
+        TermCG(): cg(0), frequency(0), documents() {}
+        TermCG(const unsigned int cat, const unsigned int freq): cg(cat), frequency(freq), documents() {}
+        ~TermCG() {}
+    };
+    
+    /**\brief Read a full termIndex as a list of structures
+    *\param ident ident of term
+    *\param termIndex structure to receive all datas of the specified term
+    *\return true if term was found, false otherwise */
+    bool getTermIndex(const unsigned int ident,
+                      std::list<struct TermCG> &termIndex)
+        throw(EofException, ReadFileException, InvalidFileException, OutOfBoundException);
 
-    /**\brief Add document ident to term ident
-    *\param termId term ident where to add specified document ident
-    *\param category grammatical category
-    *\param documentId document ident to add to specified term ident  */
-    void addDocumentId(const unsigned int termId,
-                       const unsigned int category,
-                       const unsigned int documentId)
-        throw (EofException, ReadFileException, WriteFileException, OutOfBoundException, DecodeErrorException, EncodeErrorException);
+    /**\brief Write a full termIndex as a bytes string
+    *\param ident ident of term
+    *\param termIndex structure containing all datas of the specified term */
+    void setTermIndex(const unsigned int ident,
+                      const std::list<struct TermCG> &termIndex)
+        throw(WriteFileException);
 
-    /**\brief Suppress document ident to term ident
-    *\param termId term ident where to suppress specified document ident
-    *\param documentId document ident to suppress to specified term ident  */
-    void suppressDocumentId(const unsigned int termId,
-                            const unsigned int documentId)
-        throw (EofException, ReadFileException, WriteFileException, OutOfBoundException, DecodeErrorException, EncodeErrorException);
-
-    /**\brief set identification 
-     * \param wordsNb number of words contained in lexicon 
+    /**\brief set identification
+     * \param wordsNb number of words contained in lexicon
      * \param identification unique identification of lexicon */
     void setIdentification(const unsigned int wordsNb,
                            const unsigned int identification)
         throw(WriteFileException);
 
-    /**\brief get all informations about the specified term
-    *\param termId term ident to get all indexed informations
-    *\param termCatResultList list of all results for the specified term  */
-    void getTermInfos(const unsigned int termId,
-                      std::list<NindTerm::TermCatResult> &termCatResultList)
-        throw (EofException, ReadFileException, OutOfBoundException, DecodeErrorException);
 private:
-    //Met a jour la gestion des espaces libres et retourne l'offset ou ecrire
-    long int getFreeSpace(const unsigned int size);
+//recupere l'indirection du terme specifie
+    void getIndirection(const unsigned int ident,
+                        long int &offsetEntree,
+                        unsigned int &longueurEntree)
+        throw(EofException, ReadFileException, OutOfBoundException);
 
-    struct RecordLocation {
-        long int offset;
-        unsigned int size;
-        RecordLocation(const long int offs, const unsigned int sz) { offset = offs; size = sz; }
-        bool operator< (const RecordLocation r1) { return size < r1.size; }
-    };
     bool m_isTermIndexWriter;       //true si autorise a ecrire, false sinon
     std::string m_fileName;
-    NindFile m_file;
-    std::vector<RecordLocation> m_termLocations;  //localisation de chaque terme
-    std::list<RecordLocation> m_freeLocations;    //gestion des espaces libres
+    NindFile m_file;                //pour l'ecrivain ou le lecteur
+    std::list<std::pair<long int, unsigned int> > m_indirectionMapping;  //gestion des indirections
+    std::list<std::pair<long int, unsigned int> > m_emptyAreas;         //gestion des zones libres
 };
+////////////////////////////////////////////////////////////
     } // end namespace
 } // end namespace
-////////////////////////////////////////////////////////////
 #endif
 ////////////////////////////////////////////////////////////

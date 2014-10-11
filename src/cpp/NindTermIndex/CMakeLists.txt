@@ -5,10 +5,6 @@ include_directories(${CMAKE_SOURCE_DIR}/src/cpp )
 SET(NindTermIndex_LIB_SRCS
   NindTermIndex.h
   NindTermIndex.cpp
-  NindTermIndexFile.h
-  NindTermIndexFile.cpp
-  NindTerm.h
-  NindTerm.cpp
 )
 
 add_library(NindTermIndex SHARED ${NindTermIndex_LIB_SRCS})

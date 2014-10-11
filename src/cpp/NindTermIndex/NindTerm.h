@@ -4,7 +4,7 @@
 // Description: Le decodage et l'encodage des enregistrements du fichier inverse
 // C'est une classe statique
 //
-// Author: Jean-Yves Sage <jean-yves.sage@antinno.fr>, (C) 2012
+// Author: Jean-Yves Sage <jean-yves.sage@orange.fr>, (C) LATECON 2014
 //
 // Copyright: See COPYING file that comes with this distribution
 //
@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <list>
 ////////////////////////////////////////////////////////////
-namespace antinno {
+namespace latecon {
     namespace nindex {
 ////////////////////////////////////////////////////////////
 class DLLExportLexicon NindTerm {

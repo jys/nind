@@ -10,7 +10,7 @@
 // Cette classe donne la correspondance entre un mot et son identifiant
 // utilise dans le moteur
 //
-// Author: Jean-Yves Sage <jean-yves.sage@antinno.fr>, (C) 2012
+// Author: Jean-Yves Sage <jean-yves.sage@orange.fr>, (C) LATECON 2014
 //
 // Copyright: See COPYING file that comes with this distribution
 //
@@ -18,7 +18,7 @@
 #include "NindLexiconG.h"
 #include <list>
 //#include <iostream>
-using namespace antinno::nindex;
+using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
 //brief This class maintains correspondance between words and their indentifiant

@@ -3,7 +3,7 @@
 //
 // Description: Les acces basiques a un fichier binaire sequentiel avec possibilites de bufferisation
 //
-// Author: Jean-Yves Sage <jean-yves.sage@antinno.fr>, (C) 2012
+// Author: Jean-Yves Sage <jean-yves.sage@orange.fr>, (C) LATECON 2014
 //
 // Copyright: See COPYING file that comes with this distribution
 //
@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <string>
 ////////////////////////////////////////////////////////////
-namespace antinno {
+namespace latecon {
     namespace nindex {
 ////////////////////////////////////////////////////////////
 class DLLExportLexicon NindFile {
@@ -24,11 +24,9 @@ public:
 
     /**\brief Creates NindFile with a specified name associated with.
     *\param fileName absolute path file name
-    *\param isWriter true if NindFile will write on file, false otherwise
-    *\param bufferSize size of writing buffer (0 if just reader) */
+    *\param isWriter true if NindFile will write on file, false otherwise */
     NindFile(const std::string &fileName,
-             const bool isWriter,
-             const unsigned int bufferSize = 0);
+             const bool isWriter);
 
     virtual ~NindFile();
 
@@ -59,66 +57,114 @@ public:
     *\return true if success, false otherwise */
     bool flush();
 
-    /**\brief Read bytes from the file
-    *\param bytes buffer address where to write read bytes
-    *\param bytesNb size of buffer where to write read bytes */
-    void readBytes(unsigned char *bytes,
-                   const unsigned int bytesNb)
+    /**\brief Read a single byte from the file
+    *\return byte value */
+    unsigned char readChar()
         throw(EofException, ReadFileException);
 
     /**\brief Read a 4-bytes integer from the file
-    *\param int4 4-bytes integer where to write read integer */
-    void readInt4(unsigned int &int4)
+    *\return 4-bytes integer */
+    unsigned int readInt4()
         throw(EofException, ReadFileException);
 
-    /**\brief Read a 4-bytes integer from a buffer
-    *\param int4 4-bytes integer where to write read integer
-    *\param bytes buffer address where to read integer*/
-    void readInt4(unsigned int &int4,
-                  const unsigned char *bytes);
+    /**\brief Read a 8-bytes integer from the file
+    *\return 8-bytes integer */
+    long int readInt8()
+        throw(EofException, ReadFileException);
 
     /**\brief Read a string from the file
     *\param str string where to write read string */
-    void readString(std::string &str)
+    std::string readString()
         throw(EofException, ReadFileException);
+        
+    /**\brief Read bytes from the file into an internal buffer
+    *\param bytesNb size of internal buffer to receive read datas */
+    void readBuffer(const unsigned int bytesNb)
+        throw(EofException, ReadFileException, BadAllocException);
 
-    /**\brief Write bytes into the intermediate buffer
-    *\param bytes address of bytes to write
-    *\param bytesNb number of bytes to write */
-    void writeBytes(const unsigned char *bytes,
-                    const unsigned int bytesNb)
-        throw(WriteFileException);
+    /**\brief Get a single byte from internal buffer
+    *\return byte value */
+    unsigned char getChar()
+        throw(OutReadBufferException);
 
-    /**\brief Write a 4-bytes integer into the intermediate buffer
+    /**\brief Get a 4-bytes integer from internal buffer
+    *\return 4-bytes integer */
+    unsigned int getInt4()
+        throw(OutReadBufferException);
+
+    /**\brief Get a 8-bytes integer from internal buffer
+    *\return 8-bytes integer */
+    long int getInt8()
+        throw(OutReadBufferException);
+        
+    /**\brief Test if buffer was entirely read
+    *\return true if buffer  was entirely read */
+    inline bool endOfBuffer();
+        
+    /**\brief Create an internal buffer for writing
+    *\param bytesNb size of buffer */
+    void createBuffer(const unsigned int bytesNb)
+        throw(BadAllocException);
+
+    /**\brief Put one byte into the internal buffer
+    *\param value byte value to write */
+    void putChar(const unsigned char value)
+        throw(OutWriteBufferException);
+
+    /**\brief Put a 4-bytes integer into the internal buffer
     *\param int4 4-bytes integer to write */
-    void writeInt4(const unsigned int int4)
-        throw(WriteFileException);
+    void putInt4(const unsigned int int4)
+        throw(OutWriteBufferException);
 
-    /**\brief Write a string into the intermediate buffer
-    *\param str string to write */
-    void writeString(const std::string &str)
-        throw(WriteFileException, OutOfBoundException);
+    /**\brief Put a 8-bytes integer into the internal buffer
+    *\param int8 8-bytes integer to write */
+    void putInt8(const long int int8)
+        throw(OutWriteBufferException);
+
+    /**\brief Put a string into the intermediate buffer
+    *\param str string to write  */
+    void putString(const std::string &str)
+        throw(OutWriteBufferException);
 
     /**\brief Write intermediate buffer to the file */
-    void write()
+    void writeBuffer()
         throw(WriteFileException);
-
-    /**\brief Perform a clear buffer for reading the true file and not its buffer */
-    void clearBuffer();
-    
+        
+    /**\brief Write byte value to the file
+    *\param value value to write
+    *\param count number of bytes to write */
+    void writeValue(const unsigned char value,
+                    const unsigned int count)
+        throw(WriteFileException, BadAllocException);
+       
 private:
+    //Read bytes from file into specified buffer
+    void readBytes(unsigned char* bytes,
+                   const unsigned int bytesNb)
+        throw(EofException, ReadFileException);
 
     bool m_isWriter;       //true si autorise a ecrire, false sinon
     std::string m_fileName;
     FILE *m_file;
-    unsigned char* m_buffer;        //buffer d'ecriture pour que le fichier ne soit jamais incoherent
-    unsigned int m_bufferSize;      //taille du buffer d'ecriture
-    unsigned int m_sizeInBuffer;    //taille des donnes en attente d'ecriture
-    long int m_fileSize;            //taille du fichier
+    unsigned char *m_wbuffer;        //buffer d'ecriture
+    unsigned char *m_wbufferEnd;     //fin buffer d'ecriture
+    unsigned char *m_wPtr;           //pointeur buffer d'ecriture
+    unsigned char *m_rbuffer;        //buffer de lecture
+    unsigned char *m_rbufferEnd;     //fin buffer de lecture
+    unsigned char *m_rPtr;           //pointeur buffer de lecture
+    long int m_fileSize;             //taille du fichier
     bool m_isLittleEndian;
 };
+////////////////////////////////////////////////////////////
+//brief Test if buffer was entirely read
+//return true if buffer  was entirely read */
+inline bool NindFile::endOfBuffer()
+{
+    return (m_rPtr >= m_rbufferEnd);
+}
 ////////////////////////////////////////////////////////////
     } // end namespace
 } // end namespace
 #endif
+////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
