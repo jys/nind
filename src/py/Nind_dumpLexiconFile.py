@@ -32,18 +32,16 @@ def main():
     #// <motCompose>            ::= <identifiant> <identifiant>
     #// <longueurMot>           ::= <Integer1>
     #// <motUtf8>               ::= { <Byte> }
-    #// <identifiant>           ::= <Integer4>
+    #// <identifiant>           ::= <Integer3>
     #// <identification>        ::= <flagIdentification> <identificationLexique>
     #// <flagIdentification>    ::= <Integer1>
     #// <identificationLexique> ::= <maxIdentifiant> <identifieurUnique>
-    #// <maxIdentifiant>        ::= <Integer4>
+    #// <maxIdentifiant>        ::= <Integer3>
     #// <identifieurUnique>     ::= <dateHeure>
     #// <dateHeure >            ::= <Integer4>
     SIMPLE_WORD_FLAG = 13
     COMPOUND_WORD_FLAG = 29
     IDENTIFICATION_FLAG = 53
-    #BUFFER_SIZE 300
-    #IDENT_SIZE 9
 
     simplesDico = {}
     composesDico = {}
@@ -56,22 +54,22 @@ def main():
         while octet != '':
             flag = ord(octet)
             if flag == SIMPLE_WORD_FLAG:
-                identifiant = litNombre4(lexiconFile)
+                identifiant = litNombre3(lexiconFile)
                 longueur = ord(lexiconFile.read(1))
                 mot = lexiconFile.read(longueur).decode('utf-8')
                 outFile.write('%06d : %s\n'%(identifiant, mot))   
                 simplesDico[identifiant] = mot
                 nbTermes +=1
             elif flag == COMPOUND_WORD_FLAG:
-                identifiant = litNombre4(lexiconFile)
-                identifiant1 = litNombre4(lexiconFile)
-                identifiant2 = litNombre4(lexiconFile)
+                identifiant = litNombre3(lexiconFile)
+                identifiant1 = litNombre3(lexiconFile)
+                identifiant2 = litNombre3(lexiconFile)
                 mot = calculeMotCompose(simplesDico[identifiant2], identifiant1, simplesDico, composesDico)
                 outFile.write('%06d : (%06d, %06d)  %s\n'%(identifiant, identifiant1, identifiant2, mot))
                 composesDico[identifiant] = (identifiant1, identifiant2)
                 nbTermes +=1
             elif flag == IDENTIFICATION_FLAG:
-                maxIdentifiant = litNombre4(lexiconFile)
+                maxIdentifiant = litNombre3(lexiconFile)
                 identifieurUnique = litNombre4(lexiconFile)
                 outFile.write('############## max=%d dateheure=%d ##############\n'%(maxIdentifiant, identifieurUnique))                      
             else: raise Exception('flag inconnu : %d'%(flag))
@@ -83,6 +81,11 @@ def main():
     outFile.close()
     print '%d identifiants de termes écrits dans %s'%(nbTermes, outFileName)
     
+def litNombre3(lexiconFile):
+    #le fichier est écrit en little-endian
+    octets = lexiconFile.read(3)
+    return (ord(octets[2])*256 + ord(octets[1]))*256 + ord(octets[0])
+
 def litNombre4(lexiconFile):
     #le fichier est écrit en little-endian
     octets = lexiconFile.read(4)

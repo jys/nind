@@ -13,7 +13,7 @@
 //
 ////////////////////////////////////////////////////////////
 #include "NindLexiconFile.h"
-//#include <iostream>
+#include <iostream>
 #include <string.h>
 using namespace latecon::nindex;
 using namespace std;
@@ -29,11 +29,11 @@ using namespace std;
 // <motCompose>            ::= <identifiant> <identifiant>
 // <longueurMot>           ::= <Integer1>
 // <motUtf8>               ::= { <Byte> }
-// <identifiant>           ::= <Integer4>
+// <identifiant>           ::= <Integer3>
 // <identification>        ::= <flagIdentification> <identificationLexique>
 // <flagIdentification>    ::= <Integer1>
 // <identificationLexique> ::= <maxIdentifiant> <identifieurUnique>
-// <maxIdentifiant>        ::= <Integer4>
+// <maxIdentifiant>        ::= <Integer3>
 // <identifieurUnique>     ::= <dateHeure>
 // <dateHeure >            ::= <Integer4>
 ////////////////////////////////////////////////////////////
@@ -41,40 +41,46 @@ using namespace std;
 #define COMPOUND_WORD_FLAG 29
 #define IDENTIFICATION_FLAG 53
 #define BUFFER_SIZE 300
-#define IDENT_SIZE 9
+#define IDENT_SIZE 8
 ////////////////////////////////////////////////////////////
 //brief Creates LexiconFile with a specified name associated with.
 //param fileName absolute path file name
 //param fromLexiconWriter true if from lexicon writer, false if from lexicon reader  */
 NindLexiconFile::NindLexiconFile(const std::string &fileName,
                                  const bool fromLexiconWriter)
-    throw(OpenFileException, WriteFileException, OutWriteBufferException):
+    throw(NindLexiconException):
     m_fromLexiconWriter(fromLexiconWriter),
     m_fileName(fileName),
-    m_file(fileName, fromLexiconWriter)
+    m_file(fileName)
 {
-    if (m_fromLexiconWriter) {
-        //si lexique memoire ecrivain, cree un buffer intermediaire d'ecriture
-        m_file.createBuffer(BUFFER_SIZE);
-        //si lexique memoire ecrivain, ouvre en lecture + ecriture
-        bool isOpened = m_file.open("r+b");
-        //si fichier absent, cree un fichier vide en ecriture + lecture
-        if (!isOpened) {
-            isOpened = m_file.open("w+b");
-            if (!isOpened) throw OpenFileException(m_fileName);
-            //lui colle une identification bidon pour uniformiser les cas
-            m_file.putChar(IDENTIFICATION_FLAG);
-            m_file.putInt4(0);
-            m_file.putInt4((time_t)time(NULL));  //date de creation du fichier
-            m_file.writeBuffer();               //ecriture effective sur le fichier
+    try {
+        if (m_fromLexiconWriter) {
+            //si lexique memoire ecrivain, cree un buffer intermediaire d'ecriture
+            m_file.createBuffer(BUFFER_SIZE);
+            //si lexique memoire ecrivain, ouvre en lecture + ecriture
+            bool isOpened = m_file.open("r+b");
+            //si fichier absent, cree un fichier vide en ecriture + lecture
+            if (!isOpened) {
+                isOpened = m_file.open("w+b");
+                if (!isOpened) throw OpenFileException(m_fileName);
+                //lui colle une identification bidon pour uniformiser les cas
+                m_file.putInt1(IDENTIFICATION_FLAG);
+                m_file.putInt3(0);
+                m_file.putInt4((time_t)time(NULL));  //date de creation du fichier
+                m_file.writeBuffer();               //ecriture effective sur le fichier
+            }
         }
+        else {
+            //si lexique memoire lecteur, ouvre en lecture seule
+            bool isOpened = m_file.open("rb");
+            if (!isOpened) throw OpenFileException(m_fileName);
+        }
+        m_file.setPos(0, SEEK_SET);  //pour pointer sur la tete
     }
-    else {
-        //si lexique memoire lecteur, ouvre en lecture seule
-        bool isOpened = m_file.open("rb");
-        if (!isOpened) throw OpenFileException(m_fileName);
-    }
-    m_file.setPos(0, SEEK_SET);  //pour pointer sur la tete
+    catch (FileException &exc) {
+        cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
+        throw NindLexiconException(m_fileName);
+    }        
 }
 ////////////////////////////////////////////////////////////
 NindLexiconFile::~NindLexiconFile()
@@ -98,18 +104,18 @@ bool NindLexiconFile::readNextRecordAsWordDefinition(unsigned int &ident,
 {
     //on peut lire au fil de l'eau car l'ecrivain ne peut modifier qu'a partir de l'identification
     //lit le premier byte qui est le flag
-    const unsigned char flag = m_file.readChar();
+    const unsigned char flag = m_file.readInt1();
     if (flag == SIMPLE_WORD_FLAG) {
-        ident = m_file.readInt4();
+        ident = m_file.readInt3();
         isSimpleWord = true;
         simpleWord = m_file.readString();
         return true;
     }
     if (flag == COMPOUND_WORD_FLAG) {
-        ident = m_file.readInt4();
+        ident = m_file.readInt3();
         isSimpleWord = false;
-        compoundWord.first = m_file.readInt4();
-        compoundWord.second = m_file.readInt4();
+        compoundWord.first = m_file.readInt3();
+        compoundWord.second = m_file.readInt3();
         return true;
     }
     if (flag == IDENTIFICATION_FLAG) {
@@ -117,7 +123,7 @@ bool NindLexiconFile::readNextRecordAsWordDefinition(unsigned int &ident,
         m_file.setPos(-1, SEEK_CUR);
         return false;
     }
-    throw InvalidFileException(m_fileName);
+    throw InvalidFileException("RW "+ m_fileName);
 }
 ////////////////////////////////////////////////////////////
 //brief Read next record of lexicon file as lexicon identification.
@@ -132,19 +138,19 @@ bool NindLexiconFile::readNextRecordAsLexiconIdentification(unsigned int &maxIde
     //lit le paquet d'identification en une seule fois pour garder la section critique
     m_file.readBuffer(IDENT_SIZE);
     //lit le premier byte qui est le flag
-    const unsigned char flag = m_file.getChar();
+    const unsigned char flag = m_file.getInt1();
     if (flag == IDENTIFICATION_FLAG) {
-        maxIdent = m_file.getInt4();
+        maxIdent = m_file.getInt3();
         identification = m_file.getInt4();
         m_file.setPos(-IDENT_SIZE, SEEK_CUR);  //pour pointer sur l'identification
         return true;
     }
     if (flag == SIMPLE_WORD_FLAG || flag == COMPOUND_WORD_FLAG) {
         //on n'est pas a la fin, il faut ramener le pointeur de fichier 9 octets en arriere
-        m_file.setPos(-IDENT_SIZE, SEEK_CUR);
+        m_file.setPos(-IDENT_SIZE, SEEK_CUR);  //pour pointer sur l'identification
         return false;
     }
-    throw InvalidFileException(m_fileName);
+    throw InvalidFileException("RI" + m_fileName);
 }
 ////////////////////////////////////////////////////////////
 //brief Write simple word definition on lexicon file.
@@ -159,11 +165,11 @@ void NindLexiconFile::writeSimpleWordDefinition(const unsigned int ident,
     throw(WriteFileException, BadUseException, OutWriteBufferException)
 {
     if (!m_fromLexiconWriter) throw BadUseException("lexicon file is not writable");
-    m_file.putChar(SIMPLE_WORD_FLAG);
-    m_file.putInt4(ident);
+    m_file.putInt1(SIMPLE_WORD_FLAG);
+    m_file.putInt3(ident);
     m_file.putString(simpleWord);
-    m_file.putChar(IDENTIFICATION_FLAG);
-    m_file.putInt4(maxIdent);
+    m_file.putInt1(IDENTIFICATION_FLAG);
+    m_file.putInt3(maxIdent);
     m_file.putInt4(identification);
     m_file.writeBuffer();
     m_file.setPos(-IDENT_SIZE, SEEK_CUR);  //pour pointer sur l'identification
@@ -181,20 +187,14 @@ void NindLexiconFile::writeCompoundWordDefinition(const unsigned int ident,
     throw(WriteFileException, BadUseException, OutWriteBufferException)
 {
     if (!m_fromLexiconWriter) throw BadUseException("lexicon file is not writable");
-    m_file.putChar(COMPOUND_WORD_FLAG);
-    m_file.putInt4(ident);
-    m_file.putInt4(compoundWord.first);
-    m_file.putInt4(compoundWord.second);
-    m_file.putChar(IDENTIFICATION_FLAG);
-    m_file.putInt4(maxIdent);
+    m_file.putInt1(COMPOUND_WORD_FLAG);
+    m_file.putInt3(ident);
+    m_file.putInt3(compoundWord.first);
+    m_file.putInt3(compoundWord.second);
+    m_file.putInt1(IDENTIFICATION_FLAG);
+    m_file.putInt3(maxIdent);
     m_file.putInt4(identification);
     m_file.writeBuffer();
     m_file.setPos(-IDENT_SIZE, SEEK_CUR);  //pour pointer sur l'identification
-}
-////////////////////////////////////////////////////////////
-//brief Perform a clear buffer for reading the true file and not its buffer */
-void NindLexiconFile::clearBuffer()
-{
-    m_file.flush();
 }
 ////////////////////////////////////////////////////////////

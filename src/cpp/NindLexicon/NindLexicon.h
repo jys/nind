@@ -40,7 +40,7 @@ public:
     *\param isLexiconWriter true if lexicon writer, false if lexicon reader  */
     NindLexicon(const std::string &fileName,
                 const bool isLexiconWriter)
-        throw(OpenFileException, EofException, ReadFileException, InvalidFileException, WriteFileException, OutReadBufferException);
+        throw(NindLexiconException);
 
     virtual ~NindLexicon();
 
@@ -50,7 +50,7 @@ public:
      * \param componants list of componants of a word (1 componant = simple word, more componants = compound word)
      * \return ident of word */
     unsigned int addWord(const std::list<std::string> &componants)
-        throw(WriteFileException, BadUseException, OutWriteBufferException);
+        throw(NindLexiconException);
 
     /**\brief get ident of the specified word
      * if word exists in lexicon, its ident is returned
@@ -58,7 +58,7 @@ public:
      * \param componants list of componants of a word (1 componant = simple word, more componants = compound word)
      * \return ident of word */
     unsigned int getId(const std::list<std::string> &componants)
-        throw(EofException, ReadFileException, InvalidFileException, OutReadBufferException);
+        throw(NindLexiconException);
 
     /**\brief get identification of lexicon
      * \param wordsNb where number of words contained in lexicon is returned

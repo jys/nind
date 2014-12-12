@@ -22,6 +22,7 @@ using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
 static void displayHelp(char* arg0) {
+    cout<<"© l'ATÉCON"<<endl;
     cout<<"Programme de test de NindLexicon en mode écrivain et lecteur."<<endl;
     cout<<"Le but de ce test est de vérifier qu'un lexique lecteur se met"<<endl;
     cout<<"à jour des modifications faites par le lexique écrivain."<<endl;
@@ -31,7 +32,7 @@ static void displayHelp(char* arg0) {
 
     cout<<"usage: "<<arg0<<" --help"<< endl;
     cout<<"       "<<arg0<<" <fichier dump documents>"<<endl;
-    cout<<"ex :   "<<arg0<<" fre-theJysBox.fdb-DumpByDocuments.txt"<<endl;
+    cout<<"ex :   "<<arg0<<" FRE.FDB-DumpByDocuments.txt"<<endl;
 }
 ////////////////////////////////////////////////////////////
 #define LINE_SIZE 65536*100
@@ -194,7 +195,6 @@ int main(int argc, char *argv[]) {
 
         return true;
      }
-    catch (LexiconException &exc) {cerr<<"EXCEPTION :"<<exc.m_word<<" "<<exc.what()<<endl; return false;}
     catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; return false;}
     catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; return false;}
     catch (...) {cerr<<"EXCEPTION unknown"<< endl; return false; }

@@ -1,3 +1,3 @@
 add_subdirectory(NindLexicon)
 add_subdirectory(NindBasics)
-add_subdirectory(NindTermIndex)
+add_subdirectory(NindIndex)

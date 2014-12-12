@@ -114,65 +114,85 @@ class BadAllocException : public FileException {
     BadAllocException(const std::string fileName) :
         FileException("Bad alloc error", fileName) {}
 };
-////////////////////////////////////////////////////////////
-/**\brief when something on lexicon fails  */
-class LexiconException : public std::runtime_error {
-public:
-    std::string m_word;
-    LexiconException(const char * name, const std::string word) :
-        runtime_error(name),
-        m_word(word) {}
-    virtual ~LexiconException() throw() {}
-};
-/**\brief when bad use of lexicon is attempted  */
-class BadUseException : public LexiconException {
-public:
-    BadUseException() :
-        LexiconException("Bad use", "") {}
-    BadUseException(const std::string word) :
-        LexiconException("Bad use", word) {}
-};
-/**\brief when lexicon is broken  */
-class IntegrityException : public LexiconException {
-public:
-    IntegrityException() :
-        LexiconException("Lexicon integrity error", "") {}
-    IntegrityException(const std::string word) :
-        LexiconException("Lexicon integrity error", word) {}
-};
 /**\brief when an out of bound parameter is gotten   */
-class OutOfBoundException : public LexiconException {
+class OutOfBoundException : public FileException {
     public:
     OutOfBoundException() :
-        LexiconException("Out of bound error", "") {}
+        FileException("Out of bound error", "") {}
     OutOfBoundException(const std::string error) :
-        LexiconException("Out of bound error", error) {}
+        FileException("Out of bound error", error) {}
 };
-////////////////////////////////////////////////////////////
-/**\brief when something on terms index fails  */
-class TermIndexException : public std::runtime_error {
+/**\brief when bad use of lexicon is attempted  */
+class BadUseException : public FileException {
 public:
-    std::string m_word;
-    TermIndexException(const char * name, const std::string word) :
-        runtime_error(name),
-        m_word(word) {}
-    virtual ~TermIndexException() throw() {}
+    BadUseException() :
+        FileException("Bad use", "") {}
+    BadUseException(const std::string word) :
+        FileException("Bad use", word) {}
+};
+/**\brief when an error occurs on file index  */
+class NindIndexException : public FileException {
+    public:
+    NindIndexException() :
+        FileException("Nind Index error", "") {}
+    NindIndexException(const std::string fileName) :
+        FileException("Nind Index error", fileName) {}
+};
+/**\brief when an error occurs on term file index  */
+class NindTermIndexException : public FileException {
+    public:
+    NindTermIndexException() :
+        FileException("Nind Termindex error", "") {}
+    NindTermIndexException(const std::string fileName) :
+        FileException("Nind Termindex error", fileName) {}
+};
+/**\brief when an error occurs on local file index  */
+class NindLocalIndexException : public FileException {
+    public:
+    NindLocalIndexException() :
+        FileException("Nind Localindex error", "") {}
+    NindLocalIndexException(const std::string fileName) :
+        FileException("Nind Localindex error", fileName) {}
+};
+/**\brief when an error occurs on lexicon file index  */
+class NindLexiconIndexException : public FileException {
+    public:
+    NindLexiconIndexException() :
+        FileException("Nind Lexiconindex error", "") {}
+    NindLexiconIndexException(const std::string fileName) :
+        FileException("Nind Lexiconindex error", fileName) {}
+};
+/**\brief when an error occurs on lexicon  */
+class NindLexiconException : public FileException {
+    public:
+    NindLexiconException() :
+        FileException("Nind Lexicon error", "") {}
+    NindLexiconException(const std::string fileName) :
+        FileException("Nind Lexicon error", fileName) {}
 };
 /**\brief when a decode error occurs    */
-class DecodeErrorException : public TermIndexException {
+class DecodeErrorException : public FileException {
     public:
     DecodeErrorException() :
-        TermIndexException("Out of bound error", "") {}
+        FileException("Decode error", "") {}
     DecodeErrorException(const std::string error) :
-        TermIndexException("Out of bound error", error) {}
+        FileException("Decode error", error) {}
 };
 /**\brief when a encode error occurs    */
-class EncodeErrorException : public TermIndexException {
+class EncodeErrorException : public FileException {
     public:
     EncodeErrorException() :
-        TermIndexException("Out of bound error", "") {}
+        FileException("Encode error", "") {}
     EncodeErrorException(const std::string error) :
-        TermIndexException("Out of bound error", error) {}
+        FileException("Encode error", error) {}
+};
+/**\brief when lexicon is broken  */
+class IntegrityException : public FileException {
+public:
+    IntegrityException() :
+        FileException("Lexicon integrity error", "") {}
+    IntegrityException(const std::string word) :
+        FileException("Lexicon integrity error", word) {}
 };
 ////////////////////////////////////////////////////////////
     } // end namespace

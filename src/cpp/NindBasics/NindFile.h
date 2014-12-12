@@ -23,10 +23,8 @@ class DLLExportLexicon NindFile {
 public:
 
     /**\brief Creates NindFile with a specified name associated with.
-    *\param fileName absolute path file name
-    *\param isWriter true if NindFile will write on file, false otherwise */
-    NindFile(const std::string &fileName,
-             const bool isWriter);
+    *\param fileName absolute path file name */
+    NindFile(const std::string &fileName);
 
     virtual ~NindFile();
 
@@ -40,40 +38,45 @@ public:
 
     /**\brief get current position in file
     *\return current position in file */
-    long int getPos() const;
+    inline long int getPos() const;
 
     /**\brief get current size of file
     *\return current size of file */
-    long int getFileSize() const;
+    inline long int getFileSize() const;
 
     /**\brief Set file on relative position
     *\param offset Number of bytes to offset from origin
     *\param origin Position from where offset is added :
     * SEEK_SET : Beginning of file, SEEK_CUR : Current position of the file pointer, SEEK_END : End of file
     *\return true if success, false otherwise */
-    bool setPos(const long int offset, const int origin);
+    inline bool setPos(const long int offset, const int origin);
 
     /**brief clear input buffer in reading mode and write output buffer in writing mode
     *\return true if success, false otherwise */
-    bool flush();
+    inline bool flush();
 
     /**\brief Read a single byte from the file
     *\return byte value */
-    unsigned char readChar()
+    unsigned char readInt1()
         throw(EofException, ReadFileException);
 
-    /**\brief Read a 4-bytes integer from the file
+    /**\brief Read a 3-bytes integer from the file
     *\return 4-bytes integer */
-    unsigned int readInt4()
+    unsigned int readInt3()
         throw(EofException, ReadFileException);
 
-    /**\brief Read a 8-bytes integer from the file
-    *\return 8-bytes integer */
-    long int readInt8()
-        throw(EofException, ReadFileException);
-
+    /**\brief Get an unsigned latecon integer from the file
+    *\return 4-bytes unsigned integer */
+    unsigned int readUIntLat()
+        throw(EofException, ReadFileException, FormatFileException);
+        
+    /**\brief Get a signed latecon integer from the file
+    *\return 4-bytes signed integer */
+    signed int readSIntLat()
+        throw(EofException, ReadFileException, FormatFileException);
+        
     /**\brief Read a string from the file
-    *\param str string where to write read string */
+    *\return read string */
     std::string readString()
         throw(EofException, ReadFileException);
         
@@ -81,10 +84,29 @@ public:
     *\param bytesNb size of internal buffer to receive read datas */
     void readBuffer(const unsigned int bytesNb)
         throw(EofException, ReadFileException, BadAllocException);
+        
+    /**\brief Reduce effective buffer data specifying amount of unread datas
+    *\param bytesNb size of effective unread datas */
+    void setEndInBuffer(const unsigned int bytesNb)
+        throw(OutReadBufferException);
 
-    /**\brief Get a single byte from internal buffer
-    *\return byte value */
-    unsigned char getChar()
+    /**\brief Test if effective buffer was entirely read
+    *\return true if effective buffer was entirely read */
+    inline bool endOfInBuffer();
+        
+    /**\brief Get a 1-bytes integer from internal buffer
+    *\return 4-bytes integer */
+    unsigned int getInt1()
+        throw(OutReadBufferException);
+
+    /**\brief Get a 2-bytes integer from internal buffer
+    *\return 4-bytes integer */
+    unsigned int getInt2()
+        throw(OutReadBufferException);
+
+    /**\brief Get a 3-bytes integer from internal buffer
+    *\return 4-bytes integer */
+    unsigned int getInt3()
         throw(OutReadBufferException);
 
     /**\brief Get a 4-bytes integer from internal buffer
@@ -92,33 +114,80 @@ public:
     unsigned int getInt4()
         throw(OutReadBufferException);
 
-    /**\brief Get a 8-bytes integer from internal buffer
+    /**\brief Get a 5-bytes integer from internal buffer
     *\return 8-bytes integer */
-    long int getInt8()
+    unsigned long int getInt5()
         throw(OutReadBufferException);
         
-    /**\brief Test if buffer was entirely read
-    *\return true if buffer  was entirely read */
-    inline bool endOfBuffer();
+    /**\brief Get an unsigned latecon integer from internal buffer
+    *\return 4-bytes unsigned integer */
+    unsigned int getUIntLat()
+        throw(OutReadBufferException);
+        
+    /**\brief Get a signed latecon integer from internal buffer
+    *\return 4-bytes signed integer */
+    signed int getSIntLat()
+        throw(OutReadBufferException);
+
+    /**\brief Get a string from internal buffer
+    *\return read string */
+    std::string getString()
+        throw(EofException, ReadFileException);
         
     /**\brief Create an internal buffer for writing
     *\param bytesNb size of buffer */
     void createBuffer(const unsigned int bytesNb)
         throw(BadAllocException);
+        
+    /**\brief Return the effective size of buffer for writing
+     * \return the effective actual size */
+    inline unsigned int getOutBufferSize();
+
+    /**\brief Put padding into the internal buffer
+    *\param bytesNb number of padding bytes to write */
+    void putPad(const unsigned int bytesNb)
+        throw(OutWriteBufferException);
 
     /**\brief Put one byte into the internal buffer
-    *\param value byte value to write */
-    void putChar(const unsigned char value)
+    *\param int1 byte value to write */
+    void putInt1(const unsigned char int1)
+        throw(OutWriteBufferException);
+
+    /**\brief Put a 2-bytes integer into the internal buffer
+    *\param int4 integer to write as 2-bytes*/
+    void putInt2(const unsigned int int4)
+        throw(OutWriteBufferException);
+
+    /**\brief Put a 3-bytes integer into the internal buffer
+    *\param int4 integer to write as 3-bytes*/
+    void putInt3(const unsigned int int4)
+        throw(OutWriteBufferException);
+
+    /**\brief Put a 3-bytes integer into the internal buffer at the specified offset
+    *\param int4 integer to write as 3-bytes
+    *\param offset where to write the 3 bytes into the buffer*/
+    void putInt3(const unsigned int int4,
+                 const unsigned int offset)
         throw(OutWriteBufferException);
 
     /**\brief Put a 4-bytes integer into the internal buffer
-    *\param int4 4-bytes integer to write */
+    *\param int4 integer to write as 4-bytes*/
     void putInt4(const unsigned int int4)
         throw(OutWriteBufferException);
 
-    /**\brief Put a 8-bytes integer into the internal buffer
-    *\param int8 8-bytes integer to write */
-    void putInt8(const long int int8)
+    /**\brief Put a 5-bytes integer into the internal buffer
+    *\param int8 long integer to write as 5-bytes*/
+    void putInt5(const unsigned long int int8)
+        throw(OutWriteBufferException);
+
+    /**\brief Put an unsigned latecon integer into the internal buffer
+    *\param int4 unsigned integer to write as latecon integer*/
+    void putUIntLat(const unsigned int int4)
+        throw(OutWriteBufferException);
+
+    /**\brief Put a signed latecon integer into the internal buffer
+    *\param int4 signed integer to write as latecon integer*/
+    void putSIntLat(const signed int int4)
         throw(OutWriteBufferException);
 
     /**\brief Put a string into the intermediate buffer
@@ -143,7 +212,6 @@ private:
                    const unsigned int bytesNb)
         throw(EofException, ReadFileException);
 
-    bool m_isWriter;       //true si autorise a ecrire, false sinon
     std::string m_fileName;
     FILE *m_file;
     unsigned char *m_wbuffer;        //buffer d'ecriture
@@ -156,15 +224,53 @@ private:
     bool m_isLittleEndian;
 };
 ////////////////////////////////////////////////////////////
-//brief Test if buffer was entirely read
-//return true if buffer  was entirely read */
-inline bool NindFile::endOfBuffer()
+//brief get current position in file
+//return current position in file */
+inline long int NindFile::getPos() const
+{
+    return ftell(m_file);
+}
+////////////////////////////////////////////////////////////
+//brief get current size of file
+//return current size of file */
+inline long int NindFile::getFileSize() const
+{
+    return m_fileSize;
+}
+////////////////////////////////////////////////////////////
+//brief Set file on relative position
+//param offset Number of bytes to offset from origin
+//param origin Position from where offset is added :
+//SEEK_SET : Beginning of file, SEEK_CUR : Current position of the file pointer, SEEK_END : End of file
+//return true if success, false otherwise */
+inline bool NindFile::setPos(const long int offset,
+                      const int origin)
+{
+    return fseek(m_file, offset, origin);
+}
+////////////////////////////////////////////////////////////
+//brief clear input buffer in reading mode and write output buffer in writing mode
+//return true if success, false otherwise */
+inline bool NindFile::flush()
+{
+    return fflush(m_file);
+}
+////////////////////////////////////////////////////////////
+//brief Test if effective buffer was entirely read
+//return true if effective buffer was entirely read */
+inline bool NindFile::endOfInBuffer()
 {
     return (m_rPtr >= m_rbufferEnd);
+}
+////////////////////////////////////////////////////////////
+//brief Return the effective size of buffer for writing
+//return the effective actual size */
+inline unsigned int NindFile::getOutBufferSize()
+{
+    return (m_wPtr - m_wbuffer);
 }
 ////////////////////////////////////////////////////////////
     } // end namespace
 } // end namespace
 #endif
-////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////

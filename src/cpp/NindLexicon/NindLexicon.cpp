@@ -29,7 +29,7 @@ using namespace std;
 //param isLexiconWriter true if lexicon writer, false if lexicon reader  */
 NindLexicon::NindLexicon(const std::string &fileName,
                          const bool isLexiconWriter)
-    throw(OpenFileException, EofException, ReadFileException, InvalidFileException, WriteFileException, OutReadBufferException) :
+    throw(NindLexiconException) :
     m_isLexiconWriter(isLexiconWriter),
     m_fileName(fileName),
     m_currentId(0),
@@ -57,60 +57,66 @@ NindLexicon::~NindLexicon()
 //param componants list of componants of a word (1 componant = simple word, more componants = compound word)
 //return ident of word */
 unsigned int NindLexicon::addWord(const list<string> &componants)
-    throw(WriteFileException, BadUseException, OutWriteBufferException)
+    throw(NindLexiconException)
 {
-    if (!m_isLexiconWriter) throw BadUseException("lexicon is not writable");
-    //flag pour eviter les recherches inutiles sur les mots composes quand il y a eu insertion d'un sous ensemble
-    bool isNew = false;
-    //identifiant du mot (simple ou compose) sous ensemble du mot examine
-    unsigned int subWordId = 0;
-    for (list<string>::const_iterator swIt = componants.begin(); swIt != componants.end(); swIt++) {
-        const string &simpleWord = *swIt;
-        unsigned int simpleWordId;
-        //mot deja dans le lexique ?
-        const StringHashMap::const_iterator idSWIt = m_lexiconSW.find(simpleWord);
-        if (idSWIt != m_lexiconSW.end()) {
-            //deja dans le lexique, on prend son id
-            simpleWordId = idSWIt->second;
-        }
-        else {
-            //mot nouveau, on l'insere
-            isNew = true;
-            m_lexiconSW[simpleWord] = ++m_currentId;
-            simpleWordId = m_currentId;
-            m_identification = (time_t)time(NULL);
-            m_lexiconFile.writeSimpleWordDefinition(m_currentId, simpleWord, m_currentId, m_identification);
-        }
-        //enregistrement du mot compose eventuel
-        if (subWordId == 0) {
-            //c'est un mot simple, le prochain coup, il sera compose
-            subWordId = simpleWordId;
-        }
-        else {
-            //c'est bien un mot compose
-            const pair<unsigned int, unsigned int> compoundWord(subWordId, simpleWordId);
-            //si nouvel element dans sa structure, pas la peine de le chercher, il n'y est pas
-            if (!isNew) {
-                const PairHashMap::const_iterator idCWIt = m_lexiconCW.find(compoundWord);
-                if (idCWIt != m_lexiconCW.end()) {
-                    //deja dans le lexique, on prend son id
-                    subWordId = idCWIt->second;
-                }
-                else {
-                    isNew = true;
-                }
+    try {
+        if (!m_isLexiconWriter) throw BadUseException("lexicon is not writable");
+        //flag pour eviter les recherches inutiles sur les mots composes quand il y a eu insertion d'un sous ensemble
+        bool isNew = false;
+        //identifiant du mot (simple ou compose) sous ensemble du mot examine
+        unsigned int subWordId = 0;
+        for (list<string>::const_iterator swIt = componants.begin(); swIt != componants.end(); swIt++) {
+            const string &simpleWord = *swIt;
+            unsigned int simpleWordId;
+            //mot deja dans le lexique ?
+            const StringHashMap::const_iterator idSWIt = m_lexiconSW.find(simpleWord);
+            if (idSWIt != m_lexiconSW.end()) {
+                //deja dans le lexique, on prend son id
+                simpleWordId = idSWIt->second;
             }
-            if (isNew) {
+            else {
                 //mot nouveau, on l'insere
-                m_lexiconCW[compoundWord] = ++m_currentId;
-                subWordId = m_currentId;
+                isNew = true;
+                m_lexiconSW[simpleWord] = ++m_currentId;
+                simpleWordId = m_currentId;
                 m_identification = (time_t)time(NULL);
-                m_lexiconFile.writeCompoundWordDefinition(m_currentId, compoundWord, m_currentId, m_identification);
+                m_lexiconFile.writeSimpleWordDefinition(m_currentId, simpleWord, m_currentId, m_identification);
+            }
+            //enregistrement du mot compose eventuel
+            if (subWordId == 0) {
+                //c'est un mot simple, le prochain coup, il sera compose
+                subWordId = simpleWordId;
+            }
+            else {
+                //c'est bien un mot compose
+                const pair<unsigned int, unsigned int> compoundWord(subWordId, simpleWordId);
+                //si nouvel element dans sa structure, pas la peine de le chercher, il n'y est pas
+                if (!isNew) {
+                    const PairHashMap::const_iterator idCWIt = m_lexiconCW.find(compoundWord);
+                    if (idCWIt != m_lexiconCW.end()) {
+                        //deja dans le lexique, on prend son id
+                        subWordId = idCWIt->second;
+                    }
+                    else {
+                        isNew = true;
+                    }
+                }
+                if (isNew) {
+                    //mot nouveau, on l'insere
+                    m_lexiconCW[compoundWord] = ++m_currentId;
+                    subWordId = m_currentId;
+                    m_identification = (time_t)time(NULL);
+                    m_lexiconFile.writeCompoundWordDefinition(m_currentId, compoundWord, m_currentId, m_identification);
+                }
             }
         }
+        //retourne l'id du mot specifie
+        return subWordId;
     }
-    //retourne l'id du mot specifie
-    return subWordId;
+    catch (FileException &exc) {
+        cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
+        throw NindLexiconException(m_fileName);
+    }
 }
 ////////////////////////////////////////////////////////////
 //brief get ident of the specified word
@@ -119,38 +125,44 @@ unsigned int NindLexicon::addWord(const list<string> &componants)
 //param componants list of componants of a word (1 componant = simple word, more componants = compound word)
 //return ident of word */
 unsigned int NindLexicon::getId(const list<string> &componants) 
-    throw(EofException, ReadFileException, InvalidFileException, OutReadBufferException)
+    throw(NindLexiconException)
 {
-    //si lecteur, verifie s'il y a eu maj
-    if (!m_isLexiconWriter && m_nextRefreshTime < (time_t)time(NULL)) {
-        updateFromFile();
-        m_nextRefreshTime = (time_t)time(NULL) + 10;  //temps actuel + 10s
-    }
-    //identifiant du mot (simple ou compose) sous ensemble du mot examine
-    unsigned int subWordId = 0;
-    for(list<string>::const_iterator swIt = componants.begin(); swIt != componants.end(); swIt++) {
-        const string &simpleWord = *swIt;
-        //mot dans le lexique ?
-        const StringHashMap::const_iterator idSWIt = m_lexiconSW.find(simpleWord);
-        if (idSWIt == m_lexiconSW.end()) return 0; //mot inconnu
-        //dans le lexique, on prend son id
-        const unsigned int simpleWordId = idSWIt->second;
-        //recherche du mot compose eventuel
-        if (subWordId == 0) {
-            //c'est un mot simple, le prochain coup, il sera compose
-            subWordId = simpleWordId;
+    try {
+        //si lecteur, verifie s'il y a eu maj
+        if (!m_isLexiconWriter && m_nextRefreshTime < (time_t)time(NULL)) {
+            updateFromFile();
+            m_nextRefreshTime = (time_t)time(NULL) + 10;  //temps actuel + 10s
         }
-        else {
-            //c'est bien un mot compose
-            const pair<unsigned int, unsigned int> compoundWord(subWordId, simpleWordId);
-            const PairHashMap::const_iterator idCWIt = m_lexiconCW.find(compoundWord);
-            if (idCWIt == m_lexiconCW.end()) return 0; //mot inconnu
-            //il est dans le lexique, on prend son id
-            subWordId = idCWIt->second;
+        //identifiant du mot (simple ou compose) sous ensemble du mot examine
+        unsigned int subWordId = 0;
+        for(list<string>::const_iterator swIt = componants.begin(); swIt != componants.end(); swIt++) {
+            const string &simpleWord = *swIt;
+            //mot dans le lexique ?
+            const StringHashMap::const_iterator idSWIt = m_lexiconSW.find(simpleWord);
+            if (idSWIt == m_lexiconSW.end()) return 0; //mot inconnu
+            //dans le lexique, on prend son id
+            const unsigned int simpleWordId = idSWIt->second;
+            //recherche du mot compose eventuel
+            if (subWordId == 0) {
+                //c'est un mot simple, le prochain coup, il sera compose
+                subWordId = simpleWordId;
+            }
+            else {
+                //c'est bien un mot compose
+                const pair<unsigned int, unsigned int> compoundWord(subWordId, simpleWordId);
+                const PairHashMap::const_iterator idCWIt = m_lexiconCW.find(compoundWord);
+                if (idCWIt == m_lexiconCW.end()) return 0; //mot inconnu
+                //il est dans le lexique, on prend son id
+                subWordId = idCWIt->second;
+            }
         }
+        //retourne l'id du mot specifie
+        return subWordId;
     }
-    //retourne l'id du mot specifie
-    return subWordId;
+    catch (FileException &exc) {
+        cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
+        throw NindLexiconException(m_fileName);
+    }
 }
 ////////////////////////////////////////////////////////////
 //brief get identification of lexicon

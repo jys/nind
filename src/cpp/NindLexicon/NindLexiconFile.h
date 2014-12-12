@@ -32,7 +32,7 @@ public:
     *\param fromLexiconWriter true if from lexicon writer, false if from lexicon reader  */
     NindLexiconFile(const std::string &fileName,
                     const bool fromLexiconWriter)
-        throw(OpenFileException, WriteFileException, OutWriteBufferException);
+        throw(NindLexiconException);
 
     virtual ~NindLexiconFile();
 
@@ -82,13 +82,19 @@ public:
         throw(WriteFileException, BadUseException, OutWriteBufferException);
 
     /**\brief Perform a clear buffer for reading the true file and not its buffer */
-    void clearBuffer();
+    inline void clearBuffer();
 
 private:
     bool m_fromLexiconWriter;       //true si autorise a ecrire, false sinon
     std::string m_fileName;
     NindFile m_file;
 }; 
+////////////////////////////////////////////////////////////
+//brief Perform a clear buffer for reading the true file and not its buffer */
+inline void NindLexiconFile::clearBuffer()
+{
+    m_file.flush();
+}
 ////////////////////////////////////////////////////////////
     } // end namespace
 } // end namespace

@@ -20,6 +20,7 @@ using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
 static void displayHelp(char* arg0) {
+    cout<<"© l'ATÉCON"<<endl;
     cout<<"Programme de test de NindLexicon."<<endl;
     cout<<"Charge un lexique vide avec un fichier de mots simples"<<endl;
     cout<<"et les combine pour en faire des mots composés."<<endl;
@@ -112,7 +113,6 @@ int main(int argc, char *argv[]) {
         
         return true;
     }
-    catch (LexiconException &exc) {cerr<<"EXCEPTION :"<<exc.m_word<<" "<<exc.what()<<endl; return false;}
     catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; return false;}
     catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; return false;}
     catch (...) {cerr<<"EXCEPTION unknown"<< endl; return false; }

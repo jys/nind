@@ -21,6 +21,7 @@ using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
 static void displayHelp(char* arg0) {
+    cout<<"© l'ATÉCON"<<endl;
     cout<<"Programme de test de NindLexicon en mode lecteur (pour la recherche)."<<endl;
     cout<<"Charge un lexique avec le fichier lexique et mesure le temps"<<endl;
     cout<<"de chargement et la mémoire consommée"<<endl;
@@ -65,7 +66,6 @@ int main(int argc, char *argv[]) {
         cout<<cpuTimeUsed<<" secondes CPU"<<endl;
         return true;
     }
-    catch (LexiconException &exc) {cerr<<"EXCEPTION :"<<exc.m_word<<" "<<exc.what()<<endl; return false;}
     catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; return false;}
     catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; return false;}
     catch (...) {cerr<<"EXCEPTION unknown"<< endl; return false; }

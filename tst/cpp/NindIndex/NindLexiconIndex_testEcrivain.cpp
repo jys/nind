@@ -1,16 +1,15 @@
 //
-// C++ Implementation: NindLexicon_testEcrivain
+// C++ Implementation: NindLexiconIndex_testEcrivain
 //
 // Description: un test pour remplir le lexique et faire differentes mesures.
-// idem NindLexicon_test2 mais avec fichier lexique
 //
 // Author: Jean-Yves Sage <jean-yves.sage@orange.fr>, (C) LATECON 2014
 //
 // Copyright: See COPYING file that comes with this distribution
 //
 ////////////////////////////////////////////////////////////
-#include "NindLexicon/NindLexicon.h"
-#include "NindIndex/NindIndexTest.h"
+#include "NindIndex/NindLexiconIndex.h"
+#include "NindIndexTest.h"
 #include "NindExceptions.h"
 #include <time.h>
 #include <string>
@@ -23,7 +22,7 @@ using namespace std;
 ////////////////////////////////////////////////////////////
 static void displayHelp(char* arg0) {
     cout<<"© l'ATÉCON"<<endl;
-    cout<<"Programme de test de NindLexicon en mode écrivain"<<endl;
+    cout<<"Programme de test de NindLexiconIndex en mode écrivain"<<endl;
     cout<<"avec le dump de documents spécifié."<<endl;
     cout<<"(AntindexDumpBaseByDocuments crée un dump d'une base S2.)"<<endl;
     cout<<"Si le fichier lexique n'existe pas, charge un lexique vide"<<endl;
@@ -31,39 +30,42 @@ static void displayHelp(char* arg0) {
     cout<<"Teste l'écriture puis la lecture et affiche résultats et mesures."<<endl;
     cout<<"Pour mesurer les vrais temps d'écriture et de lecture du lexique,"<<endl;
     cout<<"ce programme utilise le principe de la double pesée."<<endl;
+    cout<<"Un nombre premier est préférable pour <taille bloc indirection>."<<endl;
 
     cout<<"usage: "<<arg0<<" --help"<< endl;
-    cout<<"       "<<arg0<<" <fichier dump documents>"<<endl;
-    cout<<"ex :   "<<arg0<<" FRE.FDB-DumpByDocuments.txt"<<endl;
+    cout<<"       "<<arg0<<" <fichier dump> <taille bloc indirection> "<<endl;
+    cout<<"ex :   "<<arg0<<" FRE.FDB-DumpByDocuments.txt 100003"<<endl;
 }
 ////////////////////////////////////////////////////////////
 #define LINE_SIZE 65536*100
 ////////////////////////////////////////////////////////////
 void formeLexique(const bool pourDeVrai,
                   const string &docsFileName,
-                  NindLexicon &nindLexicon,
+                  NindLexiconIndex &nindLexicon,
                   list<pair<unsigned int, string> > &allWords,
                   unsigned int &docsNb);
 void interrogeLexique(const bool pourDeVrai,
                       const list<pair<unsigned int, string> > &allWords,
-                      NindLexicon &nindLexicon);
+                      NindLexiconIndex &nindLexicon);
 ////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
     setlocale( LC_ALL, "French" );
-    if (argc<2) {displayHelp(argv[0]); return false;}
+    if (argc<3) {displayHelp(argv[0]); return false;}
     const string docsFileName = argv[1];
     if (docsFileName == "--help") {displayHelp(argv[0]); return true;}
+    const string lexiconEntryNbStr = argv[2];
 
+    const unsigned int lexiconEntryNb = atoi(lexiconEntryNbStr.c_str());
     try {
         //calcule le nom du fichier lexique
         const size_t pos = docsFileName.find('.');
-        const string lexiconFileName = docsFileName.substr(0, pos) + ".lexicon";
+        const string lexiconFileName = docsFileName.substr(0, pos) + ".lexiconindex";
         //pour calculer le temps consomme
         clock_t start, end;
         double cpuTimeUsed;
 
         //le lexique ecrivain
-        NindLexicon nindLexicon(lexiconFileName, true);
+        NindLexiconIndex nindLexicon(lexiconFileName, true, lexiconEntryNb);
         //la correspondance de tous les mots avec leur identifiant
         list<pair<unsigned int, string> > allWords;
         unsigned int docsNb;
@@ -76,7 +78,7 @@ int main(int argc, char *argv[]) {
         //affiche les données de l'indexation
         cout<<allWords.size()<<" mots de "<<docsNb<<" documents soumis au lexique en ";
         cout<<cpuTimeUsed<<" secondes"<<endl;
-               
+        
         cout<<"2) forme le lexique pour de vrai"<<endl;
         start = clock();
         formeLexique(true, docsFileName, nindLexicon, allWords, docsNb);
@@ -87,35 +89,19 @@ int main(int argc, char *argv[]) {
         cout<<cpuTimeUsed<<" secondes"<<endl;
 
         /////////////////////////////////////
-        cout<<"3) vérifie l'intégrité"<<endl;
-        start = clock();
-        struct NindLexicon::LexiconChar lexiconSizes;
-        const bool isOk = nindLexicon.integrityAndCounts(lexiconSizes);
-        end = clock();
-        cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
-        //integrite
-        if (isOk) cout<<"lexique OK ";
-        else cout<<"lexique NOK ";
-        //nombres de mots
-        cout<<lexiconSizes.swNb<<" mots simples, ";
-        cout<<lexiconSizes.cwNb<<" mots composés"<<endl;
-        cout<<cpuTimeUsed<<" secondes"<<endl;
-
-        /////////////////////////////////////
-        cout<<"4) redemande les "<<allWords.size()<<" mots soumis et vérifie leur identifiant pour de faux"<<endl;
+        cout<<"3) redemande les "<<allWords.size()<<" mots soumis et vérifie leur identifiant pour de faux"<<endl;
         start = clock();
         interrogeLexique(false, allWords, nindLexicon);
         end = clock();
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
         cout<<"OK en "<<cpuTimeUsed<<" secondes"<<endl;
 
-        cout<<"5) redemande les "<<allWords.size()<<" mots soumis et vérifie leur identifiant pour de vrai"<<endl;
+        cout<<"4) redemande les "<<allWords.size()<<" mots soumis et vérifie leur identifiant pour de vrai"<<endl;
         start = clock();
         interrogeLexique(true, allWords, nindLexicon);
         end = clock();
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
         cout<<"OK en "<<cpuTimeUsed<<" secondes"<<endl;
-        /////////////////////////////////////
 
         return true;
     }
@@ -126,7 +112,7 @@ int main(int argc, char *argv[]) {
 ////////////////////////////////////////////////////////////
 void formeLexique(const bool pourDeVrai,
                   const string &docsFileName,
-                  NindLexicon &nindLexicon,
+                  NindLexiconIndex &nindLexicon,
                   list<pair<unsigned int, string> > &allWords,
                   unsigned int &docsNb)
 {
@@ -166,7 +152,7 @@ void formeLexique(const bool pourDeVrai,
 ////////////////////////////////////////////////////////////
 void interrogeLexique(const bool pourDeVrai,
                       const list<pair<unsigned int, string> > &allWords,
-                      NindLexicon &nindLexicon)
+                      NindLexiconIndex &nindLexicon)
 {
     //la classe d'utilitaires
     NindIndexTest nindIndexTest;

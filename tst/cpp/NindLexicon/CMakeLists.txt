@@ -1,5 +1,6 @@
 
 include_directories(${CMAKE_SOURCE_DIR}/src/cpp/)
+include_directories(${CMAKE_SOURCE_DIR}/tst/cpp/)
 ########### next target ###############
 SET(NindLexicon_testEcrivain_SRCS
    NindLexicon_testEcrivain.cpp
@@ -7,7 +8,7 @@ SET(NindLexicon_testEcrivain_SRCS
 
 add_executable(NindLexicon_testEcrivain ${NindLexicon_testEcrivain_SRCS})
 
-target_link_libraries(NindLexicon_testEcrivain NindLexicon NindBasics)
+target_link_libraries(NindLexicon_testEcrivain NindIndexTest NindLexicon NindBasics)
 
 install(TARGETS NindLexicon_testEcrivain DESTINATION bin)
 
