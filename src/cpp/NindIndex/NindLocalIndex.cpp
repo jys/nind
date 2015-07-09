@@ -7,10 +7,16 @@
 // Cette classe gere la complexite du fichier des index locaux qui doit rester coherent pour ses lecteurs
 // pendant que son ecrivain l'enrichit en fonction des nouvelles indexations.
 //
-// Author: Jean-Yves Sage <jean-yves.sage@orange.fr>, (C) LATECON 2014
+// Author: jys <jy.sage@orange.fr>, (C) LATECON 2014
 //
-// Copyright: See COPYING file that comes with this distribution
-//
+// Copyright: 2014-2015 LATECON. See LICENCE.md file that comes with this distribution
+// This file is part of NIND (as "nouvelle indexation").
+// NIND is free software: you can redistribute it and/or modify it under the terms of the 
+// GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
+// (see <http://www.gnu.org/licenses/>), either version 3 of the License, or any later version.
+// NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
+// even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
 #include "NindLocalIndex.h"
 #include <iostream>
