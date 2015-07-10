@@ -66,7 +66,7 @@ public:
         ~Term() {}
     };
     
-    /**\brief Read a full termIndex as a list of structures
+    /**\brief Read a full document as a list of terms
     *\param ident ident of doc
     *\param localIndex structure to receive all datas of the specified doc
     *\return true if doc was found, false otherwise */
