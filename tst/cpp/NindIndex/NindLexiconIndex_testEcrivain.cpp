@@ -16,8 +16,8 @@
 ////////////////////////////////////////////////////////////
 #include "NindIndex/NindLexiconIndex.h"
 #include "NindIndexTest.h"
+#include "NindDate.h"
 #include "NindExceptions.h"
-#include <time.h>
 #include <string>
 #include <list>
 #include <set>
@@ -85,7 +85,12 @@ int main(int argc, char *argv[]) {
         cout<<allWords.size()<<" mots de "<<docsNb<<" documents soumis au lexique en ";
         cout<<cpuTimeUsed<<" secondes"<<endl;
         
-        cout<<"2) forme le lexique pour de vrai"<<endl;
+        cout<<"2) forme le lexique pour de vrai dans "<<lexiconFileName<<endl;
+        //affiche les identifiants du lexique
+        unsigned int wordsNb, identification;
+        nindLexicon.getIdentification(wordsNb, identification);
+        cout<<"identification : "<<wordsNb<<" termes, "<<identification<<" ("<<NindDate::date(identification)<<")"<<endl;
+        
         start = clock();
         formeLexique(true, docsFileName, nindLexicon, allWords, docsNb);
         end = clock();
@@ -93,6 +98,10 @@ int main(int argc, char *argv[]) {
         //affiche les données de l'indexation
         cout<<allWords.size()<<" mots de "<<docsNb<<" documents soumis au lexique en ";
         cout<<cpuTimeUsed<<" secondes"<<endl;
+        /////////////////////////////////////
+        //affiche les identifiants du lexique
+        nindLexicon.getIdentification(wordsNb, identification);
+        cout<<"identification : "<<wordsNb<<" termes, "<<identification<<" ("<<NindDate::date(identification)<<")"<<endl;
 
         /////////////////////////////////////
         cout<<"3) redemande les "<<allWords.size()<<" mots soumis et vérifie leur identifiant pour de faux"<<endl;

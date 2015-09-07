@@ -82,10 +82,10 @@ NindLexiconIndex::~NindLexiconIndex()
 {
 }
 ////////////////////////////////////////////////////////////
-//brief add specified word in lexicon and return its ident if word still exists in lexicon,
-//else, word is created in lexicon
-//in both cases, word ident is returned.
-//param componants list of componants of a word (1 componant = simple word, more componants = compound word)
+//brief add specified term in lexicon it doesn't still exist in,
+//In all cases, word ident is returned.
+//param componants list of componants of a word 
+//(1 componant = simple word, more componants = compound word)
 //return ident of word */
 unsigned int NindLexiconIndex::addWord(const list<string> &componants)
     throw(NindLexiconIndexException)

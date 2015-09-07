@@ -36,7 +36,7 @@ static void displayHelp(char* arg0) {
     cout<<"du dump de documents spécifié."<<endl;
     cout<<"(AntindexDumpBaseByDocuments crée un dump d'une base S2.)"<<endl;
     cout<<"Les fichiers lexique, inverse et d'index locaux doivent être absents."<<endl;
-    cout<<"Les documents sont indexés par paquets. La taille des paquest est spécifiée"<<endl;
+    cout<<"Les documents sont indexés par paquets. La taille des paquets est spécifiée"<<endl;
     cout<<"Entre chaque traitement de paquets, les fichiers sont fermés puis rouverts."<<endl;
     cout<<"Le nombre d'entrées des blocs d'indirection est spécifiée pour le fichier inversé"<<endl;
     cout<<"et le fichier des index locaux."<<endl;
@@ -204,6 +204,7 @@ int main(int argc, char *argv[]) {
         //nindTermIndex->dumpEmptyAreas();
         docsFile.close();
         end = clock();
+        cout<<nbMaj<<" accès / mises à jour sur "<<lexiconFileName<<endl;
         cout<<nbMaj<<" mises à jour sur "<<termindexFileName<<endl;
         cout<<docsNb<<" mises à jour sur "<<localindexFileName<<endl;
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;

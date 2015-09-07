@@ -39,7 +39,7 @@ namespace latecon {
 class DLLExportLexicon NindLexiconIndex : public NindIndex {
 public:
     /**\brief Creates NindLexiconIndex.
-    *\param fileName absolute path file name
+    *\param fileName absolute path file name. Lexicon is identified by its file name
     *\param isLexiconWriter true if lexicon writer, false if lexicon reader  
     *\param indirectionBlocSize number of entries in a single indirection block */
     NindLexiconIndex(const std::string &fileName,
@@ -49,10 +49,10 @@ public:
 
     virtual ~NindLexiconIndex();
 
-    /**\brief add specified word in lexicon and return its ident if word still exists in lexicon,
-     * else, word is created in lexicon
-     * in both cases, word ident is returned.
-     * \param componants list of componants of a word (1 componant = simple word, more componants = compound word)
+    /**\brief add specified term in lexicon it doesn't still exist in,
+     * In all cases, word ident is returned.
+     * \param componants list of componants of a word 
+     * (1 componant = simple word, more componants = compound word)
      * \return ident of word */
     unsigned int addWord(const std::list<std::string> &componants)
         throw(NindLexiconIndexException);
@@ -60,7 +60,8 @@ public:
     /**\brief get ident of the specified word
      * if word exists in lexicon, its ident is returned
      * else, return 0 (0 is not a valid ident !)
-     * \param componants list of componants of a word (1 componant = simple word, more componants = compound word)
+     * \param componants list of componants of a word 
+     * (1 componant = simple word, more componants = compound word)
      * \return ident of word */
     unsigned int getId(const std::list<std::string> &componants)
         throw(NindLexiconIndexException);

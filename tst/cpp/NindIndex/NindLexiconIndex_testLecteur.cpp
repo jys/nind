@@ -16,6 +16,7 @@
 ////////////////////////////////////////////////////////////
 #include "NindIndex/NindLexiconIndex.h"
 #include "NindIndexTest.h"
+#include "NindDate.h"
 #include "NindExceptions.h"
 #include <time.h>
 #include <string>
@@ -58,6 +59,10 @@ int main(int argc, char *argv[]) {
         NindLexiconIndex nindLexicon(lexiconFileName, false);
         //la classe d'utilitaires
         NindIndexTest nindIndexTest;
+        //affiche les identifiants du lexique
+        unsigned int wordsNb, identification;
+        nindLexicon.getIdentification(wordsNb, identification);
+        cout<<"identification : "<<wordsNb<<" termes, "<<identification<<" ("<<NindDate::date(identification)<<")"<<endl;
         /////////////////////////////////////
         cout<<"1) forme la référence d'interrogation"<<endl;
         start = clock();

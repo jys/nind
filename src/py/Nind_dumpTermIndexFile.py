@@ -83,7 +83,7 @@ def main():
             indirectionSuivante = termindexFile.litNombre5()
             nombreIndirection = termindexFile.litNombre3()
             for i in range(nombreIndirection):
-                outFile.write('%07d:\n'%(noTerm))
+                outFile.write('%06d:\n'%(noTerm))
                 frequenceGlobale = 0
                 #<offsetDefinition> <longueurDefinition> 
                 offsetEntree = termindexFile.litNombre5()

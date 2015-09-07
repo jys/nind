@@ -56,41 +56,44 @@ protected:
 
     virtual ~NindIndex();
     
-    /**\brief Read from file datas of a specified definition and leave result into read buffer 
+    /**\brief Read from file datas of specified definition and leave result into read buffer 
     *\param ident ident of definition
     *\return true if ident was found, false otherwise */
     bool getDefinition(const unsigned int ident)
         throw(EofException, ReadFileException, OutReadBufferException);
         
-    /**\brief Write on file datas of a specified definition yet constructed into write buffer
+    /**\brief Write on file datas of specified definition yet constructed into write buffer
     *\param ident ident of definition
     *\param lexiconWordsNb number of words contained in lexicon 
     *\param lexiconIdentification unique identification of lexicon */
     void setDefinition(const unsigned int ident,
                        const unsigned int lexiconWordsNb,
                        const unsigned int lexiconIdentification)
-        throw(EofException, WriteFileException, BadAllocException, OutWriteBufferException, OutReadBufferException, 
-            OutOfBoundException);
+        throw(EofException, WriteFileException, BadAllocException, OutWriteBufferException, 
+              OutReadBufferException, OutOfBoundException);
         
-    /**\brief verifie que l'indirection existe et cree un bloc supplementaire si c'est pertinent
+    /**\brief check if indirection exists and create indirection block if necessary
     *\param ident ident of definition
     *\param lexiconWordsNb number of words contained in lexicon 
     *\param lexiconIdentification unique identification of lexicon */
     void checkExtendIndirection(const unsigned int ident,
                       const unsigned int lexiconWordsNb,
                       const unsigned int lexiconIdentification)
-        throw(BadAllocException, OutWriteBufferException, WriteFileException, OutOfBoundException);
+        throw(BadAllocException, OutWriteBufferException, WriteFileException, 
+              OutOfBoundException);
         
     /**\brief get size of 1rst indirection block
     *\return size of 1rst indirection block */
     unsigned int getFirstIndirectionBlockSize()
-    throw(OutReadBufferException, EofException, ReadFileException, BadAllocException, InvalidFileException);
+    throw(OutReadBufferException, EofException, ReadFileException, BadAllocException, 
+          InvalidFileException);
     
     /**\brief get identification of lexicon
     *\param wordsNb where number of words contained in lexicon is returned
     *\param identification where unique identification of lexicon is returned */
     void getFileIdentification(unsigned int &wordsNb, unsigned int &identification) 
-        throw(OutReadBufferException, EofException, ReadFileException, BadAllocException, InvalidFileException);
+        throw(OutReadBufferException, EofException, ReadFileException, BadAllocException, 
+              InvalidFileException);
         
     NindFile m_file;                //pour l'ecrivain ou le lecteur
     std::string m_fileName;

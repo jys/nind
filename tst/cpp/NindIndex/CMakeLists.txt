@@ -6,6 +6,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/cpp/)
 SET(NindIndexTest_LIB_SRCS
   NindIndexTest.h
   NindIndexTest.cpp
+  NindDate.h
+  NindDate.cpp
 )
 
 add_library(NindIndexTest SHARED ${NindIndexTest_LIB_SRCS})

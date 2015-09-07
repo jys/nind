@@ -14,10 +14,11 @@
 // even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
-#include "NindLexicon/NindLexicon.h"
+#include "NindIndex/NindLexiconIndex.h"
 #include "NindIndex/NindTermIndex.h"
 #include "NindIndex/NindLocalIndex.h"
 #include "NindIndexTest.h"
+#include "NindDate.h"
 #include "NindExceptions.h"
 #include <time.h>
 #include <string>
@@ -60,7 +61,7 @@ int main(int argc, char *argv[]) {
     try {
         //calcule les noms des fichiers lexique et inverse
         const size_t pos = docsFileName.find('.');
-        const string lexiconFileName = docsFileName.substr(0, pos) + ".lexicon";
+        const string lexiconFileName = docsFileName.substr(0, pos) + ".lexiconindex";
         const string termindexFileName = docsFileName.substr(0, pos) + ".termindex";
         const string localindexFileName = docsFileName.substr(0, pos) + ".localindex";
         //pour calculer le temps consomme
@@ -68,9 +69,11 @@ int main(int argc, char *argv[]) {
         double cpuTimeUsed;
         
         //le lexique lecteur
-        NindLexicon nindLexicon(lexiconFileName, false);
+        NindLexiconIndex nindLexicon(lexiconFileName, false);
         unsigned int wordsNb, identification;
         nindLexicon.getIdentification(wordsNb, identification);
+        //affiche les identifiants du lexique
+        cout<<"identification : "<<wordsNb<<" termes, "<<identification<<" ("<<NindDate::date(identification)<<")"<<endl;
         //le fichier inverse lecteur
         NindTermIndex nindTermIndex(termindexFileName, false,  wordsNb, identification);
         //le fichier des index locaux

@@ -7,7 +7,9 @@ import NindLateconFile
 
 def usage():
     print """© l'ATÉCON.
-Analyse un fichier lexique index et l'écrit en clair sur un fichier texte. 
+Analyse un fichier lexique index et écrit en clair sa structure 
+sur un fichier texte. 
+(Ne pas confondre avec Nind_dumpLexicon.py qui dumpe le lexique en clair)
 Le format du fichier est défini dans le document LAT2014.JYS.440.
 Le fichier de sortie s'appelle <fichier lexiconindex>-dump.txt
 Donne des informations sur la composition du fichier 
