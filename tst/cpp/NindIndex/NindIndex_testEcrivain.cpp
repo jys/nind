@@ -16,9 +16,7 @@
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
 //#include "NindLexicon/NindLexicon.h"
-#include "NindIndex/NindLexiconIndex.h"
-#include "NindIndex/NindTermIndex.h"
-#include "NindIndex/NindLocalIndex.h"
+#include "NindIndex_indexe.h"
 #include "NindIndexTest.h"
 #include "NindExceptions.h"
 #include <time.h>
@@ -36,45 +34,35 @@ static void displayHelp(char* arg0) {
     cout<<"du dump de documents spécifié."<<endl;
     cout<<"(AntindexDumpBaseByDocuments crée un dump d'une base S2.)"<<endl;
     cout<<"Les fichiers lexique, inverse et d'index locaux doivent être absents."<<endl;
-    cout<<"Les documents sont indexés par paquets. La taille des paquets est spécifiée"<<endl;
-    cout<<"Entre chaque traitement de paquets, les fichiers sont fermés puis rouverts."<<endl;
-    cout<<"Le nombre d'entrées des blocs d'indirection est spécifiée pour le fichier inversé"<<endl;
-    cout<<"et le fichier des index locaux."<<endl;
+    cout<<"Les termes sont bufferisés avant indexation. La taille du buffer est spécifiée."<<endl;
+    cout<<"(une taille de 0 signifie une indexation des termes au fil de l'eau)."<<endl;
+    cout<<"Lorsque le buffer est plein, le terme le plus ancien est indexé."<<endl;
+    cout<<"Lorsque tous les documents ont été lus, les termes bufferisés sont indexés."<<endl;
+    cout<<"Les documents sont indexés au fur et à mesure de leur lecture."<<endl;
+    cout<<"Le nombre d'entrées des blocs d'indirection est spécifiée pour le lexique,"<<endl;
+    cout<<"le fichier inversé et le fichier des index locaux."<<endl;
 
     cout<<"usage: "<<arg0<<" --help"<< endl;
-    cout<<"       "<<arg0<<" <dump documents> <paquet docs> <taille lexique> <taille inverse> <taille locaux>"<<endl;
-    cout<<"ex :   "<<arg0<<" FRE.FDB-DumpByDocuments.txt 1000 100003 100000 5000"<<endl;
+    cout<<"       "<<arg0<<" <dump documents> <taille buffer termes> <taille lexique> <taille inverse> <taille locaux>"<<endl;
+    cout<<"ex :   "<<arg0<<" FRE.FDB-DumpByDocuments.txt 0 100003 100000 5000"<<endl;
 }
 ////////////////////////////////////////////////////////////
 #define LINE_SIZE 65536*100
-////////////////////////////////////////////////////////////
-//met a jour une definition de fichier inverse
-static void majInverse (const unsigned int id,
-                        const unsigned int cg,
-                        const unsigned int noDoc,
-                        list<NindTermIndex::TermCG> &termIndex); 
-//Construit la definition d'un fichier pour l'index local
-static void majLocal(const unsigned int id,
-                     const unsigned int cg,
-                     const unsigned int pos,
-                     const unsigned int taille,
-                     const list<string> &componants,
-                     list<NindLocalIndex::Term> &localIndex);
 ////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
     setlocale( LC_ALL, "French" );
     if (argc<6) {displayHelp(argv[0]); return false;}
     const string docsFileName = argv[1];
     if (docsFileName == "--help") {displayHelp(argv[0]); return true;}
-    const string blocSizeStr = argv[2];
+    const string bufferSizeStr = argv[2];
     const string lexiconEntryNbStr = argv[3];
-    const string inverseEntryNbStr = argv[4];
-    const string localEntryNbStr = argv[5];
+    const string termindexEntryNbStr = argv[4];
+    const string localindexEntryNbStr = argv[5];
     
-    const unsigned int blocSize = atoi(blocSizeStr.c_str());
+    const unsigned int bufferSize = atoi(bufferSizeStr.c_str());
     const unsigned int lexiconEntryNb = atoi(lexiconEntryNbStr.c_str());
-    const unsigned int inverseEntryNb = atoi(inverseEntryNbStr.c_str());
-    const unsigned int localEntryNb = atoi(localEntryNbStr.c_str());
+    const unsigned int termindexEntryNb = atoi(termindexEntryNbStr.c_str());
+    const unsigned int localindexEntryNb = atoi(localindexEntryNbStr.c_str());
     
     try {
         //calcule les noms des fichiers lexique et inverse et index locaux
@@ -112,28 +100,18 @@ int main(int argc, char *argv[]) {
         /////////////////////////////////////
         cout<<"Forme le lexique, le fichier inversé et le fichier des index locaux avec "<<docsFileName<<endl;
         start = clock();
-        //le lexique ecrivain
-//        NindLexicon nindLexicon(lexiconFileName, true);
-        NindLexiconIndex nindLexicon(lexiconFileName, true, lexiconEntryNb);
-        unsigned int wordsNb, identification;
-        nindLexicon.getIdentification(wordsNb, identification);
-        //le fichier inverse ecrivain
-        NindTermIndex *nindTermIndex = new NindTermIndex(termindexFileName, 
-                                                         true, 
-                                                         wordsNb, 
-                                                         identification,
-                                                         inverseEntryNb);
-        //le fichier des index locaux
-        NindLocalIndex *nindLocalIndex = new NindLocalIndex(localindexFileName, 
-                                                            true, 
-                                                            wordsNb, 
-                                                            identification,
-                                                            localEntryNb);
+        //l'acces aux index
+        NindIndex_indexe nindIndex_indexe(lexiconFileName, 
+                                          termindexFileName, 
+                                          localindexFileName,
+                                          lexiconEntryNb,
+                                          termindexEntryNb,
+                                          localindexEntryNb,
+                                          bufferSize);
         //la classe d'utilitaires
         NindIndexTest nindIndexTest;
         //lit le fichier dump de documents
         unsigned int docsNb = 0;
-        unsigned int nbMaj = 0;
         char charBuff[LINE_SIZE];
         ifstream docsFile(docsFileName.c_str(), ifstream::in);
         if (docsFile.fail()) throw OpenFileException(docsFileName);
@@ -146,7 +124,7 @@ int main(int argc, char *argv[]) {
             if (docsFile.fail()) throw FormatFileException(docsFileName);
             nindIndexTest.getWords(string(charBuff), noDoc, wordsList);
             //la structure d'index locaux se fabrique pour un document complet
-            list<NindLocalIndex::Term> localIndex;
+            nindIndex_indexe.newDoc(noDoc);
             //la position absolue dans le fichier source du terme precedent
             //(le dump est considere comme fichier source parce que nous n'avons pas les vrais fichiers sources)
             //prend tous les mots à la suite et dans l'ordre
@@ -157,155 +135,28 @@ int main(int argc, char *argv[]) {
                 //le terme
                 list<string> componants;
                 nindIndexTest.split(word, componants);
-                //la cg
+                //la cg, position et taille
                 const unsigned char cg = nindIndexTest.getCgIdent((*wordIt).cg);
-                //recupere l'id du terme dans le lexique, l'ajoute eventuellement
-                const unsigned int id = nindLexicon.addWord(componants);
-                //recupere l'index inverse pour ce terme
-                list<NindTermIndex::TermCG> termIndex;
-                //met a jour la definition du terme
-                nindTermIndex->getTermIndex(id, termIndex);
-                //si le terme n'existe pas encore, la liste reste vide
-                majInverse(id, cg, noDoc, termIndex); 
-                //recupere l'identification du lexique
-                nindLexicon.getIdentification(wordsNb, identification);
-                //ecrit sur le fichier inverse
-                nindTermIndex->setTermIndex(id, termIndex, wordsNb, identification);
-                nbMaj +=1;
-                //augmente l'index local 
                 const unsigned int pos = (*wordIt).pos;
-                const unsigned int taille = word.size();
-                majLocal(id, cg, pos, taille, componants, localIndex);
+                const unsigned int size = word.size();
+                //indexe le terme
+                nindIndex_indexe.indexe(componants, cg, pos, size);
             }
             //ecrit la definition sur le fichier des index locaux
-            nindLocalIndex->setLocalIndex(noDoc, localIndex, wordsNb, identification);
-            //ferme et rouvre
-            if (docsNb % blocSize == 0) {
-                //nindTermIndex->dumpEmptyAreas();
-                //nindLocalIndex->dumpEmptyAreas();
-                delete nindTermIndex;
-                delete nindLocalIndex;
-                nindLexicon.getIdentification(wordsNb, identification);
-                nindTermIndex = new NindTermIndex(termindexFileName, 
-                                                  true, 
-                                                  wordsNb, 
-                                                  identification,
-                                                  inverseEntryNb);
-                nindLocalIndex = new NindLocalIndex(localindexFileName, 
-                                                    true, 
-                                                    wordsNb, 
-                                                    identification,
-                                                    localEntryNb);
-            }
+            nindIndex_indexe.newDoc(0);
             cout<<docsNb<<"\r"<<flush;
-            //nindTermIndex->dumpEmptyAreas();
-            //if (docsNb == 1) break;
         }
-        //nindTermIndex->dumpEmptyAreas();
-        docsFile.close();
+        nindIndex_indexe.flush();
         end = clock();
-        cout<<nbMaj<<" accès / mises à jour sur "<<lexiconFileName<<endl;
-        cout<<nbMaj<<" mises à jour sur "<<termindexFileName<<endl;
-        cout<<docsNb<<" mises à jour sur "<<localindexFileName<<endl;
+        cout<<nindIndex_indexe.lexiconAccessNb()<<" accès / mises à jour sur "<<lexiconFileName<<endl;
+        cout<<nindIndex_indexe.termindexAccessNb()<<" mises à jour sur "<<termindexFileName<<endl;
+        cout<<nindIndex_indexe.localindexAccessNb()<<" mises à jour sur "<<localindexFileName<<endl;
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
         cout<<cpuTimeUsed<<" secondes"<<endl;
+        docsFile.close();
     }
     catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; return false;}
     catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; return false;}
     catch (...) {cerr<<"EXCEPTION unknown"<< endl; return false; }
-}
-////////////////////////////////////////////////////////////
-//met a jour une definition de fichier inverse
-static void majInverse (const unsigned int id,
-                        const unsigned int cg,
-                        const unsigned int noDoc,
-                        list<NindTermIndex::TermCG> &termIndex) 
-{
-    list<NindTermIndex::TermCG>::iterator it1 = termIndex.begin(); 
-    while (it1 != termIndex.end()) {
-        if ((*it1).cg == cg) {
-            //c'est la meme cg, on ajoute le doc 
-            list<NindTermIndex::Document> &documents = (*it1).documents;
-            //trouve la place dans la liste ordonnee
-            list<NindTermIndex::Document>::iterator it2 = documents.begin(); 
-            while (it2 != documents.end()) {
-                //deja dans la liste, incremente la frequence
-                if ((*it2).ident == noDoc) {
-                    (*it2).frequency +=1;  
-                    break;
-                }
-                //insere a l'interieur de la liste
-                if ((*it2).ident > noDoc) {
-                    documents.insert(it2, NindTermIndex::Document(noDoc, 1));
-                    break;
-                }
-                it2++;
-            }
-            //si fin de liste, insere en fin
-            if (it2 == documents.end()) documents.push_back(NindTermIndex::Document(noDoc, 1));
-            //met a jour la frequence globale de la cg
-            (*it1).frequency +=1;
-            break;
-        }
-        it1++;
-    }
-    //si c'est une nouvelle cg, insere en fin de liste
-    if (it1 == termIndex.end()) {
-        termIndex.push_back(NindTermIndex::TermCG(cg, 1));
-        NindTermIndex::TermCG &termCG = termIndex.back();
-        list<NindTermIndex::Document> &documents = termCG.documents;
-        documents.push_back(NindTermIndex::Document(noDoc, 1));
-    }
-}
-////////////////////////////////////////////////////////////
-//Construit la definition d'un fichier pour l'index local
-static void majLocal(const unsigned int id,
-                     const unsigned int cg,
-                     const unsigned int pos,
-                     const unsigned int taille,
-                     const list<string> &componants,
-                     list<NindLocalIndex::Term> &localIndex)
-{
-    //simulation de cas reel de termes en plusieurs parties (c'est tout a fait arbitraire)
-    //TAA#BB : (pos, len(TAA)), (pos+len(TAA), len(BB))
-    //kAA#BB#CC : (pos, len(kAA), (pos+len(kAA#BB), len(CC)), (pos+len(kAA), len(BB))
-    //BAA#BB#CC#DD : (pos-10, 10), (pos, len(BAA)), (pos+len(BAA#BB#CC), len(DD)), (pos+len(BAA#BB), len(CC))
-    //autres : (pos, taille)
-    localIndex.push_back(NindLocalIndex::Term(id, cg));
-    NindLocalIndex::Term &term = localIndex.back();
-    const unsigned int nbComposants =  componants.size();
-    list<string>::const_iterator compIt = componants.begin();
-    const string &firstComp = (*compIt++);
-    const char firstChar = firstComp.front();
-    if (nbComposants == 2 && firstChar == 'T') {
-        //TAA#BB : (pos, len(TAA)), (pos+len(TAA), len(BB))
-        const unsigned int lenAA = firstComp.size();
-        const unsigned int lenBB = (*compIt++).size();
-        term.localisation.push_back(NindLocalIndex::Localisation(pos, lenAA));
-        term.localisation.push_back(NindLocalIndex::Localisation(pos + lenAA, lenBB));
-    }
-    else if (nbComposants == 3 && firstChar == 'k') {
-        //kAA#BB#CC : (pos, len(kAA), (pos+len(kAA#BB), len(CC)), (pos+len(kAA), len(BB))
-        const unsigned int lenAA = firstComp.size();
-        const unsigned int lenBB = (*compIt++).size();
-        const unsigned int lenCC = (*compIt++).size();
-        term.localisation.push_back(NindLocalIndex::Localisation(pos, lenAA));
-        term.localisation.push_back(NindLocalIndex::Localisation(pos + lenAA + lenBB + 1, lenCC));
-        term.localisation.push_back(NindLocalIndex::Localisation(pos + lenAA, lenBB));        
-    }
-    else if (nbComposants == 4 && firstChar == 'B') {
-        //BAA#BB#CC#DD : (pos-10, 10), (pos, len(BAA)), (pos+len(BAA#BB#CC), len(DD)), (pos+len(BAA#BB), len(CC))
-        const unsigned int lenAA = firstComp.size();
-        const unsigned int lenBB = (*compIt++).size();
-        const unsigned int lenCC = (*compIt++).size();
-        const unsigned int lenDD = (*compIt++).size();
-        term.localisation.push_back(NindLocalIndex::Localisation(pos - 10, 10));
-        term.localisation.push_back(NindLocalIndex::Localisation(pos, lenAA));
-        term.localisation.push_back(NindLocalIndex::Localisation(pos + lenAA + lenBB + lenCC + 2, lenDD));
-        term.localisation.push_back(NindLocalIndex::Localisation(pos + lenAA + lenBB + 1, lenCC));
-    }
-    else 
-        //autres : (pos, taille)
-        term.localisation.push_back(NindLocalIndex::Localisation(pos, taille));
 }
 ////////////////////////////////////////////////////////////

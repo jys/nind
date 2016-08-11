@@ -25,7 +25,7 @@
 #include "NindCommonExport.h"
 #include "NindExceptions.h"
 //#include <boost/serialization/hash_map.hpp>
-#include <hash_map>
+#include <unordered_map>
 #include <ostream>
 #include <string>
 #include <map>

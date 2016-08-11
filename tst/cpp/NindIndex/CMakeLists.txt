@@ -18,6 +18,19 @@ set_target_properties(NindIndexTest PROPERTIES VERSION 1.1.0 SOVERSION 1)
 install(TARGETS NindIndexTest DESTINATION lib)
 
 ########### next target ###############
+SET(NindIndex_indexe_LIB_SRCS
+  NindIndex_indexe.h
+  NindIndex_indexe.cpp
+)
+
+add_library(NindIndex_indexe SHARED ${NindIndex_indexe_LIB_SRCS})
+
+target_link_libraries(NindIndex_indexe)
+
+set_target_properties(NindIndex_indexe PROPERTIES VERSION 1.1.0 SOVERSION 1)
+install(TARGETS NindIndex_indexe DESTINATION lib)
+
+########### next target ###############
 SET(NindTermIndex_testEcrivain_SRCS
    NindTermIndex_testEcrivain.cpp
 )
@@ -35,9 +48,20 @@ SET(NindIndex_testEcrivain_SRCS
 
 add_executable(NindIndex_testEcrivain ${NindIndex_testEcrivain_SRCS})
 
-target_link_libraries(NindIndex_testEcrivain NindIndexTest NindIndex NindLexicon NindBasics)
+target_link_libraries(NindIndex_testEcrivain NindIndex_indexe NindIndexTest NindIndex NindLexicon NindBasics)
 
 install(TARGETS NindIndex_testEcrivain DESTINATION bin)
+
+########### next target ###############
+SET(NindIndex_testEcrivainB_SRCS
+   NindIndex_testEcrivainB.cpp
+)
+
+add_executable(NindIndex_testEcrivainB ${NindIndex_testEcrivainB_SRCS})
+
+target_link_libraries(NindIndex_testEcrivainB NindIndexTest NindIndex NindLexicon NindBasics)
+
+install(TARGETS NindIndex_testEcrivainB DESTINATION bin)
 
 ########### next target ###############
 SET(NindTermIndex_testLecteur_SRCS
