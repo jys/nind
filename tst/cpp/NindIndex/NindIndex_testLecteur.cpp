@@ -34,9 +34,12 @@ static void displayHelp(char* arg0) {
     cout<<"Programme de test de NindLexicon, NindTermIndex et NindLocalIndex en mode lecteur."<<endl;
     cout<<"La consultation est guidée par le dump de documents spécifié."<<endl;
     cout<<"(AntindexDumpBaseByDocuments crée un dump d'une base S2.)"<<endl;
+    cout<<"Une indication de complexité est donnée en sommant toutes les longueurs"<<endl;
+    cout<<"de listes de documents utilisées."<<endl;
+    cout<<"Le mode timeControl permet des mesures de temps par double pesée."<<endl;
 
     cout<<"usage: "<<arg0<<" --help"<< endl;
-    cout<<"       "<<arg0<<" <fichier dump documents>"<<endl;
+    cout<<"       "<<arg0<<" <fichier dump documents> [<timeControl>]"<<endl;
     cout<<"ex :   "<<arg0<<" FRE.FDB-DumpByDocuments.txt"<<endl;
 }
 ////////////////////////////////////////////////////////////
@@ -57,6 +60,9 @@ int main(int argc, char *argv[]) {
     if (argc<2) {displayHelp(argv[0]); return false;}
     const string docsFileName = argv[1];
     if (docsFileName == "--help") {displayHelp(argv[0]); return true;}
+    string timeControlStr = "0";
+    if (argc>2) timeControlStr = argv[2];
+    const unsigned int timeControl = atoi(timeControlStr.c_str());
     
     try {
         //calcule les noms des fichiers lexique et inverse
@@ -83,6 +89,7 @@ int main(int argc, char *argv[]) {
         //lit le fichier dump de documents
         unsigned int docsNb = 0;
         unsigned int nbInconnus, nbTermNok, nbTermOk, nbLocalNok, nbLocalOk = 0;
+        unsigned int complexite = 0;
         char charBuff[LINE_SIZE];
         ifstream docsFile(docsFileName.c_str(), ifstream::in);
         if (docsFile.fail()) throw OpenFileException(docsFileName);
@@ -96,7 +103,7 @@ int main(int argc, char *argv[]) {
             nindIndexTest.getWords(string(charBuff), noDoc, wordsList);
             //recupere l'index local du doc             
             list<NindLocalIndex::Term> localIndex;
-            nindLocalIndex.getLocalIndex(noDoc, localIndex);
+            if (timeControl < 1) nindLocalIndex.getLocalIndex(noDoc, localIndex);
             list<NindLocalIndex::Term>::const_iterator localIndexIt = localIndex.begin();
             //prend tous les mots à la suite et dans l'ordre
             for (list<NindIndexTest::WordDesc>::const_iterator wordIt = wordsList.begin(); 
@@ -106,9 +113,9 @@ int main(int argc, char *argv[]) {
                 nindIndexTest.split((*wordIt).word, componants);
                 //la cg
                 const unsigned char cg = nindIndexTest.getCgIdent((*wordIt).cg);
-                unsigned int id;
+                unsigned int id = 0;
                 //recupere l'id du terme dans le lexique
-                id = nindLexicon.getId(componants);
+                if (timeControl < 3) id = nindLexicon.getId(componants);
                 if (id == 0) {
                     nbInconnus +=1;
                     nbTermNok +=1;
@@ -117,13 +124,17 @@ int main(int argc, char *argv[]) {
                 }
                 //recupere l'index inverse pour ce terme
                 list<NindTermIndex::TermCG> termIndex;
-                nindTermIndex.getTermIndex(id, termIndex);
+                if (timeControl < 2) nindTermIndex.getTermIndex(id, termIndex);
                 //si le terme n'existe pas encore, la liste reste vide
                 if (docTrouve(noDoc, cg, termIndex)) nbTermOk +=1;
                 else nbTermNok +=1;
                 //verifie l'index local
                 const unsigned int pos = (*wordIt).pos;
                 const unsigned int taille = (*wordIt).word.size();
+                //calcul complexite
+                for (list<NindTermIndex::TermCG>::const_iterator it1 = termIndex.begin(); it1 != termIndex.end(); it1++) {
+                        complexite += (*it1).documents.size();
+                }
                 if (termeTrouve(id, cg, pos, taille, componants, localIndexIt)) nbLocalOk +=1;
                 else nbLocalNok +=1;
             }
@@ -132,10 +143,11 @@ int main(int argc, char *argv[]) {
         }        
         docsFile.close();
         cout<<nbInconnus<<" occurrences inconnues du lexique"<<endl;
+        cout<<complexite<<" = complexité dans les termes"<<endl;
         cout<<nbTermOk<<" occurrences consultées avec succès dans "<<termindexFileName<<endl;
-        cout<<nbTermNok<<" occurrences consultées en échec dans "<<termindexFileName<<endl;
+        //cout<<nbTermNok<<" occurrences consultées en échec dans "<<termindexFileName<<endl;
         cout<<nbLocalOk<<" occurrences consultées avec succès dans "<<localindexFileName<<endl;
-        cout<<nbLocalNok<<" occurrences consultées en échec dans "<<localindexFileName<<endl;
+        //cout<<nbLocalNok<<" occurrences consultées en échec dans "<<localindexFileName<<endl;
         end = clock();
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
         cout<<cpuTimeUsed<<" secondes"<<endl;        

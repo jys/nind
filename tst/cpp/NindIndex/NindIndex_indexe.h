@@ -43,14 +43,16 @@ public:
     *\param lexiconEntryNb number of lexicon entries in a single indirection block
     *\param termindexEntryNb number of term index entries in a single indirection block
     *\param localindexEntryNb number of local index entries in a single indirection block
-    *\param termBufferSize size of term buffer before indexation (0 means immediate indexation) */
+    *\param termBufferSize size of term buffer before indexation (0 means immediate indexation) 
+    *\param timeControl 3=structure, 2=+lexiconindex, 1=+termindex, 0=+localindex = normal*/
     NindIndex_indexe(const std::string &lexiconFileName,
                      const std::string &termindexFileName,
                      const std::string &localindexFileName,
                      const unsigned int lexiconEntryNb,
                      const unsigned int termindexEntryNb,
                      const unsigned int localindexEntryNb,
-                     const unsigned int termBufferSize = 0);
+                     const unsigned int termBufferSize = 0,
+                     const unsigned int timeControl = 0 );
 
     virtual ~NindIndex_indexe();
     
@@ -88,6 +90,7 @@ public:
     NindTermIndex m_nindTermindex;
     NindLocalIndex m_nindLocalindex;
     unsigned int m_termBufferSize;
+    unsigned int m_timeControl;
     unsigned int m_docIdent;
     unsigned int m_lexiconAccessNb;
     unsigned int m_termindexAccessNb;

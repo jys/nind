@@ -98,6 +98,7 @@ int main(int argc, char *argv[]) {
         docsFile.close();
         end = clock();
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
+        cout<<"OK en "<<cpuTimeUsed<<" secondes"<<endl;
         //affiche les données de l'indexation
         cout<<allWords.size()<<" mots de "<<docsNb<<" documents répertoriés "<<endl;
         //nindLexicon.dump(std::cerr);

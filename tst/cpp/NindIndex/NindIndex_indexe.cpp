@@ -41,18 +41,21 @@ static void majLocal(const unsigned int id,
 //param lexiconEntryNb number of lexicon entries in a single indirection block
 //param termindexEntryNb number of term index entries in a single indirection block
 //param localindexEntryNb number of local index entries in a single indirection block
-//param termBufferSize size of term buffer before indexation (0 means immediate indexation) */
+//param termBufferSize size of term buffer before indexation (0 means immediate indexation) 
+//param timeControl 3=structure, 2=+lexiconindex, 1=+termindex, 0=+localindex = normal*/
 NindIndex_indexe::NindIndex_indexe(const string &lexiconFileName,
                                    const string &termindexFileName,
                                    const string &localindexFileName,
                                    const unsigned int lexiconEntryNb,
                                    const unsigned int termindexEntryNb,
                                    const unsigned int localindexEntryNb,
-                                   const unsigned int termBufferSize) :
+                                   const unsigned int termBufferSize,
+                                   const unsigned int timeControl ) :
     m_nindLexicon(lexiconFileName, true, lexiconEntryNb),
     m_nindTermindex(termindexFileName, true, 0, 0, termindexEntryNb),
     m_nindLocalindex(localindexFileName, true, 0, 0, localindexEntryNb),
     m_termBufferSize(termBufferSize),
+    m_timeControl(timeControl),
     m_docIdent(0),
     m_lexiconAccessNb(0),
     m_termindexAccessNb(0),
@@ -74,9 +77,9 @@ void NindIndex_indexe::newDoc(const unsigned int docIdent)
     if (m_docIdent != 0) {
         //recupere l'identification du lexique
         unsigned int wordsNb, identification;
-        m_nindLexicon.getIdentification(wordsNb, identification);
+        if (m_timeControl < 3) m_nindLexicon.getIdentification(wordsNb, identification);
         //ecrit la definition sur le fichier des index locaux
-        m_nindLocalindex.setLocalIndex(m_docIdent, m_localindex, wordsNb, identification);
+        if (m_timeControl < 1) m_nindLocalindex.setLocalIndex(m_docIdent, m_localindex, wordsNb, identification);
         //vide le lexique local
         m_localindex.clear();
         //incremente le compteur
@@ -97,7 +100,8 @@ void NindIndex_indexe::indexe(const list<string> &componants,
                               const unsigned int size)
 {
     //recupere l'id du terme dans le lexique, l'ajoute eventuellement
-    const unsigned int id = m_nindLexicon.addWord(componants);
+    unsigned int id = 0;
+    if (m_timeControl < 3) id = m_nindLexicon.addWord(componants);
     //incremente le compteur
     m_lexiconAccessNb++;
     //bufferise quelle que soit la config
@@ -120,14 +124,14 @@ void NindIndex_indexe::flush()
 {
     //recupere l'identification du lexique
     unsigned int wordsNb, identification;
-    m_nindLexicon.getIdentification(wordsNb, identification);
+    if (m_timeControl < 3) m_nindLexicon.getIdentification(wordsNb, identification);
     for (map<unsigned int, list<pair<unsigned int, unsigned int> > >::const_iterator it2 = m_termBuffer.begin();
          it2 != m_termBuffer.end(); it2++) {
         const unsigned int id2 = (*it2).first;
         const list<pair<unsigned int, unsigned int> > &cgdocsList = (*it2).second;
         //recupere l'index inverse pour ce terme
         list<NindTermIndex::TermCG> termIndex;
-        m_nindTermindex.getTermIndex(id2, termIndex);
+        if (m_timeControl < 2) m_nindTermindex.getTermIndex(id2, termIndex);
         //si le terme n'existe pas encore, la liste reste vide
         for (list<pair<unsigned int, unsigned int> >::const_iterator it3 = cgdocsList.begin(); it3 != cgdocsList.end(); it3++) {
             const unsigned int cg3 = (*it3).first;
@@ -136,7 +140,7 @@ void NindIndex_indexe::flush()
             majInverse(cg3, docId, termIndex);
         }
         //ecrit sur le fichier inverse
-        m_nindTermindex.setTermIndex(id2, termIndex, wordsNb, identification);
+        if (m_timeControl < 2) m_nindTermindex.setTermIndex(id2, termIndex, wordsNb, identification);
         //incremente le compteur
         m_termindexAccessNb++;
     }

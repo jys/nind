@@ -75,6 +75,7 @@ def main():
         occurencesGenerale = occurencesDoc = 0
         nbreHapax = 0
         noTerm = 0
+        maxFreq = 0
         termindexFile.seek(0, 0)
         while True:
             addrIndirection = termindexFile.tell()
@@ -129,6 +130,7 @@ def main():
                         if totalFrequences == 1: nbreHapax +=1
                 outFile.write('frequence totale de %06d : %d\n'%(noTerm, frequenceGlobale))
                 outFile.write('\n')
+                maxFreq = max(maxFreq, frequenceGlobale)
                 noTerm +=1
             if indirectionSuivante == 0: break
             termindexFile.seek(indirectionSuivante, 0)
@@ -141,6 +143,7 @@ def main():
     print "%d occurrences de couples termes-doc"%(occurencesDoc)
     print "%d occurrences de termes"%(occurencesGenerale)
     print "%d hapax (%0.2f %%)"%(nbreHapax, float(100)*nbreHapax/nbreDefinition)
+    print "%d comme fréquence maximum pour un terme"%(maxFreq)
     
     termindexFile.seek(0, 2)
     offsetFin = termindexFile.tell()

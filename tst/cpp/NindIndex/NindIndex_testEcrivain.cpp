@@ -36,14 +36,15 @@ static void displayHelp(char* arg0) {
     cout<<"Les fichiers lexique, inverse et d'index locaux doivent être absents."<<endl;
     cout<<"Les termes sont bufferisés avant indexation. La taille du buffer est spécifiée."<<endl;
     cout<<"(une taille de 0 signifie une indexation des termes au fil de l'eau)."<<endl;
-    cout<<"Lorsque le buffer est plein, le terme le plus ancien est indexé."<<endl;
+    cout<<"Lorsque le buffer est plein, il est indexé puis vidé."<<endl;
     cout<<"Lorsque tous les documents ont été lus, les termes bufferisés sont indexés."<<endl;
     cout<<"Les documents sont indexés au fur et à mesure de leur lecture."<<endl;
     cout<<"Le nombre d'entrées des blocs d'indirection est spécifiée pour le lexique,"<<endl;
     cout<<"le fichier inversé et le fichier des index locaux."<<endl;
+    cout<<"Le mode timeControl permet des mesures de temps par double pesée."<<endl;
 
     cout<<"usage: "<<arg0<<" --help"<< endl;
-    cout<<"       "<<arg0<<" <dump documents> <taille buffer termes> <taille lexique> <taille inverse> <taille locaux>"<<endl;
+    cout<<"       "<<arg0<<" <dump documents> <taille buffer termes> <taille lexique> <taille inverse> <taille locaux> [<timeControl>]"<<endl;
     cout<<"ex :   "<<arg0<<" FRE.FDB-DumpByDocuments.txt 0 100003 100000 5000"<<endl;
 }
 ////////////////////////////////////////////////////////////
@@ -58,11 +59,14 @@ int main(int argc, char *argv[]) {
     const string lexiconEntryNbStr = argv[3];
     const string termindexEntryNbStr = argv[4];
     const string localindexEntryNbStr = argv[5];
+    string timeControlStr = "0";
+    if (argc>6) timeControlStr = argv[6];
     
     const unsigned int bufferSize = atoi(bufferSizeStr.c_str());
     const unsigned int lexiconEntryNb = atoi(lexiconEntryNbStr.c_str());
     const unsigned int termindexEntryNb = atoi(termindexEntryNbStr.c_str());
     const unsigned int localindexEntryNb = atoi(localindexEntryNbStr.c_str());
+    const unsigned int timeControl = atoi(timeControlStr.c_str());
     
     try {
         //calcule les noms des fichiers lexique et inverse et index locaux
@@ -107,7 +111,8 @@ int main(int argc, char *argv[]) {
                                           lexiconEntryNb,
                                           termindexEntryNb,
                                           localindexEntryNb,
-                                          bufferSize);
+                                          bufferSize,
+                                          timeControl);
         //la classe d'utilitaires
         NindIndexTest nindIndexTest;
         //lit le fichier dump de documents
