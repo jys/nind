@@ -52,7 +52,7 @@ protected:
               const unsigned int lexiconIdentification,
               const unsigned int definitionMinimumSize = 0,
               const unsigned int indirectionBlocSize = 0)
-        throw(NindIndexException);
+        throw(NindIndexException, InvalidFileException);
 
     virtual ~NindIndex();
     
