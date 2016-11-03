@@ -28,7 +28,7 @@
 #include "NindLexiconFile.h"
 #include "NindExceptions.h"
 //#include <boost/serialization/hash_map.hpp>
-#include <hash_map>
+#include <unordered_map>
 #include <ostream>
 #include <string>
 #include <map>
@@ -112,7 +112,7 @@ private:
     struct EqualString {
         bool operator()(const std::string &s1, const std::string &s2) const;
     };
-    typedef __gnu_cxx::hash_map<
+    typedef std::unordered_map<
         const std::string,
         unsigned int,
         HashString,
@@ -134,7 +134,7 @@ private:
     struct EqualPair {
         bool operator()(const std::pair<unsigned int, unsigned int> &p1, const std::pair<unsigned int, unsigned int> &p2) const;
     };
-    typedef __gnu_cxx::hash_map<
+    typedef std::unordered_map<
         std::pair<unsigned int, unsigned int>,
         unsigned int,
         HashPair,

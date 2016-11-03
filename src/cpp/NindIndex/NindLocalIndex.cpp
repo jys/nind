@@ -127,9 +127,7 @@ void NindLocalIndex::setLocalIndex(const unsigned int ident,
                                    const std::list<struct Term> &localIndex,
                                    const unsigned int lexiconWordsNb,
                                    const unsigned int lexiconIdentification)
-    throw(NindLocalIndexException)
 {
-    try {
         //1) verifie que le terme n'est pas en dehors du dernier bloc d'indirection
         //il faut le faire maintenant parce que le buffer d'ecriture est unique
         checkExtendIndirection(ident, lexiconWordsNb, lexiconIdentification);
@@ -173,10 +171,5 @@ void NindLocalIndex::setLocalIndex(const unsigned int ident,
         m_file.putInt3(longueurDonnees, 4);  //la taille dans la trame
         //4) ecrit la definition du terme et gere le fichier
         setDefinition(ident, lexiconWordsNb, lexiconIdentification);
-    }
-    catch (FileException &exc) {
-        cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
-        throw NindLocalIndexException(m_fileName);
-    }
 }
 ////////////////////////////////////////////////////////////
