@@ -54,8 +54,7 @@ public:
      * \param componants list of componants of a word 
      * (1 componant = simple word, more componants = compound word)
      * \return ident of word */
-    unsigned int addWord(const std::list<std::string> &componants)
-        throw(NindLexiconIndexException);
+    unsigned int addWord(const std::list<std::string> &componants);
 
     /**\brief get ident of the specified word
      * if word exists in lexicon, its ident is returned
