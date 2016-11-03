@@ -53,17 +53,6 @@ target_link_libraries(NindIndex_testEcrivain NindIndex_indexe NindIndexTest Nind
 install(TARGETS NindIndex_testEcrivain DESTINATION bin)
 
 ########### next target ###############
-SET(NindIndex_testEcrivainB_SRCS
-   NindIndex_testEcrivainB.cpp
-)
-
-add_executable(NindIndex_testEcrivainB ${NindIndex_testEcrivainB_SRCS})
-
-target_link_libraries(NindIndex_testEcrivainB NindIndexTest NindIndex NindLexicon NindBasics)
-
-install(TARGETS NindIndex_testEcrivainB DESTINATION bin)
-
-########### next target ###############
 SET(NindTermIndex_testLecteur_SRCS
    NindTermIndex_testLecteur.cpp
 )
