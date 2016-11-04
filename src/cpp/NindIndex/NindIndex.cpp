@@ -67,7 +67,7 @@ NindIndex::NindIndex(const std::string &fileName,
                              const unsigned int lexiconIdentification,
                              const unsigned int definitionMinimumSize,
                              const unsigned int indirectionBlocSize)
-    throw(NindIndexException):
+    throw(NindIndexException, InvalidFileException):
     m_file(fileName),
     m_fileName(fileName),
     m_isWriter(isWriter),
@@ -124,7 +124,10 @@ NindIndex::NindIndex(const std::string &fileName,
                 for (list<pair<unsigned long int, unsigned int> >::const_iterator it = nonVidesList.begin();
                     it != nonVidesList.end(); it++) {
                     const unsigned int longueurVide = (*it).first - addressePrec - longueurPrec;
-                    if (longueurVide < 0) throw InvalidFileException("NindIndex : " + m_fileName);
+                    if (longueurVide < 0) 
+                    {
+                      throw InvalidFileException("NindIndex : " + m_fileName);
+                    }
                     if (longueurVide > 0) {
                         const pair<unsigned long int, unsigned int> emptyArea(addressePrec + longueurPrec, longueurVide);
                         m_emptyAreas.push_back(emptyArea); 
@@ -137,7 +140,14 @@ NindIndex::NindIndex(const std::string &fileName,
             else {
                 //si le fichier n'existe pas, le cree vide en ecriture + lecture
                 //la taille du bloc d'indirection doit etre specifiee differente de 0
-                if (m_indirectionBlocSize == 0) throw BadUseException(m_fileName);
+                if (m_indirectionBlocSize == 0) 
+                {
+                  std::string errorString = 
+                    std::string("NindIndex. In write mode, indirectionBlocSize "
+                                "must be non null. ") + m_fileName;
+                  std::cerr << errorString << std::endl;
+                  throw BadUseException(errorString);
+                }
                 isOpened = m_file.open("w+b");
                 if (!isOpened) throw OpenFileException(m_fileName);
                 //lui colle une zone d'indirection vide suivie de l'identification
@@ -465,7 +475,14 @@ void NindIndex::checkIdentification(const unsigned int lexiconWordsNb,
     if (lexiconWordsNb == 0 && lexiconIdentification == 0) return;
     //si ce n'est pas le fichier lexique qui est verifie, comparaison de valeurs
     if (maxIdent != lexiconWordsNb || identification != lexiconIdentification) 
+    {
+        std::cerr << "NindIndex::checkIdentification failed "
+                  << m_fileName << " : "
+                  << maxIdent << "/" << lexiconWordsNb
+                  << " ; " << identification << "/" << lexiconIdentification
+                  << std::endl;
         throw IncompatibleFileException(m_fileName); 
+    }
 }
 ////////////////////////////////////////////////////////////
 void NindIndex::dumpEmptyAreas()
