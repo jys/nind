@@ -88,41 +88,34 @@ NindLexiconIndex::~NindLexiconIndex()
 //(1 componant = simple word, more componants = compound word)
 //return ident of word */
 unsigned int NindLexiconIndex::addWord(const list<string> &componants)
-    throw(NindLexiconIndexException)
 {
-    try {
-        if (!m_isWriter) throw BadUseException("lexicon is not writable");
-        //identifiant du mot (simple ou compose) sous ensemble du mot examine
-        unsigned int sousMotId = 0;
-        for (list<string>::const_iterator swIt = componants.begin(); swIt != componants.end(); swIt++) {
-            bool estNouveau = false;
-            const string &motSimple = *swIt;
-            list<Terme> definition;
-            list<Terme>::iterator termeIt;
-            //cherche l'identifiant du terme sur le fichier et prepare la structure de reecriture si pas trouve
-            const unsigned int termeId = getDefinitionTermes(motSimple, sousMotId, definition, termeIt);
-            if (termeId != 0) {
-                //trouve, on passe au suivant
-                sousMotId = termeId;
-                continue;
-            }
-            //pas trouve
-            //si terme simple inconnu, on le cree
-            if ((*termeIt).identifiantS == 0) (*termeIt).identifiantS = ++m_currentId;
-            //si terme compose, on le cree
-            if (sousMotId != 0) (*termeIt).composes.push_back(Compose(sousMotId, ++m_currentId));
-            sousMotId = m_currentId;
-            //et on ecrit sur le fichier
-            m_identification = (time_t)time(NULL);
-            setDefinitionTermes(definition, m_currentId, m_identification);
+    if (!m_isWriter) throw BadUseException("lexicon is not writable");
+    //identifiant du mot (simple ou compose) sous ensemble du mot examine
+    unsigned int sousMotId = 0;
+    for (list<string>::const_iterator swIt = componants.begin(); swIt != componants.end(); swIt++) {
+        bool estNouveau = false;
+        const string &motSimple = *swIt;
+        list<Terme> definition;
+        list<Terme>::iterator termeIt;
+        //cherche l'identifiant du terme sur le fichier et prepare la structure de reecriture si pas trouve
+        const unsigned int termeId = getDefinitionTermes(motSimple, sousMotId, definition, termeIt);
+        if (termeId != 0) {
+            //trouve, on passe au suivant
+            sousMotId = termeId;
+            continue;
         }
-        //retourne l'id du mot specifie
-        return sousMotId;
+        //pas trouve
+        //si terme simple inconnu, on le cree
+        if ((*termeIt).identifiantS == 0) (*termeIt).identifiantS = ++m_currentId;
+        //si terme compose, on le cree
+        if (sousMotId != 0) (*termeIt).composes.push_back(Compose(sousMotId, ++m_currentId));
+        sousMotId = m_currentId;
+        //et on ecrit sur le fichier
+        m_identification = (time_t)time(NULL);
+        setDefinitionTermes(definition, m_currentId, m_identification);
     }
-    catch (FileException &exc) {
-        cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
-        throw NindLexiconIndexException(m_fileName);
-    }
+    //retourne l'id du mot specifie
+    return sousMotId;
 }
 ////////////////////////////////////////////////////////////
 //brief get ident of the specified word

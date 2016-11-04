@@ -47,7 +47,14 @@ NindLexicon::NindLexicon(const std::string &fileName,
 {
     //cerr<<"NindLexicon::NindLexicon start"<<endl;
     //initialisation des maps depuis le fichier
-    updateFromFile();
+    try {
+      // throws EofException, ReadFileException, InvalidFileException, OutReadBufferException
+      updateFromFile();
+    } 
+    catch (FileException &exc) {
+        cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
+        throw NindLexiconException(m_fileName);
+    }
     m_nextRefreshTime = (time_t)time(NULL) + 10;  //temps actuel + 10s
     //cerr<<"NindLexicon::NindLexicon end"<<endl;
 }
@@ -269,7 +276,12 @@ void NindLexicon::updateFromFile()
     }
     //recupere le max des identifiants
     const bool isIdentification = m_lexiconFile.readNextRecordAsLexiconIdentification(m_currentId, m_identification);
-    if (!isIdentification) throw InvalidFileException(m_fileName);
+    if (!isIdentification) 
+    {
+      std::cerr << "NindLexicon::updateFromFile error reading lexicon identification. Got " 
+                << m_currentId << " and " << m_identification << std::endl;
+      throw InvalidFileException(m_fileName);
+    }
 }
 ////////////////////////////////////////////////////////////
 size_t NindLexicon::HashString::operator()(const string &s) const
