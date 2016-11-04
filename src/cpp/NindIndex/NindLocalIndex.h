@@ -82,8 +82,7 @@ public:
     void setLocalIndex(const unsigned int ident,
                       const std::list<struct Term> &localIndex,
                       const unsigned int lexiconWordsNb,
-                      const unsigned int lexiconIdentification)
-        throw(NindLocalIndexException);
+                      const unsigned int lexiconIdentification);
 
 private:
 };

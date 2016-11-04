@@ -23,3 +23,4 @@ set_target_properties(NindIndex PROPERTIES VERSION 1.1.0 SOVERSION 1)
 install(TARGETS NindIndex DESTINATION lib)
 
 ########### install files ###############
+install(FILES NindIndex.h NindLexiconIndex.h NindLexiconIndexK.h NindTermIndex.h NindLocalIndex.h DESTINATION include/NindIndex)

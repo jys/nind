@@ -17,3 +17,5 @@ set_target_properties(NindLexicon PROPERTIES VERSION 1.1.0 SOVERSION 1)
 install(TARGETS NindLexicon DESTINATION lib)
 
 ########### install files ###############
+install(FILES NindLexicon.h NindLexiconFile.h DESTINATION include/NindLexicon)
+

@@ -17,3 +17,4 @@ set_target_properties(NindAmose PROPERTIES VERSION 1.1.0 SOVERSION 1)
 install(TARGETS NindAmose DESTINATION lib)
 
 ########### install files ###############
+install(FILES NindTermAmose.h NindLocalAmose.h DESTINATION include/NindAmose)
