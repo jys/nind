@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
-import os
+from os import path, getenv
 import codecs
 import datetime
 import time
 import NindLexiconindexInverse
 
 def usage():
-    print """© l'ATÉCON.
+    if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
+    else: script = sys.argv[0]
+    print """© l'ATEJCON.
 Dumpe en clair le lexique d'une base nind (version fichier).
 Les termes, simples et composés, apparaissent dans l'ordre d'indexation.
 (Ne pas confondre avec Nind_dumpLexiconIndexFile.py qui dumpe la structure
@@ -18,13 +20,13 @@ Le fichier de sortie s'appelle <fichier lexiconindex>-dumpall.txt
 
 usage   : %s <fichier lexiconindex> 
 exemple : %s box/dumps/boxon/FRE.lexiconindex
-"""%(sys.argv[0], sys.argv[0])
+"""%(script, script)
 
 def main():
     if len(sys.argv) < 2 :
         usage()
         sys.exit()
-    lexiconindexFileName = os.path.abspath(sys.argv[1])
+    lexiconindexFileName = path.abspath(sys.argv[1])
     outFileName = '%s-dumpall.txt'%(lexiconindexFileName)
     
     #ouvre les classes

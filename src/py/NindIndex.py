@@ -1,11 +1,40 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#import sys
-#import os
+import sys
+from os import getenv, path
 #import codecs
 #import datetime
-#import time
-#import NindLateconFile
+from time import ctime
+from NindLateconFile import NindLateconFile
+
+def usage():
+    if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
+    else: script = sys.argv[0]
+    print """© l'ATEJCON.
+Programme de test de la classe NindIndex.
+La classe NindIndex est dérivée de la classe NindLateconFile,
+elle implante les opérations sur les index.
+Le programme de test dumpe en octets la définition de l'identifiant spécifié.
+
+usage   : %s <fichier termindex> <identifiant>
+exemple : %s amose-dump.localindex 75
+"""%(script, script)
+
+def main():
+    if len(sys.argv) < 3 :
+        usage()
+        sys.exit()
+    indexFileName = path.abspath(sys.argv[1])
+    ident = int(sys.argv[2])
+    
+    #la classe
+    nindIndex = NindIndex(indexFileName)
+    #identification du fichier
+    (maxIdentifiant, dateHeure) = nindIndex.getIdentification()
+    print "max=%d dateheure=%d (%s)"%(maxIdentifiant, dateHeure, ctime(int(dateHeure)))
+    #affiche l'indirection
+    (offsetDefinition, longueurDefinition) = nindIndex.getDefinitionAddr(ident)
+    print "offset=%d longueur=%d"%(offsetDefinition, longueurDefinition)
 
 #utilitaires communs aux classes NindLexiconindex, NindLexiconindexInverse, NindLocalindex, NindTermindex
 # <fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 
@@ -28,41 +57,50 @@
 # <identifieurUnique>     ::= <dateHeure>
 # <dateHeure >            ::= <Integer4>
 
-def getIdentification(latFile, latFileName):
-    FLAG_IDENTIFICATION = 53
-    TAILLE_IDENTIFICATION = 8
-    #<flagIdentification_1> <maxIdentifiant_3> <identifieurUnique_4>
-    latFile.seek(-TAILLE_IDENTIFICATION, 2)
-    if latFile.litNombre1() != FLAG_IDENTIFICATION: raise Exception('pas FLAG_IDENTIFICATION sur %s'%(latFileName))
-    maxIdentifiant = latFile.litNombre3()
-    dateHeure = latFile.litNombre4()
-    return (maxIdentifiant, dateHeure)
+class NindIndex(NindLateconFile):
     
-def getDefinitionAddr(latFile, latFileName, identifiant):
-    FLAG_INDIRECTION = 47  
-    TETE_INDIRECTION = 9
-    TAILLE_INDIRECTION = 8
-    latFile.seek(0, 0)
-    maxIdent = 0
-    startIndirection = 0
-    while True:
-        addrIndirection = latFile.tell()
-        #<flagIndirection> <addrBlocSuivant> <nombreIndirection>
-        if latFile.litNombre1() != FLAG_INDIRECTION: raise Exception('%s : pas FLAG_INDIRECTION à %08X'%(latFileName, addrIndirection))
-        indirectionSuivante = latFile.litNombre5()
-        nombreIndirection = latFile.litNombre3()
-        maxIdent += nombreIndirection
-        if maxIdent > identifiant: break
-        if indirectionSuivante == 0: break
-        startIndirection = indirectionSuivante
-        latFile.seek(startIndirection, 0)
-    if maxIdent < identifiant: return (0, 0)          #identifiant hors limite
-    #lit l'indirection
-    index = identifiant + nombreIndirection - maxIdent
-    #lit la définition du terme
-    addrIndir = startIndirection + TETE_INDIRECTION + (index * TAILLE_INDIRECTION)
-    latFile.seek(addrIndir, 0)
-    #<offsetDefinition> <longueurDefinition>
-    offsetDefinition = latFile.litNombre5()
-    longueurDefinition = latFile.litNombre3()
-    return (offsetDefinition, longueurDefinition)
+    def __init__(self, latFileName):
+        #en lecture uniquement
+        NindLateconFile.__init__(self, latFileName, False)
+    
+    def getIdentification(self):
+        FLAG_IDENTIFICATION = 53
+        TAILLE_IDENTIFICATION = 8
+        #<flagIdentification_1> <maxIdentifiant_3> <identifieurUnique_4>
+        self.seek(-TAILLE_IDENTIFICATION, 2)
+        if self.litNombre1() != FLAG_IDENTIFICATION: raise Exception('pas FLAG_IDENTIFICATION sur %s'%(self.latFileName))
+        maxIdentifiant = self.litNombre3()
+        dateHeure = self.litNombre4()
+        return (maxIdentifiant, dateHeure)
+        
+    def getDefinitionAddr(self, identifiant):
+        FLAG_INDIRECTION = 47  
+        TETE_INDIRECTION = 9
+        TAILLE_INDIRECTION = 8
+        self.seek(0, 0)
+        maxIdent = 0
+        startIndirection = 0
+        while True:
+            addrIndirection = self.tell()
+            #<flagIndirection> <addrBlocSuivant> <nombreIndirection>
+            if self.litNombre1() != FLAG_INDIRECTION: raise Exception('%s : pas FLAG_INDIRECTION à %08X'%(self.latFileName, addrIndirection))
+            indirectionSuivante = self.litNombre5()
+            nombreIndirection = self.litNombre3()
+            maxIdent += nombreIndirection
+            if maxIdent > identifiant: break
+            if indirectionSuivante == 0: break
+            startIndirection = indirectionSuivante
+            self.seek(startIndirection, 0)
+        if maxIdent < identifiant: return (0, 0)          #identifiant hors limite
+        #lit l'indirection
+        index = identifiant + nombreIndirection - maxIdent
+        #lit la définition du terme
+        addrIndir = startIndirection + TETE_INDIRECTION + (index * TAILLE_INDIRECTION)
+        self.seek(addrIndir, 0)
+        #<offsetDefinition> <longueurDefinition>
+        offsetDefinition = self.litNombre5()
+        longueurDefinition = self.litNombre3()
+        return (offsetDefinition, longueurDefinition)
+        
+if __name__ == '__main__':
+    main()

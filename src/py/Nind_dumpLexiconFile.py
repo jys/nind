@@ -1,24 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
-import os
+from os import path, getenv
 import codecs
 
 def usage():
-    print """© l'ATÉCON.
-Analyse un fichier lexique et l'écrit en clair sur un fichier texte. 
+    if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
+    else: script = sys.argv[0]
+    print """© l'ATEJCON.
+Analyse un fichier lexique, sauvegarde d'un lexique en mémoire et l'écrit 
+en clair sur un fichier texte. 
 Le format du fichier est défini dans le document LAT2014.JYS.440.
 Le fichier de sortie s'appelle <fichier lexicon>-dump.txt
 
 usage   : %s <fichier lexicon>
 exemple : %s box/dumps/boxon/FRE.lexicon
-"""%(sys.argv[0], sys.argv[0])
+"""%(script, script)
 
 def main():
     if len(sys.argv) < 2 :
         usage()
         sys.exit()
-    lexiconFileName = os.path.abspath(sys.argv[1])
+    lexiconFileName = path.abspath(sys.argv[1])
     outFileName = '%s-dump.txt'%(lexiconFileName)
 
     #// <fichierLexique>        ::= <lexique> <identification>

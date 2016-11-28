@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
-import os
+from os import path, getenv
 import codecs
 import NindLateconFile
 
 def usage():
-    print """© l'ATÉCON.
+    if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
+    else: script = sys.argv[0]
+    print """© l'ATEJCON.
 Analyse un fichier lexique index et écrit en clair sa structure 
 sur un fichier texte. 
 (Ne pas confondre avec Nind_dumpLexicon.py qui dumpe le lexique en clair)
@@ -17,13 +19,13 @@ et donne quelques statistiques
 
 usage   : %s <fichier lexiconindex>
 exemple : %s box/dumps/boxon/FRE.lexiconindex
-"""%(sys.argv[0], sys.argv[0])
+"""%(script, script)
 
 def main():
     if len(sys.argv) < 2 :
         usage()
         sys.exit()
-    inFileName = os.path.abspath(sys.argv[1])
+    inFileName = path.abspath(sys.argv[1])
     outFileName = '%s-dump.txt'%(inFileName)
         
     #<fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 

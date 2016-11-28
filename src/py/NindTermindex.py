@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
-import os
-import codecs
-import datetime
-import time
+from os import getenv, path
+from time import ctime
 import NindLateconFile
-import NindIndex
+from NindIndex import NindIndex
 
 def usage():
-    print """© l'ATÉCON.
+    if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
+    else: script = sys.argv[0]
+    print """© l'ATEJCON.
 Programme de test de la classe NindTermindex.
 Cette classe gère le contenu du fichier inversé spécifié.
 Le format du fichier est défini dans le document LAT2014.JYS.440.
@@ -19,7 +19,7 @@ catégories grammaticales et les fréquences.
 
 usage   : %s <fichier termindex> <identifiant terme>
 exemple : %s box/dumps/boxon/FRE.termindex 203547
-"""%(sys.argv[0], sys.argv[0])
+"""%(script, script)
 
 OFF = "\033[m"
 RED = "\033[1;31m"
@@ -28,14 +28,14 @@ def main():
     if len(sys.argv) < 3 :
         usage()
         sys.exit()
-    termindexFileName = os.path.abspath(sys.argv[1])
+    termindexFileName = path.abspath(sys.argv[1])
     terme = int(sys.argv[2])
     
     #la classe
     nindTermindex = NindTermindex(termindexFileName)
     #affiche l'identification du fichier
     (maxIdentifiant, dateHeure) = nindTermindex.getIdentification()
-    print "max=%d dateheure=%d (%s)"%(maxIdentifiant, dateHeure, time.ctime(int(dateHeure)))
+    print "max=%d dateheure=%d (%s)"%(maxIdentifiant, dateHeure, ctime(int(dateHeure)))
     #trouve les utilisations du terme dans le fichier inverse et les affiche
     termesCGList = nindTermindex.getTermCGList(terme)
     for (categorie, frequenceTerme, docs) in termesCGList:
@@ -60,41 +60,36 @@ def main():
 FLAG_DEFINITION = 17
 FLAG_CG = 61
 
-class NindTermindex:
+class NindTermindex(NindIndex):
     def __init__(self, termindexFileName):
-        self.termindexFileName = termindexFileName
-        #ouvre le fichier en lecture
-        self.termindexFile = NindLateconFile.NindLateconFile(self.termindexFileName)
+        NindIndex.__init__(self, termindexFileName)
 
-    def getIdentification(self):
-        return NindIndex.getIdentification(self.termindexFile, self.termindexFileName)
-    
     def getTermCGList(self, ident):
-        (offsetDefinition, longueurDefinition) = NindIndex.getDefinitionAddr(self.termindexFile, self.termindexFileName, ident)
+        (offsetDefinition, longueurDefinition) = self.getDefinitionAddr(ident)
         if offsetDefinition == 0: return []          #terme inconnu
         #lit l'indirection
-        self.termindexFile.seek(offsetDefinition, 0)
+        self.seek(offsetDefinition, 0)
         #<flagDefinition> <identifiantTerme> <longueurDonnees>
-        if self.termindexFile.litNombre1() != FLAG_DEFINITION: 
-            raise Exception('%s : pas FLAG_DEFINITION à %08X'%(self.termindexFileName, offsetDefinition))
-        if self.termindexFile.litNombre3() != ident: 
-            raise Exception('%s : %d pas trouvé à %08X'%(self.termindexFileName, ident, offsetDefinition+1))
-        longueurDonnees = self.termindexFile.litNombre3()
-        finDonnees = self.termindexFile.tell() + longueurDonnees
+        if self.litNombre1() != FLAG_DEFINITION: 
+            raise Exception('%s : pas FLAG_DEFINITION à %08X'%(self.latFileName, offsetDefinition))
+        if self.litNombre3() != ident: 
+            raise Exception('%s : %d pas trouvé à %08X'%(self.latFileName, ident, offsetDefinition+1))
+        longueurDonnees = self.litNombre3()
+        finDonnees = self.tell() + longueurDonnees
         #lit les donnes
         resultat = []
-        while self.termindexFile.tell() < finDonnees:
+        while self.tell() < finDonnees:
             #<flagCg> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
-            if self.termindexFile.litNombre1() != FLAG_CG: raise Exception('pas FLAG_CG à %d'%(self.termindexFile.tell() -1))
-            categorie = self.termindexFile.litNombre1()
-            frequenceTerme = self.termindexFile.litNombreULat()
-            nbreDocs = self.termindexFile.litNombreULat()
+            if self.litNombre1() != FLAG_CG: raise Exception('pas FLAG_CG à %d'%(self.tell() -1))
+            categorie = self.litNombre1()
+            frequenceTerme = self.litNombreULat()
+            nbreDocs = self.litNombreULat()
             noDoc = 0
             docs = []
             for i in range(nbreDocs):
                 #<identDocRelatif> <frequenceDoc>
-                identDocRelatif = self.termindexFile.litNombreULat()
-                frequenceDoc = self.termindexFile.litNombreULat()
+                identDocRelatif = self.litNombreULat()
+                frequenceDoc = self.litNombreULat()
                 noDoc += identDocRelatif
                 docs.append((noDoc, frequenceDoc))
             resultat.append((categorie, frequenceTerme, docs))

@@ -1,28 +1,30 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
-import os
+from os import path, getenv
 import codecs
 import NindLateconFile
 
 def usage():
-    print """© l'ATÉCON.
+    if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
+    else: script = sys.argv[0]
+    print """© l'ATEJCON.
 Analyse un fichier d'index locaux et l'écrit en clair sur un fichier texte. 
 Le format du fichier est défini dans le document LAT2014.JYS.440.
 Le fichier de sortie s'appelle <fichier localindex>-dump.txt
 Donne des informations sur la composition du fichier 
 et donne quelques statistiques
 
-usage   : %s <fichier termindex>
+usage   : %s <fichier localindex>
 exemple : %s box/dumps/boxon/FRE.localindex
-"""%(sys.argv[0], sys.argv[0])
+"""%(script, script)
 
 def main():
     if len(sys.argv) < 2 :
         usage()
         sys.exit()
-    termindexFileName = os.path.abspath(sys.argv[1])
-    outFileName = '%s-dump.txt'%(termindexFileName)
+    localindexFileName = path.abspath(sys.argv[1])
+    outFileName = '%s-dump.txt'%(localindexFileName)
 
     #<fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 
 
@@ -35,9 +37,10 @@ def main():
     #<longueurDefinition>    ::= <Integer3>
 
     #<blocDefinition>        ::= { <definition> | <vide> }
-    #<definition>            ::= <flagDefinition> <identifiantTerme> <longueurDonnees> <donneesTerme>
+    #<definition>            ::= <flagDefinition> <identifiantDoc> <identifiantExterne> <longueurDonnees> <donneesDoc>
     #<flagDefinition>        ::= <Integer1>
-    #<identifiantTerme>      ::= <Integer3>
+    #<identifiantDoc>        ::= <Integer3>
+    #<identifiantExterne>    ::= <Integer4>
     #<longueurDonnees>       ::= <Integer3>
     #<donneesTerme>          ::= { <donneesCG> }
     #<donneesCG>             ::= <flagCg> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
@@ -63,12 +66,13 @@ def main():
     IDENTIFICATION_SIZE = 8
     INDIRECTION_HEAD = 9
     ENTREE_SIZE = 8
-    DEFINITION_HEAD = 7
+    #<flagDefinition>(1) <identifiantDoc>(3) <identifiantExterne>(4) <longueurDonnees>(3) = 11
+    DEFINITION_HEAD = 11
     #DEF_CG_HEAD = 8
     #DOCUMENT_SIZE = 5
   
-    termindexFile = NindLateconFile.NindLateconFile(termindexFileName)
-    termindexFile2 = NindLateconFile.NindLateconFile(termindexFileName)
+    localindexFile = NindLateconFile.NindLateconFile(localindexFileName)
+    localindexFile2 = NindLateconFile.NindLateconFile(localindexFileName)
     outFile = codecs.open(outFileName, 'w', 'utf-8')
     try:
         nbreDefinition = nbreExtension = 0
@@ -76,25 +80,27 @@ def main():
         occurencesGenerale = nbreDoc = 0
         localisations = [0, 0, 0, 0]
         noDoc = 0
-        termindexFile.seek(0, 0)
+        localindexFile.seek(0, 0)
         while True:
-            addrIndirection = termindexFile.tell()
+            addrIndirection = localindexFile.tell()
             #<flagIndirection> <addrBlocSuivant> <nombreIndirection>
-            if termindexFile.litNombre1() != INDIRECTION_FLAG: raise Exception('pas INDIRECTION_FLAG à %08X'%(addrIndirection))
-            indirectionSuivante = termindexFile.litNombre5()
-            nombreIndirection = termindexFile.litNombre3()
+            if localindexFile.litNombre1() != INDIRECTION_FLAG: raise Exception('pas INDIRECTION_FLAG à %08X'%(addrIndirection))
+            indirectionSuivante = localindexFile.litNombre5()
+            nombreIndirection = localindexFile.litNombre3()
             for i in range(nombreIndirection):
                 outFile.write('%07d:: '%(noDoc))
                 #<offsetDefinition> <longueurDefinition> 
-                offsetEntree = termindexFile.litNombre5()
-                longueurEntree = termindexFile.litNombre3()
+                offsetEntree = localindexFile.litNombre5()
+                longueurEntree = localindexFile.litNombre3()
                 if offsetEntree != 0: 
                     nbreDoc +=1
-                    termindexFile2.seek(offsetEntree, 0)
-                    #<flagDefinition> <identifiantDoc> <longueurDonnees>
-                    if termindexFile2.litNombre1() != DEFINITION_FLAG: raise Exception('pas DEFINITION_FLAG à %08X'%(offsetEntree))
-                    if termindexFile2.litNombre3() != noDoc: raise Exception('%d pas trouvé à %08X'%(noDoc, offsetEntree+1))
-                    longueurDonnees = termindexFile2.litNombre3()
+                    localindexFile2.seek(offsetEntree, 0)
+                    #<flagDefinition> <identifiantDoc> <identifiantExterne> <longueurDonnees>
+                    if localindexFile2.litNombre1() != DEFINITION_FLAG: raise Exception('pas DEFINITION_FLAG à %08X'%(offsetEntree))
+                    if localindexFile2.litNombre3() != noDoc: raise Exception('%d pas trouvé à %08X'%(noDoc, offsetEntree+1))
+                    identifiantExterne = localindexFile2.litNombre4()
+                    longueurDonnees = localindexFile2.litNombre3()
+                    #print '%d, %d, %d'%(noDoc, identifiantExterne, longueurDonnees)
                     nbreDefinition +=1
                     tailleDefinition += longueurDonnees + DEFINITION_HEAD
                     extension = longueurEntree - longueurDonnees - DEFINITION_HEAD
@@ -107,25 +113,25 @@ def main():
                     finDonnees = offsetEntree + longueurDonnees + DEFINITION_HEAD
                     noTerme = 0;
                     localisationAbsolue = 0
-                    while termindexFile2.tell() < finDonnees:
+                    while localindexFile2.tell() < finDonnees:
                         #<identTermeRelatif> <categorie> <nbreLocalisations> <localisations>
                         occurencesGenerale +=1
-                        noTerme += termindexFile2.litNombreSLat()
-                        categorie = termindexFile2.litNombre1()
-                        nbreLocalisations = termindexFile2.litNombre1()
+                        noTerme += localindexFile2.litNombreSLat()
+                        categorie = localindexFile2.litNombre1()
+                        nbreLocalisations = localindexFile2.litNombre1()
                         outFile.write('[%d](%d)'%(noTerme, categorie))
                         localisations[nbreLocalisations - 1] +=1
                         localisationsList = []
                         for i in range (nbreLocalisations):
                             #<localisationRelatif> <longueur>
-                            localisationAbsolue += termindexFile2.litNombreSLat()
-                            longueur = termindexFile2.litNombre1()
+                            localisationAbsolue += localindexFile2.litNombreSLat()
+                            longueur = localindexFile2.litNombre1()
                             localisationsList.append('%d(%d)'%(localisationAbsolue, longueur))
                         outFile.write('<%s> '%(','.join(localisationsList)))
                 outFile.write('\n')
                 noDoc +=1
             if indirectionSuivante == 0: break
-            termindexFile.seek(indirectionSuivante, 0)
+            localindexFile.seek(indirectionSuivante, 0)
     except Exception as exc: 
         print 'ERREUR :', exc.args[0]
     outFile.close()
@@ -136,13 +142,13 @@ def main():
     print "%d occurrences de termes"%(occurencesGenerale)
     for i in range(4):
         print '%d localisations à %d élément(s)'%(localisations[i], i+1)    
-    termindexFile.seek(0, 2)
-    offsetFin = termindexFile.tell()
+    localindexFile.seek(0, 2)
+    offsetFin = localindexFile.tell()
     print "taille fichier % 10d %08X"%(offsetFin, offsetFin)
     print
     print "%0.2f octets / occurrence de terme"%(float(offsetFin)/occurencesGenerale)
-    termindexFile.close()
-    termindexFile2.close()
+    localindexFile.close()
+    localindexFile2.close()
 
     
 if __name__ == '__main__':

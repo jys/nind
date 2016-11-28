@@ -5,7 +5,7 @@ import os
 import codecs
 import datetime
 import time
-import NindLexiconindexInverse
+from NindRetrolexiconindex import NindRetrolexiconindex
 import NindLocalindex
 import NindLateconFile
 
@@ -31,14 +31,14 @@ def main():
     localindexFileName = '.'.join(nn[:-1])+'.localindex'
     
     #ouvre les classes
-    lexiconindexInverseFile = NindLexiconindexInverse.NindLexiconindexInverse(lexiconindexFileName)
+    nindRetrolexiconindex = NindRetrolexiconindex(lexiconindexFileName)
     nindLocalindex = NindLocalindex.NindLocalindex(localindexFileName)
 
     #trouve les termes dans le fichier des index locaux et les affiche sans leurs localisations
     termList = nindLocalindex.getTermList(noDoc)
     resultat = []
     for (noTerme, categorie, localisationsList) in termList:
-        terme = lexiconindexInverseFile.getTerme(noTerme)
+        terme = nindRetrolexiconindex.getTerme(noTerme)
         resultat.append('%s [%s]'%(terme, NindLateconFile.catNb2Str(categorie)))
     print ', '.join(resultat)
    

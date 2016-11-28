@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
-import os
+from os import path, getenv
 import codecs
 import datetime
 import time
@@ -9,7 +9,9 @@ import NindLateconFile
 import NindIndex
 
 def usage():
-    print """© l'ATÉCON.
+    if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
+    else: script = sys.argv[0]
+    print """© l'ATEJCON.
 Programme de test de la classe NindLexiconindexInverse.
 Cette classe gère le lexique inverse du fichier lexique spécifié.
 Le lexique inverse permet de trouver un terme à partir de son identifiant.
@@ -20,13 +22,13 @@ correspondant à l'identifiant spécifié.
 
 usage   : %s <fichier lexiconindex> <ident terme>
 exemple : %s box/dumps/boxon/FRE.lexiconindex 203547
-"""%(sys.argv[0], sys.argv[0])
+"""%(script, script)
 
 def main():
     if len(sys.argv) < 3 :
         usage()
         sys.exit()
-    lexiconindexFileName = os.path.abspath(sys.argv[1])
+    lexiconindexFileName = path.abspath(sys.argv[1])
     ident = int(sys.argv[2])
     
     #la classe
@@ -69,7 +71,7 @@ class NindLexiconindexInverse:
         self.lexiconindexFileName = lexiconindexFileName
         self.lexiconindexInverseFileName = lexiconindexFileName + 'inverse'
         #si le fichier inverse n'existe pas ou s'il n'est pas coherent avec le fichier lexique, il est calcule
-        if not os.path.isfile(self.lexiconindexInverseFileName): 
+        if not path.isfile(self.lexiconindexInverseFileName): 
             print "%s n'existe pas, il est créé"%(self.lexiconindexInverseFileName)
             self.createInverseFile()
         else:
@@ -195,7 +197,7 @@ class NindLexiconindexInverse:
                 terme.insert(0, self.lexiconindexInverseFile.litChaine(longueurChaine))
                 identCourant = identA
             else: raise Exception("%d n'a pas de définition sur %s"%(identCourant, self.lexiconindexFileName))
-            if len(terme) > 10: raise Exception("(%s) bouclage  sur %s"%('#'.join(terme), self.lexiconindexFileName))
+            if len(terme) > 20: raise Exception("(%s) bouclage  sur %s"%('#'.join(terme), self.lexiconindexFileName))
         return '#'.join(terme)
                        
 if __name__ == '__main__':

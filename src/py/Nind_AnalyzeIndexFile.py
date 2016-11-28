@@ -1,27 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
-import os
+from os import path, getenv
 import codecs
 import datetime
 import time
 import NindLateconFile
 
 def usage():
-    print """© l'ATÉCON.
+    if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
+    else: script = sys.argv[0]
+    print """© l'ATEJCON.
 Analyse un fichier index (lexique, inversé ou d'index locaux) 
 et affiche les stats. 
 Le format du fichier est défini dans le document LAT2014.JYS.440.
 
 usage   : %s <fichier termindex>
 exemple : %s box/dumps/boxon/FRE.termindex
-"""%(sys.argv[0], sys.argv[0])
+"""%(script, script)
 
 def main():
     if len(sys.argv) < 2 :
         usage()
         sys.exit()
-    termindexFileName = os.path.abspath(sys.argv[1])
+    termindexFileName = path.abspath(sys.argv[1])
 
     #// <fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 
     #//
@@ -131,6 +133,7 @@ def main():
     #affiche(typesNonVides)
     print "%d zones vides de taille totale %d octets"%(nbreVides, tailleVides)  
     #affiche(typesVides)
+    print
     
     print "3) vérifie les zones d'index et les zones d'extension"
     try:
