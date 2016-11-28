@@ -24,15 +24,13 @@
 #include "NindIndex.h"
 #include "NindCommonExport.h"
 #include "NindExceptions.h"
-//#include <boost/serialization/hash_map.hpp>
-#include <unordered_map>
-#include <ostream>
 #include <string>
-#include <map>
 #include <list>
 ////////////////////////////////////////////////////////////
 namespace latecon {
     namespace nindex {
+////////////////////////////////////////////////////////////
+class NindRetrolexiconIndex;
 ////////////////////////////////////////////////////////////
 /**\brief This class maintains correspondance between words and their indentifiant
 */
@@ -41,35 +39,46 @@ public:
     /**\brief Creates NindLexiconIndex.
     *\param fileName absolute path file name. Lexicon is identified by its file name
     *\param isLexiconWriter true if lexicon writer, false if lexicon reader  
-    *\param indirectionBlocSize number of entries in a single indirection block */
+    *\param withRetrolexicon true if retro lexicon 
+    *\param indirectionBlocSize number of entries in a lexicon single indirection block (for first writer only)
+    *\param retroIndirectionBlocSize number of entries in a retro lexicon single indirection block (for first writer only)*/
     NindLexiconIndex(const std::string &fileName,
                      const bool isLexiconWriter,
-                     const unsigned int indirectionBlocSize = 0)
-        throw(NindIndexException);
+                     const bool withRetrolexicon = false,
+                     const unsigned int indirectionBlocSize = 0,
+                     const unsigned int retroIndirectionBlocSize = 0);
 
     virtual ~NindLexiconIndex();
 
     /**\brief add specified term in lexicon it doesn't still exist in,
      * In all cases, word ident is returned.
-     * \param componants list of componants of a word 
-     * (1 componant = simple word, more componants = compound word)
+     * \param components list of components of a word 
+     * (1 component = simple word, more components = compound word)
      * \return ident of word */
-    unsigned int addWord(const std::list<std::string> &componants);
+    unsigned int addWord(const std::list<std::string> &components);
 
     /**\brief get ident of the specified word
      * if word exists in lexicon, its ident is returned
      * else, return 0 (0 is not a valid ident !)
-     * \param componants list of componants of a word 
-     * (1 componant = simple word, more componants = compound word)
+     * \param components list of components of a word 
+     * (1 component = simple word, more components = compound word)
      * \return ident of word */
-    unsigned int getId(const std::list<std::string> &componants)
-        throw(NindLexiconIndexException);
+    unsigned int getId(const std::list<std::string> &components);
 
     /**\brief get identification of lexicon
      * \param wordsNb where number of words contained in lexicon is returned
      * \param identification where unique identification of lexicon is returned */
     void getIdentification(unsigned int &wordsNb, unsigned int &identification);
     
+    /**\brief get word components from the specified ident
+    * if retro lexicon is not implanted, an exception is raised
+    * \param ident ident of term
+    * \param components list of components of a word 
+    * (1 component = simple word, more components = compound word) 
+    * \return true if term was found, false otherwise */
+    bool getComponents(const unsigned int ident,
+                       std::list<std::string> &components);
+
 private:
     //<identifiantA> <identifiantRelC>
     struct Compose {
@@ -93,8 +102,7 @@ private:
     //Recupere l'identifiant d'un terme sur le fichier lexique
     //retourne l'identifiant du terme s'il existe, 0 s'il n'existe pas
     unsigned int getIdentifiant(const std::string &terme,
-                                const unsigned int sousMotId)
-        throw(EofException, ReadFileException, OutReadBufferException, InvalidFileException);
+                                const unsigned int sousMotId);
 
     //recupere les donnees de tous les termes qui ont la meme clef modulo 
     //retourne l'identifiant du terme s'il existe, sinon retourne 0
@@ -102,8 +110,7 @@ private:
     unsigned int getDefinitionTermes(const std::string &termeSimple,
                                      const unsigned int sousMotId,
                                      std::list<Terme> &termes,
-                                     std::list<Terme>::iterator &termeIt)
-        throw(EofException, ReadFileException, OutReadBufferException, InvalidFileException);
+                                     std::list<Terme>::iterator &termeIt);
         
     //Ecrit les donnees de tous les termes qui ont la meme clef modulo 
     void setDefinitionTermes(const std::list<Terme> &definition,
@@ -113,6 +120,8 @@ private:
     unsigned int m_modulo;              //pour trouver l'identifiant dans le fichier
     unsigned int m_currentId;           //identifiant courant
     unsigned int m_identification;      //identification unique de ce lexique
+    bool m_withRetrolexicon;            //avec ou sans retro lexique
+    NindRetrolexiconIndex *m_nindRetrolexiconIndex;       //l'eventuel retro lexique
 };
     } // end namespace
 } // end namespace

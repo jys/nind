@@ -52,17 +52,17 @@ public:
     /**\brief add specified word in lexicon and return its ident if word still exists in lexicon,
      * else, word is created in lexicon
      * in both cases, word ident is returned.
-     * \param componants list of componants of a word (1 componant = simple word, more componants = compound word)
+     * \param components list of components of a word (1 component = simple word, more components = compound word)
      * \return ident of word */
-    unsigned int addWord(const std::list<std::string> &componants)
+    unsigned int addWord(const std::list<std::string> &components)
         throw(NindLexiconIndexException);
 
     /**\brief get ident of the specified word
      * if word exists in lexicon, its ident is returned
      * else, return 0 (0 is not a valid ident !)
-     * \param componants list of componants of a word (1 componant = simple word, more componants = compound word)
+     * \param components list of components of a word (1 component = simple word, more components = compound word)
      * \return ident of word */
-    unsigned int getId(const std::list<std::string> &componants)
+    unsigned int getId(const std::list<std::string> &components)
         throw(NindLexiconIndexException);
 
     /**\brief get identification of lexicon

@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <string>
 #include <list>
+#include <map>
 ////////////////////////////////////////////////////////////
 namespace latecon {
     namespace nindex {
@@ -44,8 +45,7 @@ public:
                    const bool isLocalIndexWriter,
                    const unsigned int lexiconWordsNb,
                    const unsigned int lexiconIdentification,
-                   const unsigned int indirectionBlocSize = 0)
-        throw(NindIndexException);
+                   const unsigned int indirectionBlocSize = 0);
 
     virtual ~NindLocalIndex();
     
@@ -71,20 +71,32 @@ public:
     *\param localIndex structure to receive all datas of the specified doc
     *\return true if doc was found, false otherwise */
     bool getLocalIndex(const unsigned int ident,
-                      std::list<struct Term> &localIndex)
-        throw(NindLocalIndexException);
+                      std::list<struct Term> &localIndex);
 
     /**\brief Write a full termIndex as a list of structures
     *\param ident ident of doc
-    *\param localIndex structure containing all datas of the specified doc 
+    *\param localIndex structure containing all datas of the specified doc . empty when deletion
     *\param lexiconWordsNb number of words contained in lexicon 
     *\param lexiconIdentification unique identification of lexicon */
     void setLocalIndex(const unsigned int ident,
                       const std::list<struct Term> &localIndex,
                       const unsigned int lexiconWordsNb,
                       const unsigned int lexiconIdentification);
+    
+    /**\brief number of documents in the collection 
+     * \return number of documents in the collection */
+    unsigned int getDocCount() const; 
 
 private:
+    //Effacement d'un document dans le fichier
+    void deleteLocalIndex(const unsigned int ident,
+                          const unsigned int lexiconWordsNb,
+                          const unsigned int lexiconIdentification);
+
+    //map de traduction des identifiants externes vers les identifiants internes
+    std::map<unsigned int, unsigned int> m_docIdTradExtInt;
+    //max des identifiants internes, pour la numejrotation
+    unsigned int m_currIdent;
 };
 ////////////////////////////////////////////////////////////
     } // end namespace

@@ -168,6 +168,14 @@ class NindLexiconIndexException : public FileException {
     NindLexiconIndexException(const std::string fileName) :
         FileException("Nind Lexiconindex error", fileName) {}
 };
+/**\brief when an error occurs on retro lexicon file index  */
+class NindRetrolexiconIndexException : public FileException {
+    public:
+    NindRetrolexiconIndexException() :
+        FileException("Nind RetroLexiconindex error", "") {}
+    NindRetrolexiconIndexException(const std::string fileName) :
+        FileException("Nind RetroLexiconindex error", fileName) {}
+};
 /**\brief when an error occurs on lexicon  */
 class NindLexiconException : public FileException {
     public:

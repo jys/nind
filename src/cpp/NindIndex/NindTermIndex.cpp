@@ -39,9 +39,9 @@ using namespace std;
 ////////////////////////////////////////////////////////////
 #define FLAG_DEFINITION 17
 #define FLAG_CG 61
-//<flagDefinition> <identifiantTerme> <longueurDonnees> = 7
+//<flagDefinition>(1) <identifiantTerme>(3) <longueurDonnees>(3) = 7
 #define TETE_DEFINITION 7
-//<flagDefinition>(1) <identTerme>(3) <longueurDonnees>(3) <flagCg>(1) <categorie>(1) <frequenceTerme>(1) 
+//<flagDefinition>(1) <identifiantTerme>(3) <longueurDonnees>(3) <flagCg>(1) <categorie>(1) <frequenceTerme>(1) 
 //<nbreDocs>(1) <identDocRelatif>(3) <frequenceDoc>(1) = 15
 #define TAILLE_DEFINITION_MINIMUM 15
 //<flagCg>(1) <categorie>(1) <frequenceTerme>(3) <nbreDocs>(3) = 8
@@ -50,6 +50,8 @@ using namespace std;
 #define TAILLE_DOC_MAXIMUM 5
 //<flagIdentification> <maxIdentifiant> <identifieurUnique> = 8
 #define TAILLE_IDENTIFICATION 8
+//taille minimum du buffer d'ecriture
+#define TAILLE_BUFFER_MINIMUM 128
 ////////////////////////////////////////////////////////////
 //brief Creates NindTermIndex with a specified name associated with.
 //param fileName absolute path file name
@@ -61,8 +63,7 @@ NindTermIndex::NindTermIndex(const std::string &fileName,
                              const bool isTermIndexWriter,
                              const unsigned int lexiconWordsNb,
                              const unsigned int lexiconIdentification,
-                             const unsigned int indirectionBlocSize)
-    throw(NindIndexException):
+                             const unsigned int indirectionBlocSize):
     NindIndex(fileName, 
               isTermIndexWriter, 
               lexiconWordsNb, 
@@ -82,7 +83,6 @@ NindTermIndex::~NindTermIndex()
 //return true if term was found, false otherwise */
 bool NindTermIndex::getTermIndex(const unsigned int ident,
                                  list<struct TermCG> &termIndex)
-    throw(NindTermIndexException)
 {
     try {
         const bool existe = getDefinition(ident);
@@ -128,7 +128,6 @@ void NindTermIndex::setTermIndex(const unsigned int ident,
                                  const list<struct TermCG> &termIndex,
                                  const unsigned int lexiconWordsNb,
                                  const unsigned int lexiconIdentification)
-    throw(NindTermIndexException)
 {
     try {
         //1) verifie que le terme n'est pas en dehors du dernier bloc d'indirection
@@ -144,7 +143,7 @@ void NindTermIndex::setTermIndex(const unsigned int ident,
             //le buffer est maximise pour écrire l'identification a la fin
             tailleMaximum += TETE_DEFINITION_MAXIMUM + (*it1).documents.size()*TAILLE_DOC_MAXIMUM + TAILLE_IDENTIFICATION;        
             //il ne doit pas etre plus petit que le minimum 
-            if (tailleMaximum < TAILLE_DEFINITION_MINIMUM) tailleMaximum = TAILLE_DEFINITION_MINIMUM;
+            if (tailleMaximum < TAILLE_BUFFER_MINIMUM) tailleMaximum = TAILLE_BUFFER_MINIMUM;
         }
         //3) forme le buffer a ecrire sur le fichier
         m_file.createBuffer(tailleMaximum); 

@@ -86,16 +86,16 @@ NindLexiconIndexK::~NindLexiconIndexK()
 //brief add specified word in lexicon and return its ident if word still exists in lexicon,
 //else, word is created in lexicon
 //in both cases, word ident is returned.
-//param componants list of componants of a word (1 componant = simple word, more componants = compound word)
+//param components list of components of a word (1 component = simple word, more components = compound word)
 //return ident of word */
-unsigned int NindLexiconIndexK::addWord(const list<string> &componants)
+unsigned int NindLexiconIndexK::addWord(const list<string> &components)
     throw(NindLexiconIndexException)
 {
     try {
         if (!m_isWriter) throw BadUseException("lexicon is not writable");
         //identifiant du mot (simple ou compose) sous ensemble du mot examine
         unsigned int sousMotId = 0;
-        for (list<string>::const_iterator swIt = componants.begin(); swIt != componants.end(); swIt++) {
+        for (list<string>::const_iterator swIt = components.begin(); swIt != components.end(); swIt++) {
             bool estNouveau = false;
             const string &motSimple = *swIt;
             list<Terme> definition;
@@ -129,15 +129,15 @@ unsigned int NindLexiconIndexK::addWord(const list<string> &componants)
 //brief get ident of the specified word
 //if word exists in lexicon, its ident is returned
 //else, return 0 (0 is not a valid ident !)
-//param componants list of componants of a word (1 componant = simple word, more componants = compound word)
+//param components list of components of a word (1 component = simple word, more components = compound word)
 //return ident of word */
-unsigned int NindLexiconIndexK::getId(const list<string> &componants)
+unsigned int NindLexiconIndexK::getId(const list<string> &components)
     throw(NindLexiconIndexException)
 {
     try {
         //identifiant du mot (simple ou compose) sous ensemble du mot examine
         unsigned int sousMotId = 0;
-        for(list<string>::const_iterator swIt = componants.begin(); swIt != componants.end(); swIt++) {
+        for(list<string>::const_iterator swIt = components.begin(); swIt != components.end(); swIt++) {
             const string &motSimple = *swIt;
             const unsigned int termeId = getIdentifiant(motSimple, sousMotId);
             if (termeId == 0) return 0;     //mot inconnu

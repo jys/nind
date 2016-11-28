@@ -51,16 +51,16 @@ protected:
               const unsigned int lexiconWordsNb,
               const unsigned int lexiconIdentification,
               const unsigned int definitionMinimumSize = 0,
-              const unsigned int indirectionBlocSize = 0)
-        throw(NindIndexException, InvalidFileException);
+              const unsigned int indirectionBlocSize = 0);
 
     virtual ~NindIndex();
     
     /**\brief Read from file datas of specified definition and leave result into read buffer 
     *\param ident ident of definition
+    *\param bytesNb optional number of bytes to read, in case of partial read
     *\return true if ident was found, false otherwise */
-    bool getDefinition(const unsigned int ident)
-        throw(EofException, ReadFileException, OutReadBufferException);
+    bool getDefinition(const unsigned int ident,
+                       const unsigned int bytesNb = 0);
         
     /**\brief Write on file datas of specified definition yet constructed into write buffer
     *\param ident ident of definition
@@ -68,9 +68,7 @@ protected:
     *\param lexiconIdentification unique identification of lexicon */
     void setDefinition(const unsigned int ident,
                        const unsigned int lexiconWordsNb,
-                       const unsigned int lexiconIdentification)
-        throw(EofException, WriteFileException, BadAllocException, OutWriteBufferException, 
-              OutReadBufferException, OutOfBoundException);
+                       const unsigned int lexiconIdentification);
         
     /**\brief check if indirection exists and create indirection block if necessary
     *\param ident ident of definition
@@ -78,46 +76,55 @@ protected:
     *\param lexiconIdentification unique identification of lexicon */
     void checkExtendIndirection(const unsigned int ident,
                       const unsigned int lexiconWordsNb,
-                      const unsigned int lexiconIdentification)
-        throw(BadAllocException, OutWriteBufferException, WriteFileException, 
-              OutOfBoundException);
+                      const unsigned int lexiconIdentification);
         
     /**\brief get size of 1rst indirection block
     *\return size of 1rst indirection block */
-    unsigned int getFirstIndirectionBlockSize()
-    throw(OutReadBufferException, EofException, ReadFileException, BadAllocException, 
-          InvalidFileException);
+    unsigned int getFirstIndirectionBlockSize();
     
     /**\brief get identification of lexicon
     *\param wordsNb where number of words contained in lexicon is returned
     *\param identification where unique identification of lexicon is returned */
-    void getFileIdentification(unsigned int &wordsNb, unsigned int &identification) 
-        throw(OutReadBufferException, EofException, ReadFileException, BadAllocException, 
-              InvalidFileException);
+    void getFileIdentification(unsigned int &wordsNb, unsigned int &identification);
         
     NindFile m_file;                //pour l'ecrivain ou le lecteur
     std::string m_fileName;
     bool m_isWriter;
-
+    
+protected:
+    //return l'identifiant maximum possible avec le systehme actuel d'indirection
+    unsigned int getMaxIdent() const;
+    
 private:
     //etablit la carte des indirections  
-    void mapIndirection()
-        throw(OutReadBufferException, EofException, ReadFileException, BadAllocException, InvalidFileException);
+    void mapIndirection();
         
     //return l'offset de l'indirection de la definition specifiee, 0 si hors limite
     unsigned long int  getIndirection(const unsigned int ident);
     
     //ajoute un bloc d'indirection vide suivi d'une identification a la position courante du fichier
     void addIndirection(const unsigned int lexiconWordsNb,
-                        const unsigned int lexiconIdentification)
-        throw(BadAllocException, OutWriteBufferException, WriteFileException);
+                        const unsigned int lexiconIdentification);
         
     //verifie l'apairage avec le lexique
     void checkIdentification(const unsigned int lexiconWordsNb,
-                             const unsigned int lexiconIdentification)
-        throw(OutReadBufferException, EofException, ReadFileException, BadAllocException, 
-              InvalidFileException, IncompatibleFileException);
+                             const unsigned int lexiconIdentification);
 
+    //ejtablit la carte des vides
+    void mapEmptySpaces();
+    
+    //trouve une nouvelle zone pour les nouvelles donnejs
+    //retourne true si l'identification est dejjah ejcrite
+    bool findNewArea(const unsigned int definitionSize,
+                     const unsigned int dataSize,
+                     const unsigned int lexiconWordsNb,
+                     const unsigned int lexiconIdentification,
+                     unsigned long int &offsetDefinition,
+                     unsigned int &longueurDefinition);
+    
+    //brief Place l'ancienne zone de donnejes dans la gestion du vide
+    void vacateOldArea(const unsigned long int oldOffsetEntry,
+                       const unsigned int oldLengthEntry);
 
     unsigned int m_definitionMinimumSize;       //taille minimum admissible pour une definition
     unsigned int m_indirectionBlocSize;         //nbre d'entrees d'un bloc d'indirection

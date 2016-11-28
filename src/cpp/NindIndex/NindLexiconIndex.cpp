@@ -19,6 +19,7 @@
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
 #include "NindLexiconIndex.h"
+#include "NindRetrolexiconIndex.h"
 #include <iostream>
 using namespace latecon::nindex;
 using namespace std;
@@ -57,11 +58,14 @@ static unsigned int clef(const string &mot);
 //brief Creates NindLexiconIndex.
 //param fileName absolute path file name
 //param isLexiconWriter true if lexicon writer, false if lexicon reader  
-//param indirectionBlocSize number of entries in a single indirection block */
+//param withRetrolexicon true if retro lexicon 
+//param indirectionBlocSize number of entries in a lexicon single indirection block (for first writer only)
+//param retroIndirectionBlocSize number of entries in a retro lexicon single indirection block (for first writer only)*/
 NindLexiconIndex::NindLexiconIndex(const string &fileName,
                                    const bool isLexiconWriter,
-                                   const unsigned int indirectionBlocSize)
-    throw(NindIndexException):
+                                   const bool withRetrolexicon,
+                                   const unsigned int indirectionBlocSize,
+                                   const unsigned int retroIndirectionBlocSize):
     NindIndex(fileName, 
         isLexiconWriter, 
         0, 
@@ -70,12 +74,23 @@ NindLexiconIndex::NindLexiconIndex(const string &fileName,
         indirectionBlocSize),
     m_modulo(0),
     m_currentId(0),
-    m_identification(0)
+    m_identification(0),
+    m_withRetrolexicon(withRetrolexicon)
 {
     //la taille du bloc d'indirection du fichier reel est structurante
     m_modulo = getFirstIndirectionBlockSize(); 
     //l'identifiant de terme le plus eleve (pour l'ecrivain)
     getFileIdentification(m_currentId, m_identification);
+    //initialisation du retro lexique, eventuellement
+    if (m_withRetrolexicon) {
+        const size_t pos = fileName.find('.');
+        m_nindRetrolexiconIndex = new NindRetrolexiconIndex(fileName.substr(0, pos) + ".retrolexiconindex",
+                                                            isLexiconWriter,
+                                                            m_currentId,
+                                                            m_identification,
+                                                            retroIndirectionBlocSize);
+    }
+    else m_nindRetrolexiconIndex = 0;
 }
 ////////////////////////////////////////////////////////////
 NindLexiconIndex::~NindLexiconIndex()
@@ -84,15 +99,15 @@ NindLexiconIndex::~NindLexiconIndex()
 ////////////////////////////////////////////////////////////
 //brief add specified term in lexicon it doesn't still exist in,
 //In all cases, word ident is returned.
-//param componants list of componants of a word 
-//(1 componant = simple word, more componants = compound word)
+//param components list of components of a word 
+//(1 component = simple word, more components = compound word)
 //return ident of word */
-unsigned int NindLexiconIndex::addWord(const list<string> &componants)
+unsigned int NindLexiconIndex::addWord(const list<string> &components)
 {
     if (!m_isWriter) throw BadUseException("lexicon is not writable");
     //identifiant du mot (simple ou compose) sous ensemble du mot examine
     unsigned int sousMotId = 0;
-    for (list<string>::const_iterator swIt = componants.begin(); swIt != componants.end(); swIt++) {
+    for (list<string>::const_iterator swIt = components.begin(); swIt != components.end(); swIt++) {
         bool estNouveau = false;
         const string &motSimple = *swIt;
         list<Terme> definition;
@@ -105,14 +120,27 @@ unsigned int NindLexiconIndex::addWord(const list<string> &componants)
             continue;
         }
         //pas trouve
+        //structure pour eventuellement mettre a jour le retro lexique
+        list<struct NindRetrolexiconIndex::TermDef> termDefs;
         //si terme simple inconnu, on le cree
-        if ((*termeIt).identifiantS == 0) (*termeIt).identifiantS = ++m_currentId;
+        if ((*termeIt).identifiantS == 0) {
+            (*termeIt).identifiantS = ++m_currentId;
+            //pour le lexique inverse : m_currentId -> motSimple
+            termDefs.push_back(NindRetrolexiconIndex::TermDef(m_currentId, motSimple));
+        }
         //si terme compose, on le cree
-        if (sousMotId != 0) (*termeIt).composes.push_back(Compose(sousMotId, ++m_currentId));
+        if (sousMotId != 0) {
+            (*termeIt).composes.push_back(Compose(sousMotId, ++m_currentId));
+            //pour le lexique inverse : m_currentId -> sousMotId, (*termeIt).identifiantS
+            termDefs.push_back(NindRetrolexiconIndex::TermDef(m_currentId, sousMotId, (*termeIt).identifiantS));
+       }
         sousMotId = m_currentId;
         //et on ecrit sur le fichier
         m_identification = (time_t)time(NULL);
         setDefinitionTermes(definition, m_currentId, m_identification);
+        //met eventuellement a jour le lexique inverse
+        if (m_withRetrolexicon and termDefs.size() != 0) 
+            m_nindRetrolexiconIndex->addTerms(termDefs, m_currentId, m_identification);
     }
     //retourne l'id du mot specifie
     return sousMotId;
@@ -121,15 +149,14 @@ unsigned int NindLexiconIndex::addWord(const list<string> &componants)
 //brief get ident of the specified word
 //if word exists in lexicon, its ident is returned
 //else, return 0 (0 is not a valid ident !)
-//param componants list of componants of a word (1 componant = simple word, more componants = compound word)
+//param components list of components of a word (1 component = simple word, more components = compound word)
 //return ident of word */
-unsigned int NindLexiconIndex::getId(const list<string> &componants)
-    throw(NindLexiconIndexException)
+unsigned int NindLexiconIndex::getId(const list<string> &components)
 {
     try {
         //identifiant du mot (simple ou compose) sous ensemble du mot examine
         unsigned int sousMotId = 0;
-        for(list<string>::const_iterator swIt = componants.begin(); swIt != componants.end(); swIt++) {
+        for(list<string>::const_iterator swIt = components.begin(); swIt != components.end(); swIt++) {
             const string &motSimple = *swIt;
             const unsigned int termeId = getIdentifiant(motSimple, sousMotId);
             if (termeId == 0) return 0;     //mot inconnu
@@ -157,7 +184,6 @@ void NindLexiconIndex::getIdentification(unsigned int &wordsNb, unsigned int &id
 //retourne l'identifiant du terme s'il existe, 0 s'il n'existe pas
 unsigned int NindLexiconIndex::getIdentifiant(const string &termeSimple,
                                               const unsigned int sousMotId)
-    throw(EofException, ReadFileException, OutReadBufferException, InvalidFileException)
 {
     //l'identifiant dans le fichier est la clef calculee modulo la taille du bloc d'indirection
     const unsigned int ident =  clef(termeSimple) % m_modulo;
@@ -208,7 +234,6 @@ unsigned int NindLexiconIndex::getDefinitionTermes(const string &termeSimple,
                                                    const unsigned int sousMotId,
                                                    list<Terme> &definition,
                                                    list<Terme>::iterator &termeIt)
-    throw(EofException, ReadFileException, OutReadBufferException, InvalidFileException)
 {
     bool termeEstTrouve = false;
     //l'identifiant dans le fichier est la clef calculee modulo la taille du bloc d'indirection
@@ -277,8 +302,8 @@ void NindLexiconIndex::setDefinitionTermes(const list<Terme> &definition,
     unsigned int tailleMaximum = TETE_DEFINITION + TAILLE_IDENTIFICATION;
     //cerr<<"NindLexiconIndex::setDefinitionTermes definition.size()="<<definition.size()<<endl;
     for (list<Terme>::const_iterator defIt = definition.begin(); defIt != definition.end(); defIt++) {
-        //<termeSimple> <identifiantS> <nbreComposes> <composes> = 262
-        //<identifiantA> <identifiantRelC> = 7
+        //<termeSimple>(256) <identifiantS>(3) <nbreComposes>(3) <composes> = 262
+        //<identifiantA>(3) <identifiantRelC>(4) = 7
         tailleMaximum += 262 + (*defIt).composes.size() * 7;
     }
     //2) forme le buffer a ecrire sur le fichier
@@ -323,3 +348,17 @@ static unsigned int clef(const string &mot)
     return clefB;
 }
 ////////////////////////////////////////////////////////////
+//brief get word components from the specified ident
+//if retro lexicon is not implanted, an exception is raised
+//param ident ident of term
+//param components list of components of a word 
+//(1 component = simple word, more components = compound word) 
+//return true if term was found, false otherwise */
+bool NindLexiconIndex::getComponents(const unsigned int ident,
+                                     list<string> &components)
+{
+    if (!m_withRetrolexicon) throw BadUseException("there is no retro lexicon");
+    return m_nindRetrolexiconIndex->getComponents(ident, components);
+}
+////////////////////////////////////////////////////////////
+

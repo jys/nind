@@ -44,8 +44,7 @@ public:
                   const bool isTermIndexWriter,
                   const unsigned int lexiconWordsNb,
                   const unsigned int lexiconIdentification,
-                  const unsigned int indirectionBlocSize = 0)
-        throw(NindIndexException);
+                  const unsigned int indirectionBlocSize = 0);
 
     virtual ~NindTermIndex();
     
@@ -71,8 +70,7 @@ public:
     *\param termIndex structure to receive all datas of the specified term
     *\return true if term was found, false otherwise */
     bool getTermIndex(const unsigned int ident,
-                      std::list<struct TermCG> &termIndex)
-        throw(NindTermIndexException);
+                      std::list<struct TermCG> &termIndex);
 
     /**\brief Write a full termIndex as a list of structures
     *\param ident ident of term
@@ -82,8 +80,7 @@ public:
     void setTermIndex(const unsigned int ident,
                       const std::list<struct TermCG> &termIndex,
                       const unsigned int lexiconWordsNb,
-                      const unsigned int lexiconIdentification)
-        throw(NindTermIndexException);
+                      const unsigned int lexiconIdentification);
         
 private:
 };
