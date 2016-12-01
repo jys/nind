@@ -68,7 +68,7 @@ public:
     /**\brief get identification of lexicon
      * \param wordsNb where number of words contained in lexicon is returned
      * \param identification where unique identification of lexicon is returned */
-    void getIdentification(unsigned int &wordsNb, unsigned int &identification);
+    void getIdentification(Identification &identification);
     
     /**\brief get word components from the specified ident
     * if retro lexicon is not implanted, an exception is raised
@@ -114,12 +114,10 @@ private:
         
     //Ecrit les donnees de tous les termes qui ont la meme clef modulo 
     void setDefinitionTermes(const std::list<Terme> &definition,
-                             const unsigned int lexiconWordsNb,
-                             const unsigned int lexiconIdentification);
+                             const Identification &lexiconIdentification);
 
     unsigned int m_modulo;              //pour trouver l'identifiant dans le fichier
-    unsigned int m_currentId;           //identifiant courant
-    unsigned int m_identification;      //identification unique de ce lexique
+    Identification m_identification;      //identification unique de ce lexique
     bool m_withRetrolexicon;            //avec ou sans retro lexique
     NindRetrolexiconIndex *m_nindRetrolexiconIndex;       //l'eventuel retro lexique
 };

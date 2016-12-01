@@ -18,117 +18,223 @@
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
 #include "NindTermAmose.h"
+#include "NindLexiconAmose.h"
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
 //brief Creates NindTermAmose with a specified name associated with.
 //param fileName absolute path file name
+//param isTermIndexWriter true if termIndex writer, false if termIndex reader  */
 //param lexiconWordsNb number of words contained in lexicon 
-//param lexiconIdentification unique identification of lexicon 
-//param cacheSize size of cache for terms from indexTerm
+//param lexiconIdentification unique identification of lexicon */
+//param indirectionBlocSize number of entries in a single indirection block */
 NindTermAmose::NindTermAmose(const string &fileName,
-                             const unsigned int lexiconWordsNb,
-                             const unsigned int lexiconIdentification,
-                             const unsigned int cacheSize)
-    throw(NindIndexException):
+                             const bool isTermIndexWriter,
+                             const Identification &lexiconIdentification,
+                             const unsigned int indirectionBlocSize):
     NindTermIndex(fileName, 
-                  false, 
-                  lexiconWordsNb, 
-                  lexiconIdentification),
-    m_cacheSize(cacheSize),
-    m_termIndexIdentCache(),
-    m_termIndexCache()
+                  isTermIndexWriter, 
+                  lexiconIdentification,
+                  indirectionBlocSize),
+    m_uniqueTermCount({{SIMPLE_TERM, 0},{MULTI_TERM, 0},{NAMED_ENTITY, 0}}),
+    m_termOccurrences({{SIMPLE_TERM, 0},{MULTI_TERM, 0},{NAMED_ENTITY, 0}})
 {
+    //commence par restaurer les compteurs s'ils existent sur le fichier termindex
+    restoreInternalCounts();
 }
 ////////////////////////////////////////////////////////////
 NindTermAmose::~NindTermAmose()
 {
 }
 ////////////////////////////////////////////////////////////
-//brief Read the list of documents where term + CG is indexed
+//brief Add doc references to the specified term
+//param ident ident of term
+//param type type of term (0: simple term, 1: multi-term, 2: named entity) 
+//param newDocuments list of documents ids + frequencies where term is in 
+//param lexiconIdentification unique identification of lexicon */
+void NindTermAmose::addDocsToTerm(const unsigned int ident,
+                                  const unsigned int type,
+                                  const list<Document> &newDocuments,
+                                  const Identification &lexiconIdentification)
+{
+    //rejcupehre la dejfinition de ce terme
+    list<TermCG> termIndex;
+    getTermIndex(ident, termIndex);
+    //si le terme n'existe pas encore, la liste est crejeje avec un ejlejment
+    if (termIndex.size() == 0) {
+        //increjmente le nombre de termes pour ce type
+        m_uniqueTermCount[type] +=1;
+        //creje un ejlejment vide
+        termIndex.push_back(TermCG());
+    }
+    //travaille sur l'unique ejlejment
+    TermCG &termcg = termIndex.front();
+    list<Document> &documents = termcg.documents;
+    //ajoute tous les documents
+    for (list<Document>::const_iterator itdoc = newDocuments.begin(); itdoc != newDocuments.end(); itdoc++) {
+        const Document &document = (*itdoc);
+        //increjmente les occurrences pour ce type
+        m_termOccurrences[type] += document.frequency;
+        //increjmente la frejquence globale de ce terme
+        termcg.frequency += document.frequency;
+        //trouve la place dans la liste ordonnee
+        list<NindTermIndex::Document>::iterator it2 = documents.begin(); 
+        while (it2 != documents.end()) {
+            //deja dans la liste, incremente la frequence
+            if ((*it2).ident == document.ident) {
+                (*it2).frequency += document.frequency;
+                break;
+            }
+            //insere a l'interieur de la liste
+            if ((*it2).ident > document.ident) {
+                documents.insert(it2, document);
+                break;
+            }
+            it2++;
+        }
+        //si fin de liste, insere en fin
+        if (it2 == documents.end()) documents.push_back(document);
+    }
+    //ejcrit le rejsultat sur le fichier
+    setTermIndex(ident, termIndex, lexiconIdentification);  
+    //ejcrit les novelles valeurs des compteurs
+    saveInternalCounts(lexiconIdentification);
+}
+////////////////////////////////////////////////////////////
+//brief remove doc reference from the specified term
+//param ident ident of term
+//param type type of term (0: simple term, 1: multi-term, 2: named entity) 
+//param documentId id of document to remove
+//param lexiconIdentification unique identification of lexicon */
+void NindTermAmose::removeDocFromTerm(const unsigned int ident,
+                                      const unsigned int type,
+                                      const unsigned int documentId,
+                                      const Identification &lexiconIdentification)
+{
+    //rejcupehre la dejfinition de ce terme
+    list<TermCG> termIndex;
+    getTermIndex(ident, termIndex);
+    //si le terme n'existe pas, on ne fait rien
+    if (termIndex.size() == 0) return;
+    //travaille sur l'unique ejlejment
+    TermCG &termcg = termIndex.front();
+    list<Document> &documents = termcg.documents;
+    //vire le document de la liste des documents
+    for (list<Document>::iterator itdoc = documents.begin(); itdoc != documents.end(); itdoc++) {
+        Document &document = (*itdoc);
+        if (document.ident != documentId) continue;
+        //dejcrejmente les occurrences pour ce type
+        m_termOccurrences[type] -= document.frequency;
+        //dejcrejmente la frejquence globale de ce terme
+        termcg.frequency -= document.frequency;
+        //enlehve le doc de la liste
+        documents.erase(itdoc);
+        //si c'ejtait le dernier, efface le terme
+        if (documents.size() == 0) {
+            //dejcrejmente le nombre de termes pour ce type
+            m_uniqueTermCount[type] -=1;
+            termIndex.clear();        
+        }
+        //terminej, ejcrit la nouvelle dejfinition
+        setTermIndex(ident, termIndex, lexiconIdentification);  
+        return;
+    }
+    //si document pas trouvej, rien n'est fait
+}   
+////////////////////////////////////////////////////////////
+//brief read specific counts from termindex file
+//synchronization between writer and readers is up to application */
+    void NindTermAmose::restoreInternalCounts()
+{
+    //rejcupehre la dejfinition de ce terme
+    list<TermCG> termIndex;
+    getTermIndex(0, termIndex);
+    //si le terme n'existe pas, on ne fait rien
+    if (termIndex.size() == 0) return;
+    //travaille sur l'unique ejlejment
+    CountsStruct &countsStruct = termIndex.front();
+    list<Counts> &counts = countsStruct.documents;
+    //remplit les compteurs avec la structure
+    list<Counts>::const_iterator itcount = counts.begin();
+    m_uniqueTermCount[SIMPLE_TERM] = (*itcount).ident;
+    m_termOccurrences[SIMPLE_TERM] = (*itcount++).frequency;
+    m_uniqueTermCount[MULTI_TERM] = (*itcount).ident;
+    m_termOccurrences[MULTI_TERM] = (*itcount++).frequency;
+    m_uniqueTermCount[NAMED_ENTITY] = (*itcount).ident;
+    m_termOccurrences[NAMED_ENTITY] = (*itcount++).frequency;
+}
+////////////////////////////////////////////////////////////
+//brief Read the list of documents where term is indexed
+//frequencies are not returned
 //param termId ident of term
-//param cg: identifier of gramatical category
-//param documents structure to receive the list of documents ids + frequencies
+//param documentIds structure to receive the list of documents ids
 //return true if term was found, false otherwise */
-bool NindTermAmose::getDocumentsList(const unsigned int termId,
-                                     const unsigned char cg,
-                                     list<Document> &documents)
-    throw(NindTermIndexException)
+bool NindTermAmose::getDocList(const unsigned int termId,
+                               list<unsigned int> &documentIds)
 {
-    list<NindTermAmose::TermIndexType>::const_reverse_iterator itTerm = getFromCache(termId);
-    if (itTerm == m_termIndexCache.crend()) return false;
-    for (list<NindTermIndex::TermCG>::const_iterator it = (*itTerm).begin(); it != (*itTerm).end(); it++) {
-        const NindTermIndex::TermCG &termCG = (*it);
-        if (termCG.cg == cg) {
-            documents = termCG.documents;
-            return true;
-        }
+    //raz resultat
+    documentIds.clear();
+    list<struct TermCG> termIndex;
+    const bool trouvej = getTermIndex(termId, termIndex);
+    //si terme inconnu, retourne false
+    if (!trouvej) return false;
+    const TermCG &termCG = termIndex.front();
+    const list<Document> &documents = termCG.documents;
+    for (list<Document>::const_iterator it = documents.begin(); it != documents.end(); it++) { 
+        documentIds.push_back((*it).ident);
     }
-    return false;   
+    return true;
 }
 ////////////////////////////////////////////////////////////
-//brief Number of documents in index that contain the given term + CG
+//brief Number of documents in index that contain the given term
 //param termId: identifier of the term
-//param cg: identifier of gramatical category
-//return number  of documents in index that contain the given term + CG
-unsigned int NindTermAmose::getDocFreq(const unsigned int termId,
-                                       const unsigned char cg)
-    throw(NindTermIndexException)
+//return number  of documents in index that contain the given term
+unsigned int NindTermAmose::getDocFreq(const unsigned int termId)
 {
-    list<NindTermAmose::TermIndexType>::const_reverse_iterator itTerm = getFromCache(termId);
-    if (itTerm == m_termIndexCache.crend()) return 0;
-    for (list<NindTermIndex::TermCG>::const_iterator it = (*itTerm).begin(); it != (*itTerm).end(); it++) {
-        const NindTermIndex::TermCG &termCG = (*it);
-        if (termCG.cg == cg) return termCG.documents.size();
-    }
-    return 0;      
+    list<struct TermCG> termIndex;
+    const bool trouvej = getTermIndex(termId, termIndex);
+    //si terme inconnu, retourne 0
+    if (!trouvej) return 0;
+    const TermCG &termCG = termIndex.front();
+    return termCG.documents.size();
 }
 ////////////////////////////////////////////////////////////
-//brief Number of occurences in index of the given term + CG
-//param termId: identifier of the term
-//param cg: identifier of gramatical category
-//return number of occurences in index of the given term + CG */
-unsigned int NindTermAmose::getTermFreq(const unsigned int termId,
-                                        const unsigned char cg)
-    throw(NindTermIndexException)
+//brief number of unique terms  
+//param type: type of the terms (0: simple term, 1: multi-term, 2: named entity) 
+//return number of unique terms of specified type into the base */
+unsigned int NindTermAmose::getUniqueTermCount(const unsigned int type)
 {
-    list<NindTermAmose::TermIndexType>::const_reverse_iterator itTerm = getFromCache(termId);
-    if (itTerm == m_termIndexCache.crend()) return 0;
-    for (list<NindTermIndex::TermCG>::const_iterator it = (*itTerm).begin(); it != (*itTerm).end(); it++) {
-        const NindTermIndex::TermCG &termCG = (*it);
-        if (termCG.cg == cg) return termCG.frequency;
-    }
-    return 0;      
+    map<unsigned int, unsigned int>::const_iterator itcount = m_uniqueTermCount.find(type);
+    if (itcount == m_uniqueTermCount.end()) return 0;
+    return ((*itcount).second); 
 }
 ////////////////////////////////////////////////////////////
-//Return iterator on the cache if term exists, end else
-//Read TermIndex if it is not in the cache, 
-list<NindTermAmose::TermIndexType>::const_reverse_iterator NindTermAmose::getFromCache(const unsigned int termId)
-    throw(NindTermIndexException)
+//brief number of terms occurrences 
+//param type: type of the terms (0: simple term, 1: multi-term, 2: named entity) 
+//return number  of terms of specified type into the base */
+unsigned int NindTermAmose::getTermOccurrences(const unsigned int type)
 {
-    list<NindTermAmose::TermIndexType>::const_reverse_iterator itTerm = m_termIndexCache.crbegin();
-    for (list<unsigned int>::const_reverse_iterator it = m_termIndexIdentCache.crbegin();
-         it != m_termIndexIdentCache.crend(); it++) {
-        if ((*it) == termId) return itTerm;
-        itTerm++;
-    }
-    //not found in cache, read from file
-    m_termIndexCache.push_back(TermIndexType());
-    TermIndexType &termIndex = m_termIndexCache.back();
-    if (NindTermIndex::getTermIndex(termId, termIndex)) {
-        //found, fill cache
-        m_termIndexIdentCache.push_back(termId);
-        //if cache is full, dismiss the oldest
-        if (m_termIndexIdentCache.size() > m_cacheSize) {
-            m_termIndexIdentCache.pop_front();
-            m_termIndexCache.pop_front();
-        }
-        return m_termIndexCache.crbegin();
-    }
-    else {
-        //repair cache
-        m_termIndexCache.pop_back();
-        return m_termIndexCache.crend();
-    }  
+    map<unsigned int, unsigned int>::const_iterator itcount = m_termOccurrences.find(type);
+    if (itcount == m_termOccurrences.end()) return 0;
+    return ((*itcount).second); 
+}
+////////////////////////////////////////////////////////////
+//brief write specific counts on termindex file
+//synchronization between writer and readers is up to application */
+    void NindTermAmose::saveInternalCounts(const Identification &lexiconIdentification)
+{
+    //les compteurs sont sauvegardejs sur le fichier termindex comme des termes
+    list<CountsStruct> termIndex;
+    //creje un ejlejment vide
+    termIndex.push_back(CountsStruct());
+    //travaille sur l'unique ejlejment
+    CountsStruct &countsStruct = termIndex.front();
+    list<Counts> &counts = countsStruct.documents;
+    //remplit la structure avec les compteurs
+    counts.push_back(Counts(m_uniqueTermCount[SIMPLE_TERM], m_termOccurrences[SIMPLE_TERM]));
+    counts.push_back(Counts(m_uniqueTermCount[MULTI_TERM], m_termOccurrences[MULTI_TERM]));
+    counts.push_back(Counts(m_uniqueTermCount[NAMED_ENTITY], m_termOccurrences[NAMED_ENTITY]));
+    //ejcrit comme term 0
+    setTermIndex(0, termIndex, lexiconIdentification);
 }
 ////////////////////////////////////////////////////////////

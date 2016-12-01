@@ -87,9 +87,10 @@ int main(int argc, char *argv[]) {
         
         cout<<"2) forme le lexique pour de vrai dans "<<lexiconFileName<<endl;
         //affiche les identifiants du lexique
-        unsigned int wordsNb, identification;
-        nindLexicon.getIdentification(wordsNb, identification);
-        cout<<"identification : "<<wordsNb<<" termes, "<<identification<<" ("<<NindDate::date(identification)<<")"<<endl;
+        NindIndex::Identification identification;
+        nindLexicon.getIdentification(identification);
+        cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;
+        cout<<" ("<<NindDate::date(identification.lexiconTime)<<")"<<endl;
         
         start = clock();
         formeLexique(true, docsFileName, nindLexicon, allWords, docsNb);
@@ -100,8 +101,9 @@ int main(int argc, char *argv[]) {
         cout<<cpuTimeUsed<<" secondes"<<endl;
         /////////////////////////////////////
         //affiche les identifiants du lexique
-        nindLexicon.getIdentification(wordsNb, identification);
-        cout<<"identification : "<<wordsNb<<" termes, "<<identification<<" ("<<NindDate::date(identification)<<")"<<endl;
+        nindLexicon.getIdentification(identification);
+        cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;
+        cout<<" ("<<NindDate::date(identification.lexiconTime)<<")"<<endl;
 
         /////////////////////////////////////
         cout<<"3) redemande les "<<allWords.size()<<" mots soumis et vérifie leur identifiant pour de faux"<<endl;

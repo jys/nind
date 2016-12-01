@@ -76,14 +76,15 @@ int main(int argc, char *argv[]) {
         
         //le lexique lecteur
         NindLexiconIndex nindLexicon(lexiconFileName, false);
-        unsigned int wordsNb, identification;
-        nindLexicon.getIdentification(wordsNb, identification);
+        NindIndex::Identification identification;
+        nindLexicon.getIdentification(identification);
         //affiche les identifiants du lexique
-        cout<<"identification : "<<wordsNb<<" termes, "<<identification<<" ("<<NindDate::date(identification)<<")"<<endl;
+        cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;
+        cout<<" ("<<NindDate::date(identification.lexiconTime)<<")"<<endl;
         //le fichier inverse lecteur
-        NindTermIndex nindTermIndex(termindexFileName, false,  wordsNb, identification);
+        NindTermIndex nindTermIndex(termindexFileName, false, identification);
         //le fichier des index locaux
-        NindLocalIndex nindLocalIndex(localindexFileName, false, wordsNb, identification);
+        NindLocalIndex nindLocalIndex(localindexFileName, false, identification);
         //la classe d'utilitaires
         NindIndexTest nindIndexTest;
         //lit le fichier dump de documents

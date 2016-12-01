@@ -28,6 +28,7 @@
 #include <string>
 #include <list>
 #include <map>
+#include <set>
 ////////////////////////////////////////////////////////////
 namespace latecon {
     namespace nindex {
@@ -38,13 +39,11 @@ public:
     /**\brief Creates NindTermIndex with a specified name associated with.
     *\param fileName absolute path file name
     *\param isLocalIndexWriter true if localIndex writer, false if localIndex reader  
-    *\param lexiconWordsNb number of words contained in lexicon 
     *\param lexiconIdentification unique identification of lexicon 
     *\param indirectionBlocSize number of entries in a single indirection block */
     NindLocalIndex(const std::string &fileName,
                    const bool isLocalIndexWriter,
-                   const unsigned int lexiconWordsNb,
-                   const unsigned int lexiconIdentification,
+                   const Identification &lexiconIdentification,
                    const unsigned int indirectionBlocSize = 0);
 
     virtual ~NindLocalIndex();
@@ -66,12 +65,19 @@ public:
         ~Term() {}
     };
     
-    /**\brief Read a full document as a list of terms
+    /**\brief Return a full document as a list of terms whith their localisations
     *\param ident ident of doc
     *\param localIndex structure to receive all datas of the specified doc
     *\return true if doc was found, false otherwise */
     bool getLocalIndex(const unsigned int ident,
                       std::list<struct Term> &localIndex);
+
+    /**\brief Return a full document as a list of unique terms ids
+    *\param ident ident of doc
+    *\param termIdents structure to receive all datas of the specified doc
+    *\return true if doc was found, false otherwise */
+    bool getTermIdents(const unsigned int ident,
+                       std::set<unsigned int> &termIdents);
 
     /**\brief Write a full termIndex as a list of structures
     *\param ident ident of doc
@@ -80,8 +86,7 @@ public:
     *\param lexiconIdentification unique identification of lexicon */
     void setLocalIndex(const unsigned int ident,
                       const std::list<struct Term> &localIndex,
-                      const unsigned int lexiconWordsNb,
-                      const unsigned int lexiconIdentification);
+                      const Identification &lexiconIdentification);
     
     /**\brief number of documents in the collection 
      * \return number of documents in the collection */
@@ -90,8 +95,13 @@ public:
 private:
     //Effacement d'un document dans le fichier
     void deleteLocalIndex(const unsigned int ident,
-                          const unsigned int lexiconWordsNb,
-                          const unsigned int lexiconIdentification);
+                          const Identification &lexiconIdentification);
+    
+    //Sauvegarde la map des identifiants externes sur le fichier ah l'index 0
+    void saveExternalIdents(const Identification &lexiconIdentification);
+
+    //Restaure la map des identifiants externes depuis le fichier ah l'index 0
+    void restoreExternalIdents();
 
     //map de traduction des identifiants externes vers les identifiants internes
     std::map<unsigned int, unsigned int> m_docIdTradExtInt;

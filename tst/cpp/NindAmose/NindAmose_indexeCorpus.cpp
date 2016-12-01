@@ -15,17 +15,17 @@
 // even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
-#include "NindIndex/NindLexiconIndex.h"
-#include "NindIndex/NindTermIndex.h"
-#include "NindIndex/NindLocalIndex.h"
+#include "NindAmose/NindTermAmose.h"
+#include "NindAmose/NindLocalAmose.h"
+#include "NindAmose/NindLexiconAmose.h"
 #include "NindExceptions.h"
 #include <time.h>
 #include <string>
 #include <list>
 #include <iostream>
+#include <iomanip> 
 #include <fstream>
 #include <sstream>
-//#include <stringstream>
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
@@ -43,11 +43,9 @@ static void displayHelp(char* arg0) {
 
     cout<<"usage: "<<arg0<<" --help"<< endl;
     cout<<"       "<<arg0<<" <dump documents> <taille lexique> <taille inverse> <taille locaux>"<<endl;
-    cout<<"ex :   "<<arg0<<" amose-dump-lucene-index-fre-10.xml.txt 0 100003 100000 5000"<<endl;
+    cout<<"ex :   "<<arg0<<" sample_fre.xml.mult.xml.txt 100003 100000 5000"<<endl;
 }
 ////////////////////////////////////////////////////////////
-static void split(const string &word, 
-                  list<string> &simpleWords);
 static void majInverse (const unsigned int id,
                         const unsigned int noDoc,
                         list<NindTermIndex::TermCG> &termIndex);
@@ -69,57 +67,53 @@ int main(int argc, char *argv[]) {
 
     try {
         //calcule les noms des fichiers lexique et inverse et index locaux
-        const size_t pos = docsFileName.find('.');
-        const string lexiconFileName = docsFileName.substr(0, pos) + ".lexiconindex";
-        const string termindexFileName = docsFileName.substr(0, pos) + ".termindex";
-        const string localindexFileName = docsFileName.substr(0, pos) + ".localindex";
+        const string incompleteFileName = docsFileName.substr(0, docsFileName.find('.'));
+        const string lexiconFileName = incompleteFileName + ".lexiconindex";
+        const string retrolexiconFileName = incompleteFileName + ".retrolexiconindex";
+        const string termindexFileName = incompleteFileName + ".termindex";
+        const string localindexFileName = incompleteFileName + ".localindex";
         //pour calculer le temps consomme
         clock_t start, end;
         double cpuTimeUsed;
 
         /////////////////////////////////////
+        bool noOldFiles = true;
         FILE *file =  fopen(lexiconFileName.c_str(), "rb");
         if (file) {
             fclose(file);
-            cout<<lexiconFileName<<" existe !"<<endl;
-            cout<<"Veuillez l'effacer par la commande : rm "<<lexiconFileName<<endl;
-            return false;
+            noOldFiles = false;
+        }
+        file =  fopen(retrolexiconFileName.c_str(), "rb");
+        if (file) {
+            fclose(file);
+            noOldFiles = false;
         }
         file =  fopen(termindexFileName.c_str(), "rb");
         if (file) {
             fclose(file);
-            cout<<termindexFileName<<" existe !"<<endl;
-            cout<<"Veuillez l'effacer par la commande : rm "<<termindexFileName<<endl;
-            return false;
+            noOldFiles = false;
         }
         file =  fopen(localindexFileName.c_str(), "rb");
         if (file) {
             fclose(file);
-            cout<<localindexFileName<<" existe !"<<endl;
-            cout<<"Veuillez l'effacer par la commande : rm "<<localindexFileName<<endl;
+            noOldFiles = false;
+        }
+        if (!noOldFiles) {
+            cout<<"Des anciens fichiers lexiques existent !"<<endl;
+            cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".*index"<<endl;
             return false;
         }
         /////////////////////////////////////
         cout<<"Forme le lexique, le fichier inversé et le fichier des index locaux avec "<<docsFileName<<endl;
         start = clock();
-        //le lexique ecrivain
-        NindLexiconIndex nindLexicon(lexiconFileName, 
-                                     true, 
-                                     lexiconEntryNb);
-        unsigned int wordsNb, identification;
-        nindLexicon.getIdentification(wordsNb, identification);
+        //le lexique ecrivain avec retro lexique (meme taille d'indirection que le fichier inverse)
+        NindLexiconAmose nindLexicon(lexiconFileName, true, lexiconEntryNb, termindexEntryNb);
+        NindIndex::Identification identification;
+        nindLexicon.getIdentification(identification);
         //le fichier inverse ecrivain
-        NindTermIndex *nindTermIndex = new NindTermIndex(termindexFileName, 
-                                                         true, 
-                                                         wordsNb, 
-                                                         identification,
-                                                         termindexEntryNb);
+        NindTermAmose nindTermAmose(termindexFileName, true, identification, termindexEntryNb);
         //le fichier des index locaux
-        NindLocalIndex *nindLocalIndex = new NindLocalIndex(localindexFileName, 
-                                                            true, 
-                                                            wordsNb, 
-                                                            identification,
-                                                            localindexEntryNb);
+        NindLocalAmose nindLocalAmose(localindexFileName, true, identification, localindexEntryNb);
         //lit le fichier dump de documents
         unsigned int docsNb = 0;
         unsigned int nbMaj = 0;
@@ -135,37 +129,57 @@ int main(int argc, char *argv[]) {
             docsNb++;
             unsigned int noDoc;
             string word;
-            unsigned int pos, taille;
+            unsigned int position, taille;
             char comma;
             sdumpLine >> noDoc;
-            noDoc -= 10170000;
+            //noDoc -= 10170000;
             //la structure d'index locaux se fabrique pour un document complet
             list<NindLocalIndex::Term> localIndex;
             //lit tous les termes et leur localisation/taille
-            while (sdumpLine >> word >> pos >> comma >> taille) {
+            //le python de construction atteste de la validite du format, pas la peine de controler
+            while (sdumpLine >> word >> position >> comma >> taille) {
+                //cout<<"#"<<word<<"#"<<pos<<"#"<<taille<<endl;
                 //le terme
-                list<string> componants;
-                split(word, componants);
+                string lemma;
+                unsigned int type;
+                string entitejNommeje;
+                //si c'est une entitej nommeje, la sejpare en 2
+                const size_t pos = word.find(':');
+                if (pos != string::npos) {
+                    entitejNommeje = word.substr(0, pos);
+                    lemma = word.substr(pos);
+                    type = NAMED_ENTITY;
+                }
+                else if (word.find('_') != string::npos) {
+                    lemma = word;
+                    type = MULTI_TERM;
+                }
+                else {
+                    lemma = word;
+                    type = SIMPLE_TERM;
+                }
                 //recupere l'id du terme dans le lexique, l'ajoute eventuellement
-                const unsigned int id = nindLexicon.addWord(componants);
-                //recupere l'index inverse pour ce terme
-                list<NindTermIndex::TermCG> termIndex;
-                //met a jour la definition du terme
-                nindTermIndex->getTermIndex(id, termIndex);
-                //si le terme n'existe pas encore, la liste reste vide
-                majInverse(id, noDoc, termIndex); 
+                const unsigned int id = nindLexicon.addTerm(lemma, type, entitejNommeje);
+//                 //recupere l'index inverse pour ce terme
+//                 list<NindTermIndex::TermCG> termIndex;
+//                 //met a jour la definition du terme
+//                 nindTermAmose->getTermIndex(id, termIndex);
+//                 //si le terme n'existe pas encore, la liste reste vide
+//                 majInverse(id, noDoc, termIndex); 
                 //recupere l'identification du lexique
-                nindLexicon.getIdentification(wordsNb, identification);
+                nindLexicon.getIdentification(identification);
                 //ecrit sur le fichier inverse
-                nindTermIndex->setTermIndex(id, termIndex, wordsNb, identification);
+                list<NindTermIndex::Document> newDocuments;
+                newDocuments.push_back(NindTermIndex::Document(noDoc, 1));
+                nindTermAmose.addDocsToTerm(id, type, newDocuments, identification);
                 nbMaj +=1;
                 //augmente l'index local 
                 localIndex.push_back(NindLocalIndex::Term(id, NO_CG));
                 NindLocalIndex::Term &term = localIndex.back();
-                term.localisation.push_back(NindLocalIndex::Localisation(pos, taille));               
+                term.localisation.push_back(NindLocalIndex::Localisation(position, taille));               
             }
             //ecrit la definition sur le fichier des index locaux
-            nindLocalIndex->setLocalIndex(noDoc, localIndex, wordsNb, identification);
+            nindLocalAmose.setLocalIndex(noDoc, localIndex, identification);
         }
         docsFile.close();
         end = clock();
@@ -174,61 +188,17 @@ int main(int argc, char *argv[]) {
         cout<<docsNb<<" mises à jour sur "<<localindexFileName<<endl;
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
         cout<<cpuTimeUsed<<" secondes"<<endl;
+        cout<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getUniqueTermCount(SIMPLE_TERM)<<" SIMPLE_TERM uniques"<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getUniqueTermCount(MULTI_TERM)<<" MULTI_TERM uniques"<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getUniqueTermCount(NAMED_ENTITY)<<" NAMED_ENTITY uniques"<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(SIMPLE_TERM)<<" occurrences de SIMPLE_TERM"<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(MULTI_TERM)<<" occurrences de MULTI_TERM"<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(NAMED_ENTITY)<<" occurrences de NAMED_ENTITY"<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.getDocCount()<<" documents indexés"<<endl;
     }
-    catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; return false;}
-    catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; return false;}
-    catch (...) {cerr<<"EXCEPTION unknown"<< endl; return false; }
+    catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; throw; return false;}
+    catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; throw; return false;}
+    catch (...) {cerr<<"EXCEPTION unknown"<< endl; throw; return false; }
 }
 ////////////////////////////////////////////////////////////
-//brief split words into single words
-//param word composed word with "#"
-//param simpleWords return list of single words */
-static void split(const string &word, 
-                  list<string> &simpleWords)
-{
-    simpleWords.clear();
-    string simpleWord;
-    stringstream sword(word);
-    while (getline(sword, simpleWord, '_')) {
-        simpleWords.push_back(simpleWord);
-    }
-}
-////////////////////////////////////////////////////////////
-//met a jour une definition de fichier inverse
-static void majInverse (const unsigned int id,
-                        const unsigned int noDoc,
-                        list<NindTermIndex::TermCG> &termIndex) 
-{
-    list<NindTermIndex::TermCG>::iterator it1 = termIndex.begin(); 
-    //il n'y a pas de cg, donc 0 ou 1 termCG
-    if (it1 != termIndex.end()) {
-        //si le terme existe deja, on ajoute le doc
-        list<NindTermIndex::Document> &documents = (*it1).documents;
-        //trouve la place dans la liste ordonnee
-        list<NindTermIndex::Document>::iterator it2 = documents.begin(); 
-        while (it2 != documents.end()) {
-            //deja dans la liste, incremente la frequence
-            if ((*it2).ident == noDoc) {
-                (*it2).frequency +=1;  
-                break;
-            }
-            //insere a l'interieur de la liste
-            if ((*it2).ident > noDoc) {
-                documents.insert(it2, NindTermIndex::Document(noDoc, 1));
-                break;
-            }
-            it2++;
-        }
-        //si fin de liste, insere en fin
-        if (it2 == documents.end()) documents.push_back(NindTermIndex::Document(noDoc, 1));
-        //met a jour la frequence globale de la cg
-        (*it1).frequency +=1;
-    }
-    else {
-        //c'est un nouveau terme
-        termIndex.push_back(NindTermIndex::TermCG(NO_CG, 1));
-        NindTermIndex::TermCG &termCG = termIndex.back();
-        list<NindTermIndex::Document> &documents = termCG.documents;
-        documents.push_back(NindTermIndex::Document(noDoc, 1));
-    }
-}

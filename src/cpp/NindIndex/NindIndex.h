@@ -36,20 +36,31 @@ class DLLExportLexicon NindIndex {
 public:
     
     void dumpEmptyAreas();
+    
+    /**\brief Structure to hold files identification */
+    struct Identification {
+        unsigned int lexiconWordsNb;
+        unsigned int lexiconTime;
+        Identification(): lexiconWordsNb(0), lexiconTime(0) {}
+        Identification(const unsigned int nb, const unsigned int id): lexiconWordsNb(nb), lexiconTime(id) {}
+        ~Identification() {}
+        bool operator==(const Identification &id2) const {
+            return (this->lexiconWordsNb == id2.lexiconWordsNb && this->lexiconTime == id2.lexiconTime); }
+        bool operator!=(const Identification &id2) const {
+            return (this->lexiconWordsNb != id2.lexiconWordsNb || this->lexiconTime != id2.lexiconTime); }    
+    };
 
 protected:
 
     /**\brief Creates NindIndex with a specified name associated with.
     *\param fileName absolute path file name
     *\param isWriter true if writer, false if reader  
-    *\param lexiconWordsNb number of words contained in lexicon  (if 0, no checks)
     *\param lexiconIdentification unique identification of lexicon  (if 0, no checks)
     *\param definitionMinimumSize size in bytes of the smallest definition
     *\param indirectionBlocSize number of entries in a single indirection block */
     NindIndex(const std::string &fileName,
               const bool isWriter,
-              const unsigned int lexiconWordsNb,
-              const unsigned int lexiconIdentification,
+              const Identification &lexiconIdentification,
               const unsigned int definitionMinimumSize = 0,
               const unsigned int indirectionBlocSize = 0);
 
@@ -64,19 +75,15 @@ protected:
         
     /**\brief Write on file datas of specified definition yet constructed into write buffer
     *\param ident ident of definition
-    *\param lexiconWordsNb number of words contained in lexicon 
     *\param lexiconIdentification unique identification of lexicon */
     void setDefinition(const unsigned int ident,
-                       const unsigned int lexiconWordsNb,
-                       const unsigned int lexiconIdentification);
+                       const Identification &lexiconIdentification);
         
     /**\brief check if indirection exists and create indirection block if necessary
     *\param ident ident of definition
-    *\param lexiconWordsNb number of words contained in lexicon 
     *\param lexiconIdentification unique identification of lexicon */
     void checkExtendIndirection(const unsigned int ident,
-                      const unsigned int lexiconWordsNb,
-                      const unsigned int lexiconIdentification);
+                                const Identification &lexiconIdentification);
         
     /**\brief get size of 1rst indirection block
     *\return size of 1rst indirection block */
@@ -85,13 +92,12 @@ protected:
     /**\brief get identification of lexicon
     *\param wordsNb where number of words contained in lexicon is returned
     *\param identification where unique identification of lexicon is returned */
-    void getFileIdentification(unsigned int &wordsNb, unsigned int &identification);
+    void getFileIdentification(Identification &identification);
         
     NindFile m_file;                //pour l'ecrivain ou le lecteur
     std::string m_fileName;
     bool m_isWriter;
     
-protected:
     //return l'identifiant maximum possible avec le systehme actuel d'indirection
     unsigned int getMaxIdent() const;
     
@@ -103,12 +109,10 @@ private:
     unsigned long int  getIndirection(const unsigned int ident);
     
     //ajoute un bloc d'indirection vide suivi d'une identification a la position courante du fichier
-    void addIndirection(const unsigned int lexiconWordsNb,
-                        const unsigned int lexiconIdentification);
+    void addIndirection(const Identification &lexiconIdentification);
         
     //verifie l'apairage avec le lexique
-    void checkIdentification(const unsigned int lexiconWordsNb,
-                             const unsigned int lexiconIdentification);
+    void checkIdentification(const Identification &lexiconIdentification);
 
     //ejtablit la carte des vides
     void mapEmptySpaces();
@@ -117,8 +121,7 @@ private:
     //retourne true si l'identification est dejjah ejcrite
     bool findNewArea(const unsigned int definitionSize,
                      const unsigned int dataSize,
-                     const unsigned int lexiconWordsNb,
-                     const unsigned int lexiconIdentification,
+                     const Identification &lexiconIdentification,
                      unsigned long int &offsetDefinition,
                      unsigned int &longueurDefinition);
     

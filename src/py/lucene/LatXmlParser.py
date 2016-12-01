@@ -35,13 +35,13 @@ def main():
 class TestParser():
     def __init__(self, inFileName, pathsArray):
         #le parser
-        xmlParser = LatXmlParser()
-        xmlParser.setPathsAndCallback(pathsArray, self.nodeCallback, self.textCallback, self.endNodeCallback)
-        xmlParser.startParse(inFileName)
+        self.xmlParser = LatXmlParser()
+        self.xmlParser.setPathsAndCallback(pathsArray, self.nodeCallback, self.textCallback, self.endNodeCallback)
+        self.xmlParser.startParse(inFileName)
         
     def nodeCallback(self, path, attr):
         outText = StringIO.StringIO()
-        outText.write('%s => '%(path))
+        outText.write('%d: %s => '%(self.xmlParser.getLineNumber(), path))
         for name in attr.getNames(): outText.write('%s=%s '%(name, attr.getValue(name)))
         print outText.getvalue()
         self.text = ''
@@ -51,7 +51,7 @@ class TestParser():
         #on ne peut disposer du texte complet qu'a la balise fermante
         #il est donc IMPERATIF de programmer ainsi        
         print ('#%s#'%(self.text)).encode('utf-8')
-        print 'end %s'%(path)
+        print '%d: end %s'%(self.xmlParser.getLineNumber(), path)
 
     def textCallback(self, path, text):
         #Sax ne s'interdit pas d'envoyer les textes par morceaux ! 
@@ -72,11 +72,17 @@ class LatXmlParser:
         
     def startParse(self, xmlFileName):
         self.parser.parse(xmlFileName)
+        
+    def getLineNumber(self):
+        return self.parser.getLineNumber()
 
 class XmlParserHandler(ContentHandler):
     def __init__(self):
         self.searchPaths = []
         self.currentPath = [""]
+        
+    def setDocumentLocator(self, locator):
+        self.locator = locator
         
     def setPathsAndCallback(self, paths, nodeCallback, textCallback, endNodeCallback):
         #transforme les paths recherches en array d'array
@@ -113,6 +119,9 @@ class XmlParserHandler(ContentHandler):
         for i in range(len(self.currentPath)): 
             if self.currentPath[i+1:] in self.searchPaths: return True
         return False
+    
+    def getLineNumber(self):
+        return self.locator.getLineNumber()
 
     
 if __name__ == '__main__':

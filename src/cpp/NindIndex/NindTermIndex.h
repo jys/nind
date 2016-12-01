@@ -37,13 +37,11 @@ public:
     /**\brief Creates NindTermIndex with a specified name associated with.
     *\param fileName absolute path file name
     *\param isTermIndexWriter true if termIndex writer, false if termIndex reader  
-    *\param lexiconWordsNb number of words contained in lexicon 
     *\param lexiconIdentification unique identification of lexicon 
     *\param indirectionBlocSize number of entries in a single indirection block */
     NindTermIndex(const std::string &fileName,
                   const bool isTermIndexWriter,
-                  const unsigned int lexiconWordsNb,
-                  const unsigned int lexiconIdentification,
+                  const Identification &lexiconIdentification,
                   const unsigned int indirectionBlocSize = 0);
 
     virtual ~NindTermIndex();
@@ -55,6 +53,7 @@ public:
         Document(): ident(0), frequency(0) {}
         Document(const unsigned int id, const unsigned int freq): ident(id), frequency(freq) {}
         ~Document() {}
+        bool operator< (const Document &doc2) { return (this->ident < doc2.ident); }
     };
     struct TermCG {
         unsigned char cg;
@@ -75,12 +74,10 @@ public:
     /**\brief Write a full termIndex as a list of structures
     *\param ident ident of term
     *\param termIndex structure containing all datas of the specified term 
-    *\param lexiconWordsNb number of words contained in lexicon 
     *\param lexiconIdentification unique identification of lexicon */
     void setTermIndex(const unsigned int ident,
                       const std::list<struct TermCG> &termIndex,
-                      const unsigned int lexiconWordsNb,
-                      const unsigned int lexiconIdentification);
+                      const Identification &lexiconIdentification);
         
 private:
 };

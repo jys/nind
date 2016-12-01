@@ -21,10 +21,12 @@
 #define NindLocalAmose_H
 ////////////////////////////////////////////////////////////
 #include "NindIndex/NindLocalIndex.h"
+#include "NindAmose/NindLexiconAmose.h"
 #include "NindCommonExport.h"
 #include "NindExceptions.h"
 #include <string>
 #include <list>
+#include <vector>
 #include <set>
 ////////////////////////////////////////////////////////////
 namespace latecon {
@@ -35,57 +37,75 @@ public:
 
     /** \brief Creates NindLocalAmose with a specified name associated with.
     *\param fileName absolute path file name
-    *\param lexiconWordsNb number of words contained in lexicon 
+    *\param isLocalIndexWriter true if localIndex writer, false if localIndex reader  
     *\param lexiconIdentification unique identification of lexicon 
-    *\param cacheSize size of cache for terms from indexTerm*/
+    *\param indirectionBlocSize number of entries in a single indirection block */
     NindLocalAmose(const std::string &fileName,
-                  const unsigned int lexiconWordsNb,
-                  const unsigned int lexiconIdentification,
-                  const unsigned int cacheSize = 5)
-        throw(NindIndexException);
+                   const bool isLocalIndexWriter,
+                   const Identification &lexiconIdentification,
+                   const unsigned int indirectionBlocSize = 0);
 
     virtual ~NindLocalAmose();
+
+// /** 
+// * @brief Fill the data structure positions with position of occurrences 
+// *        of terms (from @ref termIds) in documents (from @ref documents) 
+// * @param termIds: vector of identifier of terms 
+// * @param documents: vector of documents where to search for position of terms. The vector must be sorted by content id. 
+// * @param positions: position of occurrences of terms in documents. One element foreach content  id in @ref documents. 
+// * Each element is a vector containing one element for each term in termIds.
+// * And each of these elements is the list of positions and lengths of the occurrences of this term in this document. 
+// */ 
+// virtual void getTermPositionIndocs(
+//     const std::vector<TermId>& termIds, 
+//     const std::vector<Lima::CONTENT_ID>& documents, 
+//     std::vector<std::vector<Lima::Common::Misc::PositionLengthList> >& positions ) const = 0; 
+    /** \brief Fill the data structure positions with position of occurrences 
+    * of terms (from @ref termIds) in documents (from @ref documents)
+    * \param termIds vector of identifier of terms
+    * \param documents vector of documents where to search for position of terms. 
+    * \param positions position of occurrences of terms in documents. One element foreach content  id in @ref documents. 
+    * Each element is a vector containing one element for each term in termIds.
+    * And each of these elements is the list of positions and lengths of the occurrences of this term in this document.  */
+    void getTermPositionIndocs(const std::vector<unsigned int>& termIds, 
+                               const std::vector<unsigned int>& documents, 
+                               std::vector<std::vector<std::list<Localisation> > >& positions ); 
     
-    /** \brief Read a full document as a list of terms
-    *\param docId ident of doc
-    *\param localIndex structure to receive all datas of the specified doc
-    *\return true if doc was found, false otherwise */
-    bool getLocalIndex(const unsigned int docId,
-                       std::list<struct Term> &localIndex)
-        throw(NindLocalIndexException);
-        
+// /** 
+// * @brief get the set of unique term in a document 
+// * @param cid: identifier of the document 
+// * @param type: type of terms (simple term, multi-term, named entity) 
+// * @return a pair of iterators pointing to 1) the first element of a set 
+// * of terms and to 2) past the end of this set. 
+// */ 
+// virtual std::pair<DocTermsIterator, DocTermsIterator> getDocTerms(
+//     Lima::CONTENT_ID cid, 
+//     Lima::Common::BagOfWords::BoWType type) const = 0;*/ 
+// 
+// La bufferisation de la liste des termes par la classe NindLocalAmose serait possible 
+// o si getDocTerms n'est pas réentrant (pas rappellej jusqu'ah ce que son rejsultat soit complehtement utilisej)
+// o s'il existait une méthode pour libérer l'espace utilisé pour la liste de termes     
+
+    /** \brief get the set of unique term in a document 
+    * \param docId identifier of the document
+    * \param termType type of terms (0: simple term, 1: multi-term, 2: named entity) 
+    * \param termsSet set de termes uniques dans le document */
+    bool getDocTerms(const unsigned int docId,
+                     const unsigned int termType,
+                     std::set<std::string> &termsSet);
+ 
+// /** 
+// * @brief get length of a document 
+// * @return  an integer, the number of occurrences of terms 
+// */ 
+// virtual uint32_t getDocLength(
+//     Lima::CONTENT_ID cid) const = 0; 
     /** \brief get length of a document
     *\return  an integer, the number of occurrences of terms    */
-    unsigned int getDocLength(const unsigned int docId)
-        throw(NindLocalIndexException);
-        
-    struct TermCg {
-        unsigned int term;
-        unsigned char cg;
-        TermCg(): term(0), cg(0) {}
-        TermCg(const unsigned int ter, const unsigned char cat): term(ter), cg(cat) {}
-        ~TermCg() {}
-        bool operator<(const TermCg tcg) const {return this->term < tcg.term; }
-    };
-
-    /** \brief Read a full document as a set of unique terms without frequencies
-    *\param docId ident of doc
-    *\param termCgSet structure to receive unique terms
-    *\return true if doc was found, false otherwise */
-    bool getUniqueTerms(const unsigned int docId,
-                       std::set<struct TermCg> &uniqueTermsSet)
-        throw(NindLocalIndexException);
+    unsigned int getDocLength(const unsigned int docId);
         
 private:
-    typedef std::list<struct Term> LocalIndexType;
-    //Return iterator on the cache if doc exists, end else
-    //Read LocalIndex if it is not in the cache, 
-    std::list<LocalIndexType>::const_reverse_iterator getFromCache(const unsigned int docId)
-        throw(NindLocalIndexException);
-        
-    unsigned int m_cacheSize;
-    std::list<unsigned int> m_localIndexIdentCache;
-    std::list<LocalIndexType> m_localIndexCache;    
+    NindLexiconAmose m_nindLexicon;
 };
 ////////////////////////////////////////////////////////////
     } // end namespace

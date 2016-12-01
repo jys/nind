@@ -18,26 +18,25 @@
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
 #include "NindLocalAmose.h"
+#include <map>
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
 //brief Creates NindLocalAmose with a specified name associated with.
 //param fileName absolute path file name
-//param lexiconWordsNb number of words contained in lexicon 
+//param isLocalIndexWriter true if localIndex writer, false if localIndex reader  
 //param lexiconIdentification unique identification of lexicon 
-//param cacheSize size of cache for terms from indexTerm*/
+//param indirectionEntryNb number of entries in a single indirection block */
 NindLocalAmose::NindLocalAmose(const string &fileName,
-                               const unsigned int lexiconWordsNb,
-                               const unsigned int lexiconIdentification,
-                               const unsigned int cacheSize)
-    throw(NindIndexException):
+                               const bool isLocalIndexWriter,
+                               const Identification &lexiconIdentification,
+                               const unsigned int indirectionBlocSize):
     NindLocalIndex(fileName, 
-                   false, 
-                   lexiconWordsNb, 
-                   lexiconIdentification),
-    m_cacheSize(cacheSize),
-    m_localIndexIdentCache(),
-    m_localIndexCache()
+                   isLocalIndexWriter, 
+                   lexiconIdentification,
+                   indirectionBlocSize),
+    m_nindLexicon(fileName.substr(0, fileName.find('.'))+".lexiconindex", 
+                  false)
 {
 }
 ////////////////////////////////////////////////////////////
@@ -45,77 +44,90 @@ NindLocalAmose::~NindLocalAmose()
 {
 }
 ////////////////////////////////////////////////////////////
-//brief Read a full document as a list of terms
-//param docId ident of doc
-//param localIndex structure to receive all datas of the specified doc
-//return true if doc was found, false otherwise */
-bool NindLocalAmose::getLocalIndex(const unsigned int docId,
-                                   list<struct Term> &localIndex)
-    throw(NindLocalIndexException)
+//brief Fill the data structure positions with position of occurrences 
+//of terms (from @ref termIds) in documents (from @ref documents)
+//param termIds vector of identifier of terms
+//param documents vector of documents where to search for position of terms. 
+//param positions position of occurrences of terms in documents. One element foreach content  id in @ref documents. 
+//Each element is a vector containing one element for each term in termIds.
+//And each of these elements is the list of positions and lengths of the occurrences of this term in this document.  */
+void NindLocalAmose::getTermPositionIndocs(const vector<unsigned int>& termIds, 
+                                           const vector<unsigned int>& documents, 
+                                           vector<vector<list<Localisation> > >& positions)
 {
-    list<NindLocalAmose::LocalIndexType>::const_reverse_iterator itLocal = getFromCache(docId); 
-    if (itLocal == m_localIndexCache.crend()) return false;
-    localIndex = (*itLocal);
+    //raz rejsultat
+    positions.clear();
+    positions.resize(documents.size());
+    //crejation d'une map d'accehs inverse au vector des terms
+    map<unsigned int, unsigned int> termIdsMap;
+    const unsigned int termIdsSize = termIds.size();
+    for (unsigned int itterm = 0; itterm != termIdsSize; itterm++) termIdsMap[termIds[itterm]] = itterm;
+    //itejrateur dans structure rejsultat
+    vector<vector<list<Localisation> > >::iterator itpos = positions.begin();
+    //on traite les documents un ah un
+    for (vector<unsigned int>::const_iterator itdoc = documents.begin(); itdoc != documents.end(); itdoc++) {
+        //le rejsultat pour ce document
+        vector<list<Localisation> > &docTerms = (*itpos++);
+        docTerms.resize(termIds.size());
+        //les index locaux du document
+        list<NindLocalIndex::Term> localIndex;
+        const bool trouvej = NindLocalIndex::getLocalIndex((*itdoc), localIndex);
+        //si le doc n'existe pas, laisse son rejsultat vide et passe au suivant
+        if (!trouvej) continue; 
+        //examine chaque occurrence de terme
+        for (list<struct Term>::const_iterator itoccur = localIndex.begin(); itoccur != localIndex.end(); itoccur++) {
+            const struct Term &termOccur = (*itoccur);
+            //si ce terme n'est cherchej, son occurrence n'est pas prise en compte 
+            const map<unsigned int, unsigned int>::const_iterator ittermIdsMap = termIdsMap.find(termOccur.term);
+            if (ittermIdsMap == termIdsMap.end()) continue;
+            //occurrence ah prendre en compte
+            //liste des localisations du terme dans le rejsultat
+            const unsigned int idxTerm = (*ittermIdsMap).second;
+            list<Localisation> &Localisations = docTerms[idxTerm];
+            //ajoute cette localisation aux prejcejdentes
+            //(Amose n'indexe pas les localisations frectionnejes)
+            Localisations.push_back(termOccur.localisation.front());
+        }
+    }
+}
+////////////////////////////////////////////////////////////
+//brief get the set of unique term in a document 
+//param docId identifier of the document
+//param termType type of terms (0: simple term, 1: multi-term, 2: named entity) 
+//param termsSet set de termes uniques dans le document */
+bool NindLocalAmose::getDocTerms(const unsigned int docId,
+                                 const unsigned int termType,
+                                 set<string> &termsSet)
+{
+    //raz rejsultat
+    termsSet.clear();
+    //les identifiants des termes uniques du document
+    set<unsigned int> termIdents;
+    const bool trouvej = NindLocalIndex::getTermIdents(docId, termIdents);
+    //si le doc n'existe pas, retour false
+    if (!trouvej) return false;
+    //examine chaque occurrence de terme
+    for (set<unsigned int>::const_iterator itterm = termIdents.begin(); itterm != termIdents.end(); itterm++) {
+        //rejcupehre le terme en string
+        string lemma;
+        unsigned int type;
+        string namedEntity;
+        const bool trouvej = m_nindLexicon.getTerm((*itterm), lemma, type, namedEntity);
+        if (!trouvej) throw IncompatibleFileException("Unknown term into lexicon");
+        if (type == termType) termsSet.insert(lemma);
+    }
     return true;
 }
 ////////////////////////////////////////////////////////////
 //brief get length of a document
 //return  an integer, the number of occurrences of terms    */
 unsigned int NindLocalAmose::getDocLength(const unsigned int docId)
-    throw(NindLocalIndexException)
 {
-    list<NindLocalAmose::LocalIndexType>::const_reverse_iterator itLocal = getFromCache(docId); 
-    if (itLocal == m_localIndexCache.crend()) return 0;
-    return (*itLocal).size();
-}
-////////////////////////////////////////////////////////////
-//brief Read a full document as a set of unique terms without frequencies
-//param docId ident of doc
-//param termCgSet structure to receive unique terms
-//return true if doc was found, false otherwise */
-bool NindLocalAmose::getUniqueTerms(const unsigned int docId,
-                                    set<struct TermCg> &uniqueTermsSet)
-    throw(NindLocalIndexException)
-{
-    list<NindLocalAmose::LocalIndexType>::const_reverse_iterator itLocal = getFromCache(docId); 
-    if (itLocal == m_localIndexCache.crend()) return false;
-    uniqueTermsSet.clear();
-    for (list<NindLocalIndex::Term>::const_iterator it = (*itLocal).begin(); it != (*itLocal).end(); it++) {
-        const NindLocalIndex::Term &term = (*it);
-        const TermCg termCg(term.term, term.cg);
-        uniqueTermsSet.insert(termCg);
-    }
-    return true;
-}
-////////////////////////////////////////////////////////////
-//Return iterator on the cache if doc exists, end else
-//Read LocalIndex if it is not in the cache, 
-list<NindLocalAmose::LocalIndexType>::const_reverse_iterator NindLocalAmose::getFromCache(const unsigned int docId)
-    throw(NindLocalIndexException)
-{
-    list<NindLocalAmose::LocalIndexType>::const_reverse_iterator itLocal = m_localIndexCache.crbegin();
-    for (list<unsigned int>::const_reverse_iterator it = m_localIndexIdentCache.crbegin();
-         it != m_localIndexIdentCache.crend(); it++) {
-        if ((*it) == docId) return itLocal;
-        itLocal++;
-    }
-    //not found in cache, read from file
-    m_localIndexCache.push_back(LocalIndexType());
-    LocalIndexType &localIndex = m_localIndexCache.back();
-    if (NindLocalIndex::getLocalIndex(docId, localIndex)) {
-        //found, fill cache
-        m_localIndexIdentCache.push_back(docId);
-        //if cache is full, dismiss the oldest
-        if (m_localIndexIdentCache.size() > m_cacheSize) {
-            m_localIndexIdentCache.pop_front();
-            m_localIndexCache.pop_front();
-        }
-        return m_localIndexCache.crbegin();
-    }
-    else {
-        //repair cache
-        m_localIndexCache.pop_back();
-        return m_localIndexCache.crend();
-    }  
+    //les index locaux du document
+    list<NindLocalIndex::Term> localIndex;
+    const bool trouvej = NindLocalIndex::getLocalIndex(docId, localIndex);
+    //si le doc n'existe pas, retour 0
+    if (!trouvej) return 0;
+    return localIndex.size();
 }
 ////////////////////////////////////////////////////////////

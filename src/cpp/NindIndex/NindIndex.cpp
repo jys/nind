@@ -57,14 +57,12 @@ using namespace std;
 //brief Creates NindIndex with a specified name associated with.
 //param fileName absolute path file name
 //param isWriter true if writer, false if reader  
-//param lexiconWordsNb number of words contained in lexicon (if 0, no checks)
 //param lexiconIdentification unique identification of lexicon  (if 0, no checks)
 //param definitionMinimumSize size in bytes of the smallest definition
 //param indirectionBlocSize number of entries in a single indirection block */
 NindIndex::NindIndex(const std::string &fileName,
                              const bool isWriter,
-                             const unsigned int lexiconWordsNb,
-                             const unsigned int lexiconIdentification,
+                             const Identification &lexiconIdentification,
                              const unsigned int definitionMinimumSize,
                              const unsigned int indirectionBlocSize):
     m_file(fileName),
@@ -84,7 +82,7 @@ NindIndex::NindIndex(const std::string &fileName,
                 //ejtablit la carte des indirections       
                 mapIndirection();
                 //verifie l'apairage avec le lexique
-                checkIdentification(lexiconWordsNb, lexiconIdentification); 
+                checkIdentification(lexiconIdentification); 
                 //ejtablit la carte des vides
                 mapEmptySpaces();
             }
@@ -102,7 +100,7 @@ NindIndex::NindIndex(const std::string &fileName,
                 isOpened = m_file.open("w+b");
                 if (!isOpened) throw OpenFileException(m_fileName);
                 //lui colle une zone d'indirection vide suivie de l'identification
-                addIndirection(lexiconWordsNb, lexiconIdentification);
+                addIndirection(lexiconIdentification);
                 //renseigne la zone d'indirection
                 const pair<unsigned int, unsigned long int> indirection(TETE_INDIRECTION, m_indirectionBlocSize);
                 m_indirectionMapping.push_back(indirection);
@@ -115,7 +113,7 @@ NindIndex::NindIndex(const std::string &fileName,
             //ejtablit la carte des indirections       
             mapIndirection();
             //verifie l'apairage avec le lexique
-            checkIdentification(lexiconWordsNb, lexiconIdentification); 
+            checkIdentification(lexiconIdentification); 
         }
     }
     catch (FileException &exc) {
@@ -157,8 +155,7 @@ bool NindIndex::getDefinition(const unsigned int ident,
 //param lexiconWordsNb number of words contained in lexicon 
 //param lexiconIdentification unique identification of lexicon 
 void NindIndex::setDefinition(const unsigned int ident,
-                              const unsigned int lexiconWordsNb,
-                              const unsigned int lexiconIdentification)
+                              const Identification &lexiconIdentification)
 {
     //indicateur que l'identification a dejjah ejtej ejcrite
     bool identOk = false;
@@ -202,7 +199,7 @@ void NindIndex::setDefinition(const unsigned int ident,
             unsigned int longueurDefinition = 0;
             //2) trouve une place libre
             //cherche d'abord une place compatible (>= tailleDefinition et < tailleDefinition + m_definitionMinimumSize)
-            identOk = findNewArea(definitionSize, dataSize, lexiconWordsNb, lexiconIdentification, offsetDefinition, longueurDefinition);
+            identOk = findNewArea(definitionSize, dataSize, lexiconIdentification, offsetDefinition, longueurDefinition);
             //3b) ecrit les nouvelles donnees
             m_file.setPos(offsetDefinition, SEEK_SET);    //se positionne sur le terme
             m_file.writeBuffer();                     //ecrit le nouveau buffer
@@ -223,8 +220,8 @@ void NindIndex::setDefinition(const unsigned int ident,
         //<flagIdentification> <maxIdentifiant> <identifieurUnique>
         m_file.createBuffer(TAILLE_IDENTIFICATION);
         m_file.putInt1(FLAG_IDENTIFICATION);
-        m_file.putInt3(lexiconWordsNb);
-        m_file.putInt4(lexiconIdentification);
+        m_file.putInt3(lexiconIdentification.lexiconWordsNb);
+        m_file.putInt4(lexiconIdentification.lexiconTime);
         m_file.writeBuffer();                       //ecriture effective sur le fichier  
         m_file.flush();
     }
@@ -235,8 +232,7 @@ void NindIndex::setDefinition(const unsigned int ident,
 //param lexiconWordsNb number of words contained in lexicon 
 //param lexiconIdentification unique identification of lexicon 
 void NindIndex::checkExtendIndirection(const unsigned int ident,
-                             const unsigned int lexiconWordsNb,
-                             const unsigned int lexiconIdentification)
+                                       const Identification &lexiconIdentification)
 {
     //si le terme n'a pas d'indirection, ajoute un bloc d'indirection
     unsigned long int indirection = getIndirection(ident);
@@ -244,7 +240,7 @@ void NindIndex::checkExtendIndirection(const unsigned int ident,
         //le terme est hors des blocs d'indexation actuels, cree un nouveau bloc d'indirection
         m_file.setPos(-TAILLE_IDENTIFICATION, SEEK_END);       //se positionne sur l'identification
         const unsigned long int blocIndirection = m_file.getPos();
-        addIndirection(lexiconWordsNb, lexiconIdentification);  //bloc d'indirection = identification a la fin 
+        addIndirection(lexiconIdentification);  //bloc d'indirection = identification a la fin 
         pair<unsigned long int, unsigned int> &indirectionBlocPrec = m_indirectionMapping.back();
         //se positionne sur le <addrBlocSuivant> du dernier bloc
         //<flagIndirection> <addrBlocSuivant> <nombreIndirection> { indirection }
@@ -268,7 +264,7 @@ unsigned int NindIndex::getFirstIndirectionBlockSize()
     //<flagIndirection> <addrBlocSuivant> <nombreIndirection>
     m_file.readBuffer(TETE_INDIRECTION);
     if (m_file.getInt1() != FLAG_INDIRECTION) 
-        throw InvalidFileException("NindIndex::mapIndirection : " + m_fileName);
+        throw InvalidFileException("NindIndex::getFirstIndirectionBlockSize : " + m_fileName);
     m_file.getInt5();
     return m_file.getInt3();
 }
@@ -276,15 +272,16 @@ unsigned int NindIndex::getFirstIndirectionBlockSize()
 //brief get identification of lexicon
 //param wordsNb where number of words contained in lexicon is returned
 //param identification where unique identification of lexicon is returned */
-void NindIndex::getFileIdentification(unsigned int &wordsNb, unsigned int &identification)
+void NindIndex::getFileIdentification(Identification &identification)
 {
     m_file.setPos(-TAILLE_IDENTIFICATION, SEEK_END);       //se positionne sur l'identification
     //<flagIdentification> <maxIdentifiant> <identifieurUnique>
     m_file.readBuffer(TAILLE_IDENTIFICATION);
     if (m_file.getInt1() != FLAG_IDENTIFICATION) 
         throw InvalidFileException("NindIndex::getIdentification : " + m_fileName);
-    wordsNb = m_file.getInt3();
-    identification = m_file.getInt4();
+    const unsigned int wordsNb = m_file.getInt3();
+    const unsigned int time = m_file.getInt4();
+    identification = Identification(wordsNb, time);
 }
 ////////////////////////////////////////////////////////////
 //return l'identifiant maximum possible avec le systehme actuel d'indirection
@@ -333,8 +330,7 @@ unsigned long int NindIndex::getIndirection(const unsigned int ident)
 }
 ////////////////////////////////////////////////////////////
 //ajoute un bloc d'indirection vide suivi d'une identification a la position courante du fichier
-void NindIndex::addIndirection(const unsigned int lexiconWordsNb,
-                                   const unsigned int lexiconIdentification)
+void NindIndex::addIndirection(const Identification &lexiconIdentification)
 {
     //le fichier est deja positionne au bon endroit
     //<flagIndirection_1> <addrBlocSuivant_5> <nombreIndirection_3>
@@ -349,14 +345,13 @@ void NindIndex::addIndirection(const unsigned int lexiconWordsNb,
     //utilise le meme buffer
     //<flagIdentification_1> <maxIdentifiant_3> <identifieurUnique_4>
     m_file.putInt1(FLAG_IDENTIFICATION);
-    m_file.putInt3(lexiconWordsNb);
-    m_file.putInt4(lexiconIdentification);
+    m_file.putInt3(lexiconIdentification.lexiconWordsNb);
+    m_file.putInt4(lexiconIdentification.lexiconTime);
     m_file.writeBuffer();                               //ecriture effective sur le fichier
 }
 ////////////////////////////////////////////////////////////
 //verifie l'apairage avec le lexique
-void NindIndex::checkIdentification(const unsigned int lexiconWordsNb,
-                                    const unsigned int lexiconIdentification)
+void NindIndex::checkIdentification(const Identification &lexiconIdentification)
 {
     m_file.setPos(-TAILLE_IDENTIFICATION, SEEK_END);       //se positionne sur l'identification
     //<flagIdentification> <maxIdentifiant> <identifieurUnique>
@@ -366,13 +361,13 @@ void NindIndex::checkIdentification(const unsigned int lexiconWordsNb,
     const unsigned int maxIdent = m_file.getInt3();
     const unsigned int identification = m_file.getInt4();
     //si c'est le fichier lexique qui est verifie, pas de comparaison de valeurs
-    if (lexiconWordsNb == 0 && lexiconIdentification == 0) return;
+    if (lexiconIdentification == Identification(0, 0)) return;
     //si ce n'est pas le fichier lexique qui est verifie, comparaison de valeurs
-    if (maxIdent != lexiconWordsNb || identification != lexiconIdentification) {
+    if (Identification(maxIdent, identification) != lexiconIdentification) {
         std::cerr << "NindIndex::checkIdentification failed "
                   << m_fileName << " : "
-                  << maxIdent << "/" << lexiconWordsNb
-                  << " ; " << identification << "/" << lexiconIdentification
+                  << maxIdent << "/" << lexiconIdentification.lexiconWordsNb
+                  << " ; " << identification << "/" << lexiconIdentification.lexiconTime
                   << std::endl;
         throw IncompatibleFileException(m_fileName); 
     }
@@ -436,8 +431,7 @@ void NindIndex::mapEmptySpaces()
 //trouve une nouvelle zone pour les nouvelles donnejs
 bool NindIndex::findNewArea(const unsigned int definitionSize,
                             const unsigned int dataSize,
-                            const unsigned int lexiconWordsNb,
-                            const unsigned int lexiconIdentification,
+                            const Identification &lexiconIdentification,
                             unsigned long int &offsetDefinition,
                             unsigned int &longueurDefinition)
 {
@@ -479,8 +473,8 @@ bool NindIndex::findNewArea(const unsigned int definitionSize,
             //et l'identification au bout
             //<flagIdentification> <maxIdentifiant> <identifieurUnique>
             m_file.putInt1(FLAG_IDENTIFICATION);  
-            m_file.putInt3(lexiconWordsNb);  
-            m_file.putInt4(lexiconIdentification); 
+            m_file.putInt3(lexiconIdentification.lexiconWordsNb);  
+            m_file.putInt4(lexiconIdentification.lexiconTime); 
             return true;
         }
     }

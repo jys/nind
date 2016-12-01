@@ -3,6 +3,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/cpp )
 ########### next target ###############
 
 SET(NindAmose_LIB_SRCS
+  NindLexiconAmose.h
+  NindLexiconAmose.cpp
   NindTermAmose.h
   NindTermAmose.cpp
   NindLocalAmose.h

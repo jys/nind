@@ -61,12 +61,10 @@ using namespace std;
 //param indirectionBlocSize number of entries in a single indirection block */
 NindTermIndex::NindTermIndex(const std::string &fileName,
                              const bool isTermIndexWriter,
-                             const unsigned int lexiconWordsNb,
-                             const unsigned int lexiconIdentification,
+                             const Identification &lexiconIdentification,
                              const unsigned int indirectionBlocSize):
     NindIndex(fileName, 
               isTermIndexWriter, 
-              lexiconWordsNb, 
               lexiconIdentification, 
               TAILLE_DEFINITION_MINIMUM, 
               indirectionBlocSize)
@@ -126,13 +124,12 @@ bool NindTermIndex::getTermIndex(const unsigned int ident,
 //param lexiconIdentification unique identification of lexicon */
 void NindTermIndex::setTermIndex(const unsigned int ident,
                                  const list<struct TermCG> &termIndex,
-                                 const unsigned int lexiconWordsNb,
-                                 const unsigned int lexiconIdentification)
+                                 const Identification &lexiconIdentification)
 {
     try {
         //1) verifie que le terme n'est pas en dehors du dernier bloc d'indirection
         //il faut le faire maintenant parce que le buffer d'ecriture est unique
-        checkExtendIndirection(ident, lexiconWordsNb, lexiconIdentification);
+        checkExtendIndirection(ident, lexiconIdentification);
         
         //2) calcule la taille maximum du buffer d'ecriture
         //<flagDefinition> <identifiantTerme> <longueurDonnees> <donneesTerme>
@@ -170,7 +167,7 @@ void NindTermIndex::setTermIndex(const unsigned int ident,
         const unsigned int longueurDonnees = m_file.getOutBufferSize() - TETE_DEFINITION;
         m_file.putInt3(longueurDonnees, 4);  //la taille dans la trame
         //4) ecrit la definition du terme et gere le fichier
-        setDefinition(ident, lexiconWordsNb, lexiconIdentification);
+        setDefinition(ident, lexiconIdentification);
     }
     catch (FileException &exc) {
         cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 

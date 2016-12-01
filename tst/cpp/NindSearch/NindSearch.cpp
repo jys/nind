@@ -19,6 +19,7 @@
 #include "NindIndex/NindTermIndex.h"
 #include "NindIndex/NindLocalIndex.h"
 #include "NindIndex/NindIndexTest.h"
+#include "NindIndex/NindDate.h"
 #include "NindExceptions.h"
 #include <time.h>
 #include <string>
@@ -61,16 +62,16 @@ int main(int argc, char *argv[]) {
         const string localindexFileName = lexiconFileName.substr(0, pos) + ".localindex";
         //le lexique lecteur
         NindLexiconIndex nindLexicon(lexiconFileName, false);
-        unsigned int wordsNb, identification;
-        nindLexicon.getIdentification(wordsNb, identification);
+        NindIndex::Identification identification;
+        nindLexicon.getIdentification(identification);
         //le fichier inverse lecteur
-        NindTermIndex nindTermIndex(termindexFileName, false,  wordsNb, identification);
+        NindTermIndex nindTermIndex(termindexFileName, false, identification);
         //le fichier des index locaux
-        NindLocalIndex nindLocalIndex(localindexFileName, false, wordsNb, identification);
+        NindLocalIndex nindLocalIndex(localindexFileName, false, identification);
         //la classe d'utilitaires
         NindIndexTest nindIndexTest;
-        const time_t time = (time_t) identification;
-        cout<<"N° de terme max : "<<wordsNb<<" dernière mise à jour : "<<ctime(&time);
+        cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;
+        cout<<" ("<<NindDate::date(identification.lexiconTime)<<")"<<endl;
         
         while (true) {
             char str [80];
@@ -110,6 +111,7 @@ int main(int argc, char *argv[]) {
             //recupere l'index local du doc             
             list<NindLocalIndex::Term> localIndex;
             nindLocalIndex.getLocalIndex(noDoc, localIndex);
+            cerr<<"localIndex.size()="<<localIndex.size()<<endl;
             for (list<NindLocalIndex::Term>::const_iterator it3 = localIndex.begin();
                     it3 != localIndex.end(); it3++) {
                 const NindLocalIndex::Term &term = (*it3);

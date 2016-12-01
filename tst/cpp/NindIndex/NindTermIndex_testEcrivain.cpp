@@ -84,12 +84,11 @@ int main(int argc, char *argv[]) {
         start = clock();
         //le lexique ecrivain
         NindLexicon nindLexicon(lexiconFileName, true);
-        unsigned int wordsNb, identification;
-        nindLexicon.getIdentification(wordsNb, identification);
+        NindIndex::Identification identification;
+        nindLexicon.getIdentification(identification.lexiconWordsNb, identification.lexiconTime);
         //le fichier inverse ecrivain
         NindTermIndex *nindTermIndex = new NindTermIndex(termindexFileName, 
                                                          true, 
-                                                         wordsNb, 
                                                          identification,
                                                          indirectionEntryNb);
         //la classe d'utilitaires
@@ -158,18 +157,17 @@ int main(int argc, char *argv[]) {
                     documents.push_back(NindTermIndex::Document(noDoc, 1));
                 }
                 //ecrit sur le fichier
-                nindLexicon.getIdentification(wordsNb, identification);
-                nindTermIndex->setTermIndex(id, termIndex, wordsNb, identification);
+                nindLexicon.getIdentification(identification.lexiconWordsNb, identification.lexiconTime);
+                nindTermIndex->setTermIndex(id, termIndex, identification);
                 nbMaj +=1;
             }
             //ferme et rouvre
             if (docsNb % blocSize == 0) {
                 nindTermIndex->dumpEmptyAreas();
                 delete nindTermIndex;
-                nindLexicon.getIdentification(wordsNb, identification);
+                nindLexicon.getIdentification(identification.lexiconWordsNb, identification.lexiconTime);
                 nindTermIndex = new NindTermIndex(termindexFileName, 
                                                   true, 
-                                                  wordsNb, 
                                                   identification,
                                                   indirectionEntryNb);
             }

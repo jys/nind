@@ -37,7 +37,15 @@ using namespace std;
 // <localisationRelatif>   ::= <IntegerSLat>
 // <longueur>              ::= <Integer1>
 ////////////////////////////////////////////////////////////
+//Le bloc 0 est le lexique du fichier des index locaux, il donne le n° exerne des documents
+//Il a une structure particulière
+// <definition>            ::= <flagLexique> <nombreDocuments> { <identifiantExterne> }
+// <flagLexique>           ::= <Integer1>
+// <nombreDocuments>       ::= <Integer3>
+// <identifiantExterne>    ::= <Integer3>
+////////////////////////////////////////////////////////////
 #define FLAG_DEFINITION 17
+#define FLAG_LEXIQUE 19
 //<flagDefinition>(1) <identifiantDoc>(3) <identifiantExterne>(4) = 8
 #define TETE_IDENT_EXTERNE 8
 //<flagDefinition>(1) <identifiantDoc>(3) <identifiantExterne>(4) = 8
@@ -60,17 +68,14 @@ using namespace std;
 //brief Creates NindTermIndex with a specified name associated with.
 //param fileName absolute path file name
 //param isLocalIndexWriter true if localIndex writer, false if localIndex reader  
-//param lexiconWordsNb number of words contained in lexicon 
 //param lexiconIdentification unique identification of lexicon 
 //param indirectionEntryNb number of entries in a single indirection block */
 NindLocalIndex::NindLocalIndex(const std::string &fileName,
                                const bool isLocalIndexWriter,
-                               const unsigned int lexiconWordsNb,
-                               const unsigned int lexiconIdentification,
+                               const Identification &lexiconIdentification,
                                const unsigned int indirectionBlocSize):
     NindIndex(fileName, 
               isLocalIndexWriter, 
-              lexiconWordsNb, 
               lexiconIdentification, 
               TAILLE_DEFINITION_MINIMUM, 
               indirectionBlocSize),
@@ -102,7 +107,7 @@ NindLocalIndex::~NindLocalIndex()
 {
 }
 ////////////////////////////////////////////////////////////
-//brief Read a full document as a list of terms
+//brief Return a full document as a list of terms whith their localisations
 //param ident ident of doc
 //param localIndex structure to receive all datas of the specified doc
 //return true if doc was found, false otherwise */
@@ -110,7 +115,9 @@ bool NindLocalIndex::getLocalIndex(const unsigned int ident,
                                    list<struct Term> &localIndex)
 {
     try {
-        //trouve l'identfiant interne du doc 
+        //raz rejsultat
+        localIndex.clear();
+        //trouve l'identifiant interne du doc 
         map<unsigned int, unsigned int>::const_iterator itident = m_docIdTradExtInt.find(ident);
         if (itident == m_docIdTradExtInt.end()) return false;
         const unsigned int identInt = (*itident).second;
@@ -150,20 +157,38 @@ bool NindLocalIndex::getLocalIndex(const unsigned int ident,
     }
 }
 ////////////////////////////////////////////////////////////
+//brief Return a full document as a list of unique terms ids
+//param ident ident of doc
+//param termIdents structure to receive all datas of the specified doc
+//return true if doc was found, false otherwise */
+bool NindLocalIndex::getTermIdents(const unsigned int ident,
+                                   set<unsigned int> &termIdents)
+{
+    //raz rejsultat
+    termIdents.clear();
+    //rejcupehre la structure du document
+    list<struct Term> localIndex;
+    const bool existe = getLocalIndex(ident, localIndex);
+    if (!existe) return false;
+    //trouve tous les identifiants de termes de ce document
+    for (list<struct Term>::const_iterator it = localIndex.begin(); it != localIndex.end(); it++) {
+        const NindLocalIndex::Term &term = (*it);
+        termIdents.insert(term.term);
+    } 
+}
+////////////////////////////////////////////////////////////
 //brief Write a full termIndex as a list of structures
 //param ident ident of doc
 //param localIndex structure containing all datas of the specified doc. empty when deletion
-//param lexiconWordsNb number of words contained in lexicon 
 //param lexiconIdentification unique identification of lexicon */
 void NindLocalIndex::setLocalIndex(const unsigned int ident,
                                    const std::list<struct Term> &localIndex,
-                                   const unsigned int lexiconWordsNb,
-                                   const unsigned int lexiconIdentification)
+                                   const Identification &lexiconIdentification)
 {
     try {
         //effacement ?
         if (localIndex.size() == 0) {
-            deleteLocalIndex(ident, lexiconWordsNb, lexiconIdentification);
+            deleteLocalIndex(ident, lexiconIdentification);
             return;
         }
         //est-ce que ce document est dejah connu ?
@@ -176,7 +201,7 @@ void NindLocalIndex::setLocalIndex(const unsigned int ident,
         const unsigned int identInt = (*itident).second;
         //1) verifie que l'identInt n'est pas en dehors du dernier bloc d'indirection
         //il faut le faire maintenant parce que le buffer d'ecriture est unique
-        checkExtendIndirection(identInt, lexiconWordsNb, lexiconIdentification);
+        checkExtendIndirection(identInt, lexiconIdentification);
         
         //2) calcule la taille maximum du buffer d'ecriture
         //<flagDefinition> <identifiantDoc> <identifiantExterne> <longueurDonnees> <donneesDoc>
@@ -217,7 +242,7 @@ void NindLocalIndex::setLocalIndex(const unsigned int ident,
         const unsigned int longueurDonnees = m_file.getOutBufferSize() - TETE_DEFINITION;
         m_file.putInt3(longueurDonnees, OFFSET_LONGUEUR);  //la taille dans la trame
         //4) ecrit la definition du terme et gere le fichier
-        setDefinition(identInt, lexiconWordsNb, lexiconIdentification);
+        setDefinition(identInt, lexiconIdentification);
     }
     catch (FileException &exc) {
         cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
@@ -233,8 +258,7 @@ unsigned int NindLocalIndex::getDocCount() const
 }
 ////////////////////////////////////////////////////////////
 void NindLocalIndex::deleteLocalIndex(const unsigned int ident,
-                                      const unsigned int lexiconWordsNb,
-                                      const unsigned int lexiconIdentification)
+                                      const Identification &lexiconIdentification)
 {
     map<unsigned int, unsigned int>::const_iterator itident = m_docIdTradExtInt.find(ident);
     //si effacement de pas connu, raf
@@ -242,8 +266,26 @@ void NindLocalIndex::deleteLocalIndex(const unsigned int ident,
     const unsigned int identInt = (*itident).second;
     //efface dans le fichier
     m_file.createBuffer(0); 
-    setDefinition(identInt, lexiconWordsNb, lexiconIdentification);
+    setDefinition(identInt, lexiconIdentification);
     //efface dans la map de traduction des identifiants
     m_docIdTradExtInt.erase(itident);
 }
 ////////////////////////////////////////////////////////////
+//Sauvegarde la map des identifiants externes sur le fichier ah l'index 0
+void NindLocalIndex::saveExternalIdents(const Identification &lexiconIdentification)
+{
+    // <flagLexique> <nombreDocuments> { <identifiantExterne> }
+    //calcule taille du buffer
+    const unsigned int tailleBuffer = m_docIdTradExtInt.size() * 3 + 4;
+    //forme le buffer a ecrire sur le fichier
+    m_file.createBuffer(tailleBuffer);
+    m_file.putInt1(FLAG_LEXIQUE);
+    m_file.putInt3(m_docIdTradExtInt.size());
+ }
+////////////////////////////////////////////////////////////
+//Restaure la map des identifiants externes depuis le fichier ah l'index 0
+void NindLocalIndex::restoreExternalIdents()
+{
+}
+////////////////////////////////////////////////////////////
+

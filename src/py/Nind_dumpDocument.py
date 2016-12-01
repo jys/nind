@@ -1,29 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
-import os
-import codecs
-import datetime
-import time
+from os import getenv, path
+import NindLateconFile
 from NindRetrolexiconindex import NindRetrolexiconindex
-import NindLocalindex
+from NindLocalindex import NindLocalindex
 import NindLateconFile
 
 def usage():
-    print """© l'ATÉCON.
+    if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
+    else: script = sys.argv[0]
+    print """© l'ATEJCON.
 Dumpe en clair un document préalablement indexé dans une base nind.
 Les termes apparaissent dans l'ordre, les localisations ne sont pas affichées.
 Le système nind est expliqué dans le document LAT2014.JYS.440.
 
 usage   : %s <fichier lexiconindex> <n° doc>
 exemple : %s box/dumps/boxon/FRE.lexiconindex 9546
-"""%(sys.argv[0], sys.argv[0])
+"""%(script, script)
 
 def main():
     if len(sys.argv) < 3 :
         usage()
         sys.exit()
-    lexiconindexFileName = os.path.abspath(sys.argv[1])
+    lexiconindexFileName = path.abspath(sys.argv[1])
     noDoc = int(sys.argv[2])
     
     #calcul des noms de fichiers (remplace l'extension)
@@ -32,10 +32,10 @@ def main():
     
     #ouvre les classes
     nindRetrolexiconindex = NindRetrolexiconindex(lexiconindexFileName)
-    nindLocalindex = NindLocalindex.NindLocalindex(localindexFileName)
+    nindLocalindex = NindLocalindex(localindexFileName)
 
     #trouve les termes dans le fichier des index locaux et les affiche sans leurs localisations
-    termList = nindLocalindex.getTermList(noDoc)
+    (noDocExterne, termList) = nindLocalindex.getTermList(noDoc)
     resultat = []
     for (noTerme, categorie, localisationsList) in termList:
         terme = nindRetrolexiconindex.getTerme(noTerme)

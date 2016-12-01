@@ -25,6 +25,8 @@
 #include "NindExceptions.h"
 #include <string>
 #include <list>
+#include <map>
+#include <set>
 ////////////////////////////////////////////////////////////
 namespace latecon {
     namespace nindex {
@@ -34,53 +36,105 @@ public:
 
     /** \brief Creates NindTermAmose with a specified name associated with.
     *\param fileName absolute path file name
-    *\param lexiconWordsNb number of words contained in lexicon 
+    *\param isTermIndexWriter true if termIndex writer, false if termIndex reader  
     *\param lexiconIdentification unique identification of lexicon 
-    *\param cacheSize size of cache for terms from indexTerm*/
+    *\param indirectionBlocSize number of entries in a single indirection block */
     NindTermAmose(const std::string &fileName,
-                  const unsigned int lexiconWordsNb,
-                  const unsigned int lexiconIdentification,
-                  const unsigned int cacheSize = 5)
-        throw(NindIndexException);
+                  const bool isTermIndexWriter,
+                  const Identification &lexiconIdentification,
+                  const unsigned int indirectionBlocSize = 0);
 
     virtual ~NindTermAmose();
     
-    /** \brief Read the list of documents where term + CG is indexed
+    /**\brief Add doc references to the specified term
+    *\param ident ident of term
+    *\param type type of term (0: simple term, 1: multi-term, 2: named entity) 
+    *\param newDocuments list of documents ids + frequencies where term is in 
+    *\param lexiconIdentification unique identification of lexicon */
+    void addDocsToTerm(const unsigned int ident,
+                       const unsigned int type,
+                       const std::list<Document> &newDocuments,
+                       const Identification &lexiconIdentification);
+    
+    /**\brief remove doc reference from the specified term
+    *\param ident ident of term
+    *\param type type of term (0: simple term, 1: multi-term, 2: named entity) 
+    *\param documentId id of document to remove
+    *\param lexiconIdentification unique identification of lexicon */
+    void removeDocFromTerm(const unsigned int ident,
+                           const unsigned int type,
+                           const unsigned int documentId,
+                           const Identification &lexiconIdentification);
+
+    /**\brief read specific counts from termindex file
+     * synchronization between writer and readers is up to application */
+    void restoreInternalCounts();
+    
+// /**
+// * @brief get the set of documents containing a term
+// *
+// * @param termId: identifier of the term
+// * @return a pair of iterators pointing to 1) the first element of a set
+// * of documents containing a term and to 2) past the end of this set.
+// */
+// virtual std::pair<DocListIterator, DocListIterator> getDocList(
+//     const TermId& termId) const = 0;
+// 
+// La bufferisation de la liste des identifiants de documents par la classe NindTermAmose serait possible 
+// o si getDocList n'est pas réentrant (pas rappellej jusqu'ah ce que son rejsultat soit complehtement utilisej)
+// o s'il existait une méthode pour libérer l'espace utilisé pour la liste d'identifiants     
+    /** \brief Read the list of documents where term is indexed
+    * frequencies are not returned
     *\param termId ident of term
-    *\param cg: identifier of gramatical category
-    *\param documents structure to receive the list of documents ids + frequencies
+    *\param documentIds structure to receive the list of documents ids
     *\return true if term was found, false otherwise */
-    bool getDocumentsList(const unsigned int termId,
-                          const unsigned char cg,
-                          std::list<Document> &documents)
-        throw(NindTermIndexException);
+    bool getDocList(const unsigned int termId,
+                    std::list<unsigned int> &documentIds); 
         
-    /** \brief Number of documents in index that contain the given term + CG
+// /** 
+// * @brief Number of documents in index that contain the given term 
+// * @param termId: identifier of the term 
+// */ 
+// virtual uint64_t getDocFreq(
+//     const TermId& termId) const = 0; 
+    /** \brief Number of documents in index that contain the given term
     *\param termId: identifier of the term
-    *\param cg: identifier of gramatical category
-    *\return number  of documents in index that contain the given term + CG */
-    unsigned int getDocFreq(const unsigned int termId,
-                            const unsigned char cg)
-        throw(NindTermIndexException);
- 
-    /** \brief Number of occurences in index of the given term + CG
-    *\param termId: identifier of the term
-    *\param cg: identifier of gramatical category
-    *\return number of occurences in index of the given term + CG */
-    unsigned int getTermFreq(const unsigned int termId,
-                            const unsigned char cg)
-        throw(NindTermIndexException);
- 
+    *\return number  of documents in index that contain the given term */
+    unsigned int getDocFreq(const unsigned int termId);
+    
+// /** 
+// * @brief number of unique terms 
+// * @param type: type of the terms (simple term, multi-term, named entity) 
+// */ 
+// virtual uint64_t getUniqueTermCount (
+//    Lima::Common::BagOfWords::BoWType type ) const = 0; 
+    /** \brief number of unique terms  
+    *\param type: type of the terms (0: simple term, 1: multi-term, 2: named entity) 
+    *\return number of unique terms of specified type into the base */
+    unsigned int getUniqueTermCount(const unsigned int type);
+    
+    
+// @brief number of terms occurrences 
+// @param type: type of the terms (simple term, multi-term, named entity) 
+// virtual uint64_t getTermOccurrences (
+//    Lima::Common::BagOfWords::BoWType type ) const = 0; 
+    /** \brief number of terms occurrences 
+    *\param type: type of the terms (0: simple term, 1: multi-term, 2: named entity) 
+    *\return number  of terms occurrences of specified type into the base */
+    unsigned int getTermOccurrences(const unsigned int type);
+    
 private:
-    typedef std::list<struct TermCG> TermIndexType;
-    //Return iterator on the cache if term exists, end else
-    //Read TermIndex if it is not in the cache, 
-    std::list<TermIndexType>::const_reverse_iterator getFromCache(const unsigned int termId)
-        throw(NindTermIndexException);
-        
-    unsigned int m_cacheSize;
-    std::list<unsigned int> m_termIndexIdentCache;
-    std::list<TermIndexType> m_termIndexCache;    
+    /**\brief write specific counts on termindex file
+     * synchronization between writer and readers is up to application 
+    *\param lexiconIdentification unique identification of lexicon */
+    void saveInternalCounts(const Identification &lexiconIdentification);
+    
+    std::map<unsigned int, unsigned int> m_uniqueTermCount;
+    std::map<unsigned int, unsigned int> m_termOccurrences;
+    
+    //pour utiliser la structure commune pour sauvegarder les compteurs sur le fichier termindex
+    typedef Document Counts;
+    typedef TermCG CountsStruct;
 };
 ////////////////////////////////////////////////////////////
     } // end namespace

@@ -52,8 +52,8 @@ NindIndex_indexe::NindIndex_indexe(const string &lexiconFileName,
                                    const unsigned int termBufferSize,
                                    const unsigned int timeControl ) :
     m_nindLexicon(lexiconFileName, true, lexiconEntryNb),
-    m_nindTermindex(termindexFileName, true, 0, 0, termindexEntryNb),
-    m_nindLocalindex(localindexFileName, true, 0, 0, localindexEntryNb),
+    m_nindTermindex(termindexFileName, true, NindIndex::Identification(0, 0), termindexEntryNb),
+    m_nindLocalindex(localindexFileName, true, NindIndex::Identification(0, 0), localindexEntryNb),
     m_termBufferSize(termBufferSize),
     m_timeControl(timeControl),
     m_docIdent(0),
@@ -76,10 +76,10 @@ void NindIndex_indexe::newDoc(const unsigned int docIdent)
     //ecrit le document courant sur le  fichier des index locaux, sauf la premiere fois
     if (m_docIdent != 0) {
         //recupere l'identification du lexique
-        unsigned int wordsNb, identification;
-        if (m_timeControl < 3) m_nindLexicon.getIdentification(wordsNb, identification);
+        NindIndex::Identification identification;
+        if (m_timeControl < 3) m_nindLexicon.getIdentification(identification);
         //ecrit la definition sur le fichier des index locaux
-        if (m_timeControl < 1) m_nindLocalindex.setLocalIndex(m_docIdent, m_localindex, wordsNb, identification);
+        if (m_timeControl < 1) m_nindLocalindex.setLocalIndex(m_docIdent, m_localindex, identification);
         //vide le lexique local
         m_localindex.clear();
         //incremente le compteur
@@ -123,8 +123,8 @@ void NindIndex_indexe::indexe(const list<string> &componants,
 void NindIndex_indexe::flush()
 {
     //recupere l'identification du lexique
-    unsigned int wordsNb, identification;
-    if (m_timeControl < 3) m_nindLexicon.getIdentification(wordsNb, identification);
+    NindIndex::Identification identification;
+    if (m_timeControl < 3) m_nindLexicon.getIdentification(identification);
     for (map<unsigned int, list<pair<unsigned int, unsigned int> > >::const_iterator it2 = m_termBuffer.begin();
          it2 != m_termBuffer.end(); it2++) {
         const unsigned int id2 = (*it2).first;
@@ -140,7 +140,7 @@ void NindIndex_indexe::flush()
             majInverse(cg3, docId, termIndex);
         }
         //ecrit sur le fichier inverse
-        if (m_timeControl < 2) m_nindTermindex.setTermIndex(id2, termIndex, wordsNb, identification);
+        if (m_timeControl < 2) m_nindTermindex.setTermIndex(id2, termIndex, identification);
         //incremente le compteur
         m_termindexAccessNb++;
     }

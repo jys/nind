@@ -68,25 +68,22 @@ NindLexiconIndex::NindLexiconIndex(const string &fileName,
                                    const unsigned int retroIndirectionBlocSize):
     NindIndex(fileName, 
         isLexiconWriter, 
-        0, 
-        0, 
+        Identification(0, 0),
         TAILLE_DEFINITION_MINIMUM, 
         indirectionBlocSize),
     m_modulo(0),
-    m_currentId(0),
-    m_identification(0),
+    m_identification(Identification(0, 0)),
     m_withRetrolexicon(withRetrolexicon)
 {
     //la taille du bloc d'indirection du fichier reel est structurante
     m_modulo = getFirstIndirectionBlockSize(); 
     //l'identifiant de terme le plus eleve (pour l'ecrivain)
-    getFileIdentification(m_currentId, m_identification);
+    getFileIdentification(m_identification);
     //initialisation du retro lexique, eventuellement
     if (m_withRetrolexicon) {
         const size_t pos = fileName.find('.');
         m_nindRetrolexiconIndex = new NindRetrolexiconIndex(fileName.substr(0, pos) + ".retrolexiconindex",
                                                             isLexiconWriter,
-                                                            m_currentId,
                                                             m_identification,
                                                             retroIndirectionBlocSize);
     }
@@ -107,6 +104,8 @@ unsigned int NindLexiconIndex::addWord(const list<string> &components)
     if (!m_isWriter) throw BadUseException("lexicon is not writable");
     //identifiant du mot (simple ou compose) sous ensemble du mot examine
     unsigned int sousMotId = 0;
+    //le compteur courant des identifiants du lexique
+    unsigned int &currentId = m_identification.lexiconWordsNb;
     for (list<string>::const_iterator swIt = components.begin(); swIt != components.end(); swIt++) {
         bool estNouveau = false;
         const string &motSimple = *swIt;
@@ -124,23 +123,23 @@ unsigned int NindLexiconIndex::addWord(const list<string> &components)
         list<struct NindRetrolexiconIndex::TermDef> termDefs;
         //si terme simple inconnu, on le cree
         if ((*termeIt).identifiantS == 0) {
-            (*termeIt).identifiantS = ++m_currentId;
-            //pour le lexique inverse : m_currentId -> motSimple
-            termDefs.push_back(NindRetrolexiconIndex::TermDef(m_currentId, motSimple));
+            (*termeIt).identifiantS = ++currentId;
+            //pour le lexique inverse : currentId -> motSimple
+            termDefs.push_back(NindRetrolexiconIndex::TermDef(currentId, motSimple));
         }
         //si terme compose, on le cree
         if (sousMotId != 0) {
-            (*termeIt).composes.push_back(Compose(sousMotId, ++m_currentId));
-            //pour le lexique inverse : m_currentId -> sousMotId, (*termeIt).identifiantS
-            termDefs.push_back(NindRetrolexiconIndex::TermDef(m_currentId, sousMotId, (*termeIt).identifiantS));
+            (*termeIt).composes.push_back(Compose(sousMotId, ++currentId));
+            //pour le lexique inverse : currentId -> sousMotId, (*termeIt).identifiantS
+            termDefs.push_back(NindRetrolexiconIndex::TermDef(currentId, sousMotId, (*termeIt).identifiantS));
        }
-        sousMotId = m_currentId;
+        sousMotId = currentId;
         //et on ecrit sur le fichier
-        m_identification = (time_t)time(NULL);
-        setDefinitionTermes(definition, m_currentId, m_identification);
+        m_identification.lexiconTime = (time_t)time(NULL);
+        setDefinitionTermes(definition, m_identification);
         //met eventuellement a jour le lexique inverse
         if (m_withRetrolexicon and termDefs.size() != 0) 
-            m_nindRetrolexiconIndex->addTerms(termDefs, m_currentId, m_identification);
+            m_nindRetrolexiconIndex->addTerms(termDefs, m_identification);
     }
     //retourne l'id du mot specifie
     return sousMotId;
@@ -172,11 +171,9 @@ unsigned int NindLexiconIndex::getId(const list<string> &components)
 }
 ////////////////////////////////////////////////////////////
 //brief get identification of lexicon
-//param wordsNb where number of words contained in lexicon is returned
 //param identification where unique identification of lexicon is returned */
-void NindLexiconIndex::getIdentification(unsigned int &wordsNb, unsigned int &identification)
+void NindLexiconIndex::getIdentification(Identification &identification)
 {
-    wordsNb = m_currentId;
     identification = m_identification;
 }
 ////////////////////////////////////////////////////////////
@@ -295,8 +292,7 @@ unsigned int NindLexiconIndex::getDefinitionTermes(const string &termeSimple,
 ////////////////////////////////////////////////////////////
 //Ecrit les donnees de tous les termes qui ont la meme clef modulo 
 void NindLexiconIndex::setDefinitionTermes(const list<Terme> &definition,
-                                           const unsigned int lexiconWordsNb,
-                                           const unsigned int lexiconIdentification)
+                                           const Identification &lexiconIdentification)
 {
     //1) calcule la taille max du buffer
     unsigned int tailleMaximum = TETE_DEFINITION + TAILLE_IDENTIFICATION;
@@ -332,7 +328,7 @@ void NindLexiconIndex::setDefinitionTermes(const list<Terme> &definition,
     const unsigned int longueurDonnees = m_file.getOutBufferSize() - TETE_DEFINITION;
     m_file.putInt3(longueurDonnees, 4);  //la taille dans la trame
     //3) ecrit la definition du terme et gere le fichier
-    setDefinition(ident, lexiconWordsNb, lexiconIdentification);   
+    setDefinition(ident, lexiconIdentification);   
 }
 ////////////////////////////////////////////////////////////
 //calcule la clef de hachage

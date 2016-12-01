@@ -17,38 +17,39 @@
 #include "NindIndex/NindLexiconIndex.h"
 #include "NindAmose/NindTermAmose.h"
 #include "NindAmose/NindLocalAmose.h"
-#include "NindIndex/NindIndexTest.h"
+#include "NindIndex/NindDate.h"
 #include "NindExceptions.h"
 #include <time.h>
 #include <string>
 #include <list>
 #include <set>
 #include <iostream>
+#include <iomanip> 
 #include <fstream>
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
 static void displayHelp(char* arg0) {
-    cout<<"© l'ATÉCON"<<endl;
+    cout<<"© l'ATEJCON"<<endl;
     cout<<"Programme d'interrogation d'une base nind préalablement indexée"<<endl;
-    cout<<"L'utilisateur indique le terme cherché et sa catégorie grammaticale."<<endl;
+    cout<<"L'utilisateur indique le terme cherché."<<endl;
     cout<<"Ce peut être un terme simple ou un terme composé."<<endl;
-    cout<<"Un terme composé a la forme dièsée (ex \"kyrielle#outil#informatique\")."<<endl;
-    cout<<"Valeurs des catégories grammaticales :ADJ, ADV, CONJ, DET, DETERMINEUR,"<<endl;
-    cout<<"    DIVERS, DIVERS_DATE, EXCLAMATION, INTERJ, NC, NOMBRE, NP, PART,"<<endl;
-    cout<<"    PONCTU, PREP, PRON, V, DIVERS_PARTICULE, CLASS, AFFIX"<<endl;
+    cout<<"Un terme composé a la forme blanc-soulignée (ex \"kyrielle_outil_informatique\")."<<endl;
     cout<<"L'utilisateur indique ensuite le document examiné"<<endl;
-    cout<<"et la localisation du terme cherché est affichée."<<endl;
+    cout<<"et la localisation du terme cherché est affichée,"<<endl;
+    cout<<"ainsi que les mesures utiles aux calculs de pertinence"<<endl;
 
     cout<<"usage: "<<arg0<<" --help"<< endl;
     cout<<"       "<<arg0<<" <fichier lexique>"<<endl;
-    cout<<"ex :   "<<arg0<<" FRE.lexiconindex"<<endl;
+    cout<<"ex :   "<<arg0<<" amose-dump.lexiconindex"<<endl;
 }
 ////////////////////////////////////////////////////////////
 #define OFF "\33[m"
 #define BLUE "\33[0;34m"
 #define BOLD "\033[1;31m"
-
+////////////////////////////////////////////////////////////
+static void split(const string &word, 
+                  list<string> &simpleWords);
 ////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
     setlocale( LC_ALL, "French" );
@@ -58,21 +59,29 @@ int main(int argc, char *argv[]) {
 
     try {
         //calcule les noms des fichiers lexique et inverse
-        const size_t pos = lexiconFileName.find('.');
-        const string termindexFileName = lexiconFileName.substr(0, pos) + ".termindex";
-        const string localindexFileName = lexiconFileName.substr(0, pos) + ".localindex";
+        const string incompleteFileName = lexiconFileName.substr(0, lexiconFileName.find('.'));
+        const string termindexFileName = incompleteFileName + ".termindex";
+        const string localindexFileName = incompleteFileName + ".localindex";
         //le lexique lecteur
         NindLexiconIndex nindLexicon(lexiconFileName, false);
-        unsigned int wordsNb, identification;
-        nindLexicon.getIdentification(wordsNb, identification);
+        NindIndex::Identification identification;
+        nindLexicon.getIdentification(identification);
         //le fichier inverse lecteur
-        NindTermAmose nindTermAmose(termindexFileName, wordsNb, identification);
+        NindTermAmose nindTermAmose(termindexFileName, false, identification);
         //le fichier des index locaux
-        NindLocalAmose nindLocalAmose(localindexFileName, wordsNb, identification);
-        //la classe d'utilitaires
-        NindIndexTest nindIndexTest;
-        const time_t time = (time_t) identification;
-        cout<<"N° de terme max : "<<wordsNb<<" dernière mise à jour : "<<ctime(&time);
+        NindLocalAmose nindLocalAmose(localindexFileName, false, identification);
+        cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;
+        cout<<" ("<<NindDate::date(identification.lexiconTime)<<")"<<endl;
+        //affiche les mesures globales pour les calculs de pertinence
+        cout<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getUniqueTermCount(SIMPLE_TERM)<<" SIMPLE_TERM uniques"<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getUniqueTermCount(MULTI_TERM)<<" MULTI_TERM uniques"<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getUniqueTermCount(NAMED_ENTITY)<<" NAMED_ENTITY uniques"<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(SIMPLE_TERM)<<" occurrences de SIMPLE_TERM"<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(MULTI_TERM)<<" occurrences de MULTI_TERM"<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(NAMED_ENTITY)<<" occurrences de NAMED_ENTITY"<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.getDocCount()<<" documents indexés"<<endl;
+        
         
         while (true) {
             char str [80];
@@ -82,42 +91,24 @@ int main(int argc, char *argv[]) {
             if (word.empty()) break;
             //le terme
             list<string> componants;
-            nindIndexTest.split(word, componants);
+            split(word, componants);
             //trouve son identifiant
             const unsigned int ident = nindLexicon.getId(componants);
             if (ident == 0) {
                 cout<<"INCONNU"<<endl;
                 continue;
             }
-            //demande la categorie grammaticale
-            unsigned int cg;
-            while (true) {
-                cout<<BLUE<<"Entrez la catégorie grammaticale (ex \"ADJ\") : "<<OFF;
-                cin.getline(str, 80, '\n');
-                const string cgStr = string(str);
-                try {
-                    cg = nindIndexTest.getCgIdent(cgStr);
-                    break;
-                }
-                catch (...) { 
-                    cout<<"Valeurs des catégories grammaticales :ADJ, ADV, CONJ, DET, DETERMINEUR,"<<endl;
-                    cout<<"    DIVERS, DIVERS_DATE, EXCLAMATION, INTERJ, NC, NOMBRE, NP, PART,"<<endl;
-                    cout<<"    PONCTU, PREP, PRON, V, DIVERS_PARTICULE, CLASS, AFFIX"<<endl;
-                }
-            }
-            //recupere le nombre d'occurences pour ce terme + CG
-            const unsigned int nbOcc = nindTermAmose.getTermFreq(ident, cg);
-            cout<<nbOcc<<" occurences trouvées"<<endl;
-            //recupere le nombre de documents pour ce terme + CG
-            const unsigned int nbDocs = nindTermAmose.getDocFreq(ident, cg);
+            //recupere le nombre d'occurences pour ce terme
+            //const unsigned int nbOcc = nindTermAmose.getTermFreq(ident);
+            //cout<<nbOcc<<" occurences trouvées"<<endl;
+            //recupere le nombre de documents pour ce terme
+            const unsigned int nbDocs = nindTermAmose.getDocFreq(ident);
             cout<<nbDocs<<" documents trouvés"<<endl;
-            //recupere l'index inverse pour ce terme + CG
-            list<NindTermIndex::Document> documents;
-            nindTermAmose.getDocumentsList(ident, cg, documents);
-            for (list<NindTermIndex::Document>::const_iterator it2 = documents.begin(); 
-                    it2 != documents.end(); it2++) {
-                const NindTermIndex::Document &doc = (*it2);
-                cout<<doc.ident<<"("<<doc.frequency<<") ";
+            //recupere l'index inverse pour ce terme
+            list<unsigned int> documents;
+            nindTermAmose.getDocList(ident, documents);
+            for (list<unsigned int>::const_iterator it2 = documents.begin(); it2 != documents.end(); it2++) {
+                cout<<(*it2)<<" ";
             }
             cout<<endl;
             cout<<BLUE<<"Entrez le n° de doc à afficher : "<<OFF;
@@ -125,18 +116,18 @@ int main(int argc, char *argv[]) {
             const unsigned int noDoc = atoi(str);
             //recupere la taille du doc en nombre d'occurences de termes
             const unsigned int nbTerms = nindLocalAmose.getDocLength(noDoc);
-            cout<<nbTerms<<" termes + CG indexés dans ce document"<<endl;
+            cout<<nbTerms<<" termes indexés dans ce document"<<endl;
             //recupere les termes + CG uniques indexes dans ce document
-            set<NindLocalAmose::TermCg> uniqueTermsSet;
-            nindLocalAmose.getUniqueTerms(noDoc, uniqueTermsSet);
-            cout<<uniqueTermsSet.size()<<" termes + CG uniques indexés dans ce document"<<endl;
+            //set<NindLocalAmose::TermCg> uniqueTermsSet;
+            //nindLocalAmose.getUniqueTerms(noDoc, uniqueTermsSet);
+            //cout<<uniqueTermsSet.size()<<" termes uniques indexés dans ce document"<<endl;
             //recupere l'index local du doc             
             list<NindLocalIndex::Term> localIndex;
             nindLocalAmose.getLocalIndex(noDoc, localIndex);
             for (list<NindLocalIndex::Term>::const_iterator it3 = localIndex.begin();
                     it3 != localIndex.end(); it3++) {
                 const NindLocalIndex::Term &term = (*it3);
-                if (term.term == ident && term.cg == cg) {
+                if (term.term == ident) {
                     cout<<"<";
                     const list<NindLocalIndex::Localisation> &localisation = term.localisation;
                     string sep = "";
@@ -155,3 +146,25 @@ int main(int argc, char *argv[]) {
     catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; return false;}
     catch (...) {cerr<<"EXCEPTION unknown"<< endl; return false; }
 }
+////////////////////////////////////////////////////////////
+//brief split words into single words
+//param word composed word with "_"
+//param simpleWords return list of single words */
+static void split(const string &word, 
+                  list<string> &simpleWords)
+{
+    simpleWords.clear();
+    size_t posDeb = 0;
+    while (true) {
+        const size_t posSep = word.find('_', posDeb);
+        if (posSep == string::npos) {
+            //separateur pas trouve
+            if (posDeb != word.size()) simpleWords.push_back(word.substr(posDeb));
+            break;
+        }
+        //separateur trouve
+        simpleWords.push_back(word.substr(posDeb, posSep-posDeb));
+        posDeb = posSep + 1;
+    }
+}
+////////////////////////////////////////////////////////////
