@@ -35,12 +35,27 @@ def main():
     #affiche l'indirection
     (offsetDefinition, longueurDefinition) = nindIndex.getDefinitionAddr(ident)
     print "offset=%d longueur=%d"%(offsetDefinition, longueurDefinition)
+    if offsetDefinition == 0: print 'PAS DE DÉFINITION'
+    else:
+        #lit l'indirection
+        nindIndex.seek(offsetDefinition, 0)
+        #<flagDefinition> <identifiantTerme> <longueurDonnees>
+        flagDefinition = nindIndex.litNombre1()
+        print '<flagDefinition>   = %d'%(flagDefinition)
+        identifiantTerme = nindIndex.litNombre3()
+        print '<identifiant> = %d'%(identifiantTerme)
+        longueurDonnees = nindIndex.litNombre3()
+        print '<longueurDonnees>  = %d'%(longueurDonnees)
+        octets = []
+        for i in range(longueurDonnees): octets.append(str(nindIndex.litNombre1()))
+        print ', '.join(octets)
+
 
 #utilitaires communs aux classes NindLexiconindex, NindLexiconindexInverse, NindLocalindex, NindTermindex
 # <fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 
 #
-# <blocIndirection>       ::= <flagIndirection> <addrBlocSuivant> <nombreIndirection> { indirection }
-# <flagIndirection>       ::= <Integer1>
+# <blocIndirection>       ::= <flagIndirection=47> <addrBlocSuivant> <nombreIndirection> { indirection }
+# <flagIndirection=47>    ::= <Integer1>
 # <addrBlocSuivant>       ::= <Integer5>
 # <nombreIndirection>     ::= <Integer3>
 # <indirection>           ::= <offsetDefinition> <longueurDefinition> 
@@ -51,8 +66,8 @@ def main():
 # <definition>            ::= { <Octet> }
 # <vide>                  ::= { <Octet> }
 #
-# <blocIdentification>    ::= <flagIdentification> <maxIdentifiant> <identifieurUnique>
-# <flagIdentification>    ::= <Integer1>
+# <blocIdentification>    ::= <flagIdentification=53> <maxIdentifiant> <identifieurUnique>
+# <flagIdentification=53> ::= <Integer1>
 # <maxIdentifiant>        ::= <Integer3>
 # <identifieurUnique>     ::= <dateHeure>
 # <dateHeure >            ::= <Integer4>
@@ -65,7 +80,7 @@ class NindIndex(NindLateconFile):
     
     def getIdentification(self):
         FLAG_IDENTIFICATION = 53
-        TAILLE_IDENTIFICATION = 8
+        TAILLE_IDENTIFICATION = 12
         #<flagIdentification_1> <maxIdentifiant_3> <identifieurUnique_4>
         self.seek(-TAILLE_IDENTIFICATION, 2)
         if self.litNombre1() != FLAG_IDENTIFICATION: raise Exception('pas FLAG_IDENTIFICATION sur %s'%(self.latFileName))
@@ -82,7 +97,7 @@ class NindIndex(NindLateconFile):
         startIndirection = 0
         while True:
             addrIndirection = self.tell()
-            #<flagIndirection> <addrBlocSuivant> <nombreIndirection>
+            #<flagIndirection=47> <addrBlocSuivant> <nombreIndirection>
             if self.litNombre1() != FLAG_INDIRECTION: raise Exception('%s : pas FLAG_INDIRECTION à %08X'%(self.latFileName, addrIndirection))
             indirectionSuivante = self.litNombre5()
             nombreIndirection = self.litNombre3()

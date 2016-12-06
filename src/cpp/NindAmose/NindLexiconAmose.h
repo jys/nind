@@ -52,6 +52,17 @@ public:
                          const unsigned int type,
                          const std::string &namedEntity = "");
 
+    /**\brief get ident of a specified term
+    * if word exists in lexicon, its ident is returned
+    * else, return 0 (0 is not a valid ident !)
+    * \param lemma word to be searched. Compound word is structured with "_"
+    * \param type type of the terms (0: simple term, 1: multi-term, 2: named entity) 
+    * \param namedEntity type of named entity, eventually
+    * \return ident of word */
+    unsigned int getTermId(const std::string &lemma,
+                           const unsigned int type,
+                           const std::string &namedEntity = "");
+
     /**\brief get term components from a specified term id 
     * \param lemma word corresponding to term id. Compound word is structured with "_"
     * \param type type of the terms (0: simple term, 1: multi-term, 2: named entity) 
@@ -59,13 +70,15 @@ public:
     * \return true if term exists, false otherwise */
     bool getTerm(const unsigned int termId,
                  std::string &lemma,
-                 unsigned int type,
+                 unsigned int &type,
                  std::string &namedEntity);
     
+private:
+    unsigned int m_semicolonIdent;
 };
 ////////////////////////////////////////////////////////////
 /**\brief various types of Amose terms */
-enum AmoseTypes { SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY };
+enum AmoseTypes { SIMPLE_TERM = 0, MULTI_TERM, NAMED_ENTITY };
 ////////////////////////////////////////////////////////////
     } // end namespace
 } // end namespace

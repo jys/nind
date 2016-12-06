@@ -23,40 +23,39 @@
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
-// <definition>            ::= <flagDefinition> <identifiantTerme>
-//                                                 <longueurDonnees> <donneesTerme>
-// <flagDefinition>        ::= <Integer1>
+// <definition>            ::= <flagDefinition=17> <identifiantTerme> <longueurDonnees> <donneesTerme>
+// <flagDefinition=17>     ::= <Integer1>
 // <identifiantTerme>      ::= <Integer3>
 // <longueurDonnees>       ::= <Integer3>
 // <donneesTerme>          ::= <termeCompose> | <termeSimple>
-// <termeCompose>          ::= <flagCompose> <identifiantA> <identifiantRelS>
-// <flagCompose>           ::= <Integer1>
+// <termeCompose>          ::= <flagCompose=31> <identifiantA> <identifiantRelS>
+// <flagCompose=31>        ::= <Integer1>
 // <identifiantA>          ::= <Integer3>
 // <identifiantRelS>       ::= <IntegerSLat>
-// <termeSimple>           ::= <flagSimple> <longueurTerme> <termeUtf8>
-// <flagSimple>            ::= <Integer1>
+// <termeSimple>           ::= <flagSimple=37> <longueurTerme> <termeUtf8>
+// <flagSimple=37>         ::= <Integer1>
 // <longueurTerme>         ::= <Integer1>
 // <termeUtf8>             ::= { <Octet> }
 ////////////////////////////////////////////////////////////
 #define FLAG_DEFINITION 17
 #define FLAG_COMPOSE 31
 #define FLAG_SIMPLE 37
-//<flagDefinition>(1) <identifiantTerme>(3) <longueurDonnees>(3) = 7
+//<flagDefinition=17>(1) <identifiantTerme>(3) = 4
+#define OFFSET_LONGUEUR 4
+//<flagDefinition=17>(1) <identifiantTerme>(3) <longueurDonnees>(3) = 7
 #define TETE_DEFINITION 7
-//<flagDefinition>(1) <identifiantTerme>(3) <longueurDonnees>(3) <flagCompose>(1) <identifiantA>(3) 
+//<flagDefinition=17>(1) <identifiantTerme>(3) <longueurDonnees>(3) <flagCompose=31>(1) <identifiantA>(3) 
 //<identifiantRelS>(1) = 12
-//<flagDefinition>(1) <identifiantTerme>(3) <longueurDonnees>(3) <flagSimple>(1) <longueurTerme>(1) 
+//<flagDefinition=17>(1) <identifiantTerme>(3) <longueurDonnees>(3) <flagSimple=37>(1) <longueurTerme>(1) 
 //<termeUtf8>(1) = 10
 #define TAILLE_DEFINITION_MINIMUM 10
-//<flagDefinition>(1) <identifiantTerme>(3) <longueurDonnees>(3) <flagSimple>(1) <longueurTerme>(1) 
+//<flagDefinition=17>(1) <identifiantTerme>(3) <longueurDonnees>(3) <flagSimple=37>(1) <longueurTerme>(1) 
 //<termeUtf8>(255) = 264
 #define TAILLE_DEFINITION_MAXIMUM 264
 //<flagCg>(1) <categorie>(1) <frequenceTerme>(3) <nbreDocs>(3) = 8
 //#define TETE_DEFINITION_MAXIMUM 8
 //<identDocRelatif>(3) <frequenceDoc>(2) = 5
 //#define TAILLE_DOC_MAXIMUM 5
-//<flagIdentification>(1) <maxIdentifiant>(3) <identifieurUnique>(4) = 8
-#define TAILLE_IDENTIFICATION 8
 //taille maximum d'un mot compose (pour detecter les bouclages)
 #define TAILLE_COMPOSE_MAXIMUM 30
 ////////////////////////////////////////////////////////////
@@ -97,25 +96,25 @@ void NindRetrolexiconIndex::addTerms(const list<struct TermDef> &termDefs,
             checkExtendIndirection(termDef.identifiant, lexiconIdentification);
             //2) forme le buffer a ecrire sur le fichier
             m_file.createBuffer(TAILLE_DEFINITION_MAXIMUM); 
-            //<flagDefinition> <identifiantTerme> <longueurDonnees> <donneesTerme>
+            //<flagDefinition=17> <identifiantTerme> <longueurDonnees> <donneesTerme>
             m_file.putInt1(FLAG_DEFINITION);
             m_file.putInt3(termDef.identifiant);
             m_file.putInt3(0);         //la taille des donnees sera ecrite plus tard, quand elle sera connue
             //simple si pas compose (pas avec la chaine vide)
             if (termDef.identifiantA == 0) {
-                //<flagSimple> <longueurTerme> <termeUtf8>
+                //<flagSimple=37> <longueurTerme> <termeUtf8>
                 m_file.putInt1(FLAG_SIMPLE);
                 m_file.putString(termDef.termeSimple);
             }
             else {
-                //<flagCompose> <identifiantA> <identifiantRelS>
+                //<flagCompose=31> <identifiantA> <identifiantRelS>
                 m_file.putInt1(FLAG_COMPOSE);
                 m_file.putInt3(termDef.identifiantA);
                 m_file.putSIntLat(termDef.identifiantS - termDef.identifiant);
             }
             //ecrit la taille reelle du buffer
             const unsigned int longueurDonnees = m_file.getOutBufferSize() - TETE_DEFINITION;
-            m_file.putInt3(longueurDonnees, 4);  //la taille dans la trame
+            m_file.putInt3(longueurDonnees, OFFSET_LONGUEUR);  //la taille dans la trame
             //4) ecrit la definition du terme et gere le fichier
             setDefinition(termDef.identifiant, lexiconIdentification);           
         }
@@ -173,7 +172,7 @@ bool NindRetrolexiconIndex::getTermDef(const unsigned int ident,
     try {
         const bool existe = getDefinition(ident);
         if (!existe) return false;
-        //<flagDefinition> <identifiantTerme> <longueurDonnees> <donnees>
+        //<flagDefinition=17> <identifiantTerme> <longueurDonnees> <donnees>
         if (m_file.getInt1() != FLAG_DEFINITION) throw InvalidFileException("NindRetrolexiconIndex::getTermDef A : " + m_fileName);
         const unsigned int identTerme = m_file.getInt3();
         if (identTerme != ident) throw InvalidFileException("NindRetrolexiconIndex::getTermDef B : " + m_fileName);
@@ -181,10 +180,17 @@ bool NindRetrolexiconIndex::getTermDef(const unsigned int ident,
         //positionne la fin de buffer en fonction de la longueur effective des donneesTerme
         m_file.setEndInBuffer(longueurDonnees);
         const unsigned char flag = m_file.getInt1();
-        //<flagCompose> <identifiantA> <identifiantRelS>
-        if (flag == FLAG_COMPOSE) termDef = TermDef(ident, m_file.getInt3(), ident + m_file.getSIntLat());
-        //<flagSimple> <longueurTerme> <termeUtf8>
-        else if (flag == FLAG_SIMPLE) termDef = TermDef(ident, m_file.getString());
+        //<flagCompose=31> <identifiantA> <identifiantRelS>
+        if (flag == FLAG_COMPOSE) {
+            const unsigned int identifiantA = m_file.getInt3();
+            const unsigned int identifiantS = identTerme + m_file.getSIntLat();
+            termDef = TermDef(ident, identifiantA, identifiantS);
+        }
+        //<flagSimple=37> <longueurTerme> <termeUtf8>
+        else if (flag == FLAG_SIMPLE) {
+            const string termeUtf8 = m_file.getString();
+            termDef = TermDef(ident, termeUtf8);
+        }
         else throw InvalidFileException("NindRetrolexiconIndex::getTermDef C : " + m_fileName);    
         return true;
     }

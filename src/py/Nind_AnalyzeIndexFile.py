@@ -27,8 +27,8 @@ def main():
 
     #// <fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 
     #//
-    #// <blocIndirection>       ::= <flagIndirection> <addrBlocSuivant> <nombreIndirection> { indirection }
-    #// <flagIndirection>       ::= <Integer1>
+    #// <blocIndirection>       ::= <flagIndirection=47> <addrBlocSuivant> <nombreIndirection> { indirection }
+    #// <flagIndirection=47>    ::= <Integer1>
     #// <addrBlocSuivant>       ::= <Integer5>
     #// <nombreIndirection>     ::= <Integer3>
     #// <indirection>           ::= <offsetDefinition> <longueurDefinition> 
@@ -37,33 +37,32 @@ def main():
     #//
     #// <blocDefinition>        ::= { <definition> | <vide> }
     #// <definition>            ::= { <octet> }
-    #// <definition>            ::= <flagDefinition> <identifiantTerme> <longueurDonnees> <donneesTerme>
-    #// <definition>            ::= <flagDefinition> <identifiantDoc> <longueurDonnees> <donneesDoc>
-    #//<definition>             ::= <flagDefinition> <identifiantHash> <longueurDonnees> <donneesHash>
-    #// <flagDefinition>        ::= <Integer1>
+    #// <definition>            ::= <flagDefinition=17> <identifiantTerme> <longueurDonnees> <donneesTerme>
+    #// <definition>            ::= <flagDefinition=17> <identifiantHash> <longueurDonnees> <donneesHash>
+    #// <definition>            ::= <flagDefinition=19> <identifiantDoc> <identifiantExterne> <longueurDonnees> <donneesDoc>
+    #// <flagDefinition=17>     ::= <Integer1>
+    #// <flagDefinition=19>     ::= <Integer1>
     #// <identifiantTerme>      ::= <Integer3>
     #// <identifiantDoc>        ::= <Integer3>
     #// <longueurDonnees>       ::= <Integer3>
     #// <vide>                  ::= { <octet> }
     #//
-    #// <blocIdentification>    ::= <flagIdentification> <maxIdentifiant> <identifieurUnique>
-    #// <flagIdentification>    ::= <Integer1>
+    #// <blocIdentification>    ::= <flagIdentification=53> <maxIdentifiant> <identifieurUnique>
+    #// <flagIdentification=53> ::= <Integer1>
     #// <maxIdentifiant>        ::= <Integer3>
     #// <identifieurUnique>     ::= <dateHeure>
     #// <dateHeure >            ::= <Integer4>
     
     FLAG_INDIRECTION = 47
-    FLAG_DEFINITION = 17
+    FLAG_DEFINITION_17 = 17
+    FLAG_DEFINITION_19 = 19
     FLAG_IDENTIFICATION = 53
-    #<flagIdentification> <maxIdentifiant> <identifieurUnique> = 8
-    TAILLE_IDENTIFICATION = 8
-    #<flagIndirection> <addrBlocSuivant> <nombreIndirection> = 9
+    #<flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique> = 12
+    TAILLE_IDENTIFICATION = 12
+    #<flagIndirection=47> <addrBlocSuivant> <nombreIndirection> = 9
     TETE_INDIRECTION = 9
     #<offsetDefinition> <longueurDefinition> = 8
     TAILLE_INDIRECTION = 8
-    #<flagDefinition> <identifiantTerme> <longueurDonnees> = 7
-    #<flagDefinition> <identifiantDoc> <longueurDonnees> = 7
-    TETE_DEFINITION = 7
   
     termindexFile = NindLateconFile.NindLateconFile(termindexFileName)
     termindexFile2 = NindLateconFile.NindLateconFile(termindexFileName)
@@ -74,7 +73,7 @@ def main():
         blocIndirection = 0
         tailleIndirection = 0
         while True:
-            #<flagIndirection> <indirectionSuivante> <nombreIndirection>
+            #<flagIndirection=47> <indirectionSuivante> <nombreIndirection>
             addrIndirection = termindexFile.tell()
             flagIndirection = termindexFile.litNombre1()
             if flagIndirection != FLAG_INDIRECTION: raise Exception('pas FLAG_INDIRECTION à %08X'%(addrIndirection))
@@ -107,7 +106,7 @@ def main():
     print "2) établit la cartographie des vides"
     try:
         #ajoute l'identification dans les non-vides
-        #<flagIdentification> <maxIdentifiant> <identifieurUnique>
+        #<flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique> 
         termindexFile.seek(0, 2)
         nonVidesList.append((termindexFile.tell() - TAILLE_IDENTIFICATION, TAILLE_IDENTIFICATION))
         #ordonne les indirections
@@ -144,7 +143,7 @@ def main():
         termindexFile.seek(0, 0)
         while True:
             addrIndirection = termindexFile.tell()
-            #<flagIndirection> <addrBlocSuivant> <nombreIndirection>
+            #<flagIndirection=47> <addrBlocSuivant> <nombreIndirection>
             if termindexFile.litNombre1() != FLAG_INDIRECTION: raise Exception('pas FLAG_INDIRECTION à %08X'%(addrIndirection))
             indirectionSuivante = termindexFile.litNombre5()
             nombreIndirection = termindexFile.litNombre3()
@@ -154,15 +153,19 @@ def main():
                 longueurDefinition = termindexFile.litNombre3()
                 if offsetDefinition != 0: 
                     termindexFile2.seek(offsetDefinition, 0)
-                    #<flagDefinition> <identifiantTerme> <longueurDonnees>
-                    #<flagDefinition> <identifiantDoc> <longueurDonnees>
-                    #<flagDefinition> <identifiantHash> <longueurDonnees> 
-                    if termindexFile2.litNombre1() != FLAG_DEFINITION: raise Exception('pas FLAG_DEFINITION à %08X'%(offsetDefinition))
-                    if termindexFile2.litNombre3() != noDefinition: raise Exception('%d pas trouvé à %08X'%(noDefinition, offsetDefinition+1))
+                    #<flagDefinition=17> <identifiantTerme> <longueurDonnees>
+                    #<flagDefinition=17> <identifiantHash> <longueurDonnees> 
+                    #<flagDefinition=19> <identifiantDoc> <identifiantExterne> <longueurDonnees> 
+                    flagDefinition = termindexFile2.litNombre1()
+                    identifiant = termindexFile2.litNombre3()
+                    if flagDefinition == FLAG_DEFINITION_19: termindexFile2.litNombre4()
+                    elif flagDefinition != FLAG_DEFINITION_17: raise Exception('pas FLAG_DEFINITION à %08X'%(offsetDefinition))
+                    if identifiant != noDefinition: raise Exception('%d pas trouvé à %08X'%(noDefinition, offsetDefinition+1))
                     longueurDonnees = termindexFile2.litNombre3()
+                    teteDefinition = termindexFile2.tell() - offsetDefinition
                     nbreDefinition +=1
-                    tailleDefinition += longueurDonnees + TETE_DEFINITION
-                    extension = longueurDefinition - longueurDonnees - TETE_DEFINITION
+                    tailleDefinition += teteDefinition + longueurDonnees
+                    extension = longueurDefinition - teteDefinition - longueurDonnees
                     #print "offsetDefinition=%d longueurDefinition=%d longueurDonnees=%d"%(offsetDefinition, longueurDefinition, longueurDonnees)
                     if extension > 0: 
                         nbreExtension +=1
@@ -179,13 +182,15 @@ def main():
     
     print "4) vérifie l'identification"
     try:
-        #<flagIdentification_1> <maxIdentifiant_3> <identifieurUnique_4>
+        #<flagIdentification_1> <maxIdentifiant_3> <identifieurUnique_4> <identifieurSpecifique_4>
         termindexFile.seek(-TAILLE_IDENTIFICATION, 2)
         addrIdentification = termindexFile.tell()
         if termindexFile.litNombre1() != FLAG_IDENTIFICATION: raise Exception('pas FLAG_IDENTIFICATION à %08X'%(addrIdentification))
         maxIdentifiant = termindexFile.litNombre3()
         dateHeure = termindexFile.litNombre4()
         print "max=%d dateheure=%d (%s)"%(maxIdentifiant, dateHeure, time.ctime(int(dateHeure)))
+        identifieurSpecifique = termindexFile.litNombre4()
+        print "identifieurSpecifique=%d"%(identifieurSpecifique)
     except Exception as exc: 
         print 'ERREUR :', exc.args[0]
         

@@ -42,8 +42,18 @@ def main():
     if sousMotId == 0: print 'INCONNU'
     else: print 'identifiant=',sousMotId
 
-#<definition>            ::= <flagDefinition> <identifiantHash> <longueurDonnees> <donneesHash>
-#<flagDefinition>        ::= <Integer1>
+# <fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 
+#
+# <blocIndirection>       ::= <flagIndirection=47> <addrBlocSuivant> <nombreIndirection> { indirection }
+# <flagIndirection=47>    ::= <Integer1>
+# <addrBlocSuivant>       ::= <Integer5>
+# <nombreIndirection>     ::= <Integer3>
+# <indirection>           ::= <offsetDefinition> <longueurDefinition> 
+# <offsetDefinition>      ::= <Integer5>
+# <longueurDefinition>    ::= <Integer3>
+#
+#<definition>            ::= <flagDefinition=17> <identifiantHash> <longueurDonnees> <donneesHash>
+#<flagDefinition=17>        ::= <Integer1>
 #<identifiantHash>       ::= <Integer3>
 #<longueurDonnees>       ::= <Integer3>
 #<donneesHash>           ::= { <terme> }
@@ -68,7 +78,7 @@ class NindLexiconindex(NindIndex):
     def __init__(self, lexiconindexFileName):
         NindIndex.__init__(self, lexiconindexFileName)
         #trouve le modulo = nombreIndirection
-        #<flagIndirection> <indirectionSuivante> <nombreIndirection>
+        #<flagIndirection=47> <addrBlocSuivant> <nombreIndirection>
         self.seek(0, 0)
         if self.litNombre1() != FLAG_INDIRECTION: 
             raise Exception('%s : pas FLAG_INDIRECTION à 0'%(self.latFileName))
@@ -86,7 +96,7 @@ class NindLexiconindex(NindIndex):
         longueurDefinition = self.litNombre3()
         if offsetDefinition == 0: return 0      #identifiant pas trouve
         self.seek(offsetDefinition, 0)
-        #<flagDefinition> <identifiantHash> <longueurDonnees> 
+        #<flagDefinition=17> <identifiantHash> <longueurDonnees> 
         if self.litNombre1() != FLAG_DEFINITION: 
             raise Exception('%s : pas FLAG_DEFINITION à %08X'%(self.latFileName, offsetDefinition))
         if self.litNombre3() != index: 

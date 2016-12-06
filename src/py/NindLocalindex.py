@@ -43,8 +43,8 @@ def main():
         resultat.append('%d %s<%s>'%(noTerme, NindLateconFile.catNb2Str(categorie), ' '.join(locListe)))
     print ' '.join(resultat)
 
-#<definition>            ::= <flagDefinition> <identifiantDoc> <identifiantExterne> <longueurDonnees> <donneesDoc>
-#<flagDefinition>        ::= <Integer1>
+#<definition>            ::= <flagDefinition=19> <identifiantDoc> <identifiantExterne> <longueurDonnees> <donneesDoc>
+#<flagDefinition=19>     ::= <Integer1>
 #<identifiantDoc>        ::= <Integer3>
 #<identifiantExterne>    ::= <Integer4>
 #<longueurDonnees>       ::= <Integer3>
@@ -58,7 +58,7 @@ def main():
 #<identDocRelatif>       ::= <IntegerULat>
 #<frequenceDoc>          ::= <IntegerULat>
 
-FLAG_DEFINITION = 17
+FLAG_DEFINITION = 19
     
 class NindLocalindex(NindIndex):
     def __init__(self, localindexFileName):
@@ -69,7 +69,7 @@ class NindLocalindex(NindIndex):
         if offsetDefinition == 0: return (0, [])          #doc inconnu
         #lit l'indirection
         self.seek(offsetDefinition, 0)
-        #<flagDefinition> <identifiantDoc> <identifiantExterne> <longueurDonnees>
+        #<flagDefinition=19> <identifiantDoc> <identifiantExterne> <longueurDonnees>
         if self.litNombre1() != FLAG_DEFINITION: 
             raise Exception('%s : pas FLAG_DEFINITION à %08X'%(self.latFileName, offsetDefinition))
         if self.litNombre3() != noDoc: 

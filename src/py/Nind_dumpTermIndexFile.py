@@ -28,8 +28,8 @@ def main():
 
     #<fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 
 
-    #<blocIndirection>       ::= <flagIndirection> <addrBlocSuivant> <nombreIndirection> { indirection }
-    #<flagIndirection>       ::= <Integer1>
+    #<blocIndirection>       ::= <flagIndirection=47> <addrBlocSuivant> <nombreIndirection> { indirection }
+    #<flagIndirection=47>    ::= <Integer1>
     #<addrBlocSuivant>       ::= <Integer5>
     #<nombreIndirection>     ::= <Integer3>
     #<indirection>           ::= <offsetDefinition> <longueurDefinition> 
@@ -37,13 +37,13 @@ def main():
     #<longueurDefinition>    ::= <Integer3>
 
     #<blocDefinition>        ::= { <definition> | <vide> }
-    #<definition>            ::= <flagDefinition> <identifiantTerme> <longueurDonnees> <donneesTerme>
-    #<flagDefinition>        ::= <Integer1>
+    #<definition>            ::= <flagDefinition=17> <identifiantTerme> <longueurDonnees> <donneesTerme>
+    #<flagDefinition=17>     ::= <Integer1>
     #<identifiantTerme>      ::= <Integer3>
     #<longueurDonnees>       ::= <Integer3>
     #<donneesTerme>          ::= { <donneesCG> }
-    #<donneesCG>             ::= <flagCg> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
-    #<flagCg>                ::= <Integer1>
+    #<donneesCG>             ::= <flagCg=61> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
+    #<flagCg=61>             ::= <Integer1>
     #<categorie>             ::= <Integer1>
     #<frequenceTerme>        ::= <IntegerULat>
     #<nbreDocs>              ::= <IntegerULat>
@@ -52,8 +52,8 @@ def main():
     #<frequenceDoc>          ::= <IntegerULat>
     #<vide>                  ::= { <octet> }
 
-    #<blocIdentification>    ::= <flagIdentification> <maxIdentifiant> <identifieurUnique>
-    #<flagIdentification>    ::= <Integer1>
+    #<blocIdentification>    ::= <flagIdentification=53> <maxIdentifiant> <identifieurUnique>
+    #<flagIdentification=53> ::= <Integer1>
     #<maxIdentifiant>        ::= <Integer3>
     #<identifieurUnique>     ::= <dateHeure>
     #<dateHeure >            ::= <Integer4>    
@@ -91,9 +91,10 @@ def main():
                 #<offsetDefinition> <longueurDefinition> 
                 offsetEntree = termindexFile.litNombre5()
                 longueurEntree = termindexFile.litNombre3()
-                if offsetEntree != 0: 
+                #l'indirection 0 est spejcifique, il faut la sauter
+                if offsetEntree != 0 and noTerm != 0: 
                     termindexFile2.seek(offsetEntree, 0)
-                    #<flagDefinition> <identifiantTerme> <longueurDonnees>
+                    #<flagDefinition=17> <identifiantTerme> <longueurDonnees>
                     if termindexFile2.litNombre1() != DEFINITION_FLAG: raise Exception('pas DEFINITION_FLAG à %08X'%(offsetEntree))
                     if termindexFile2.litNombre3() != noTerm: raise Exception('%d pas trouvé à %08X'%(noTerm, offsetEntree+1))
                     longueurDonnees = termindexFile2.litNombre3()
@@ -108,7 +109,7 @@ def main():
                     #examine les données
                     finDonnees = offsetEntree + longueurDonnees + DEFINITION_HEAD
                     while termindexFile2.tell() < finDonnees:
-                        #<flagCg> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
+                        #<flagCg=61> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
                         if termindexFile2.litNombre1() != CG_FLAG: raise Exception('pas CG_FLAG à %d'%(termindexFile2.tell() -1))
                         categorie = termindexFile2.litNombre1()
                         frequenceTerme = termindexFile2.litNombreULat()

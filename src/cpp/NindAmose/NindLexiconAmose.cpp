@@ -21,6 +21,11 @@
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
+static void splitTerm(const string &lemma,
+                      const unsigned int type,
+                      const string &namedEntity,
+                      list<string> &simpleWords);
+////////////////////////////////////////////////////////////
 //brief Creates NindLexiconAmose.
 //param fileName absolute path file name. Lexicon is identified by its file name
 //param isLexiconWriter true if lexicon writer, false if lexicon reader  
@@ -34,7 +39,8 @@ NindLexiconAmose::NindLexiconAmose(const string &fileName,
                      isLexiconWriter,
                      true,
                      indirectionBlocSize,
-                     retroIndirectionBlocSize)
+                     retroIndirectionBlocSize),
+    m_semicolonIdent(0)
 {
 }
 ////////////////////////////////////////////////////////////
@@ -53,17 +59,24 @@ unsigned int NindLexiconAmose::addTerm(const string &lemma,
                                        const std::string &namedEntity)
 {
     list<string> simpleWords;
-    if (type == NAMED_ENTITY)
-    {
-        simpleWords.push_back(":");
-        simpleWords.push_back(namedEntity);
-    }
-    string simpleWord;
-    stringstream sword(lemma);
-    while (getline(sword, simpleWord, '_')) {
-        if (!simpleWord.empty()) simpleWords.push_back(simpleWord);
-    }
+    splitTerm(lemma, type, namedEntity, simpleWords);
     return addWord(simpleWords);
+}
+////////////////////////////////////////////////////////////
+//brief get ident of a specified term
+//if word exists in lexicon, its ident is returned
+//else, return 0 (0 is not a valid ident !)
+//param lemma word to be searched. Compound word is structured with "_"
+//param type type of the terms (0: simple term, 1: multi-term, 2: named entity) 
+//param namedEntity type of named entity, eventually
+//return ident of word */
+unsigned int NindLexiconAmose::getTermId(const string &lemma,
+                                         const unsigned int type,
+                                         const string &namedEntity)
+{
+    list<string> simpleWords;
+    splitTerm(lemma, type, namedEntity, simpleWords);
+    return getId(simpleWords);
 }
 ////////////////////////////////////////////////////////////
 //brief get term components from a specified term id 
@@ -73,7 +86,7 @@ unsigned int NindLexiconAmose::addTerm(const string &lemma,
 //return true if term exists, false otherwise */
 bool NindLexiconAmose::getTerm(const unsigned int termId,
                                string &lemma,
-                               unsigned int type,
+                               unsigned int &type,
                                string &namedEntity)
 {
     //rejcupehre la liste des composants
@@ -85,7 +98,7 @@ bool NindLexiconAmose::getTerm(const unsigned int termId,
     else type = MULTI_TERM;
     list<string>::const_iterator itcomp = components.begin();
     string component = (*itcomp++);
-    if (component == ":") {
+    if (component == "§") {
         if (components.size() < 3) throw NindLexiconException("named entity error");
         type = NAMED_ENTITY;
         namedEntity = (*itcomp++);
@@ -93,5 +106,24 @@ bool NindLexiconAmose::getTerm(const unsigned int termId,
     }
     while (itcomp != components.end()) component += '_' + (*itcomp++);
     lemma = component;
- }
+    return true;
+}
+////////////////////////////////////////////////////////////
+//met en forme le terme pour interroger le lexique
+static void splitTerm(const string &lemma,
+                      const unsigned int type,
+                      const string &namedEntity,
+                      list<string> &simpleWords)
+{
+    //le premier ejlejment d'une entitej nommeje est le type de l'entitej
+    if (type == NAMED_ENTITY) {
+        simpleWords.push_back("§");
+        simpleWords.push_back(namedEntity);
+    }
+    string simpleWord;
+    stringstream sword(lemma);
+    while (getline(sword, simpleWord, '_')) {
+        if (!simpleWord.empty()) simpleWords.push_back(simpleWord);
+    }
+}
 ////////////////////////////////////////////////////////////

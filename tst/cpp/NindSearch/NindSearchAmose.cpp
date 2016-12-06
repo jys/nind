@@ -14,7 +14,7 @@
 // even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
-#include "NindIndex/NindLexiconIndex.h"
+#include "NindAmose/NindLexiconAmose.h"
 #include "NindAmose/NindTermAmose.h"
 #include "NindAmose/NindLocalAmose.h"
 #include "NindIndex/NindDate.h"
@@ -48,8 +48,14 @@ static void displayHelp(char* arg0) {
 #define BLUE "\33[0;34m"
 #define BOLD "\033[1;31m"
 ////////////////////////////////////////////////////////////
-static void split(const string &word, 
-                  list<string> &simpleWords);
+static void analyzeWord(const string &word, 
+                        string &lemma, 
+                        AmoseTypes &type, 
+                        string &entitejNommeje);
+static void afficheTermesUniques(NindLocalAmose &nindLocalAmose, 
+                                 const unsigned int noDoc,
+                                 const AmoseTypes termType, 
+                                 const string &titre);
 ////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
     setlocale( LC_ALL, "French" );
@@ -63,7 +69,7 @@ int main(int argc, char *argv[]) {
         const string termindexFileName = incompleteFileName + ".termindex";
         const string localindexFileName = incompleteFileName + ".localindex";
         //le lexique lecteur
-        NindLexiconIndex nindLexicon(lexiconFileName, false);
+        NindLexiconAmose nindLexicon(lexiconFileName, false);
         NindIndex::Identification identification;
         nindLexicon.getIdentification(identification);
         //le fichier inverse lecteur
@@ -74,15 +80,14 @@ int main(int argc, char *argv[]) {
         cout<<" ("<<NindDate::date(identification.lexiconTime)<<")"<<endl;
         //affiche les mesures globales pour les calculs de pertinence
         cout<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getUniqueTermCount(SIMPLE_TERM)<<" SIMPLE_TERM uniques"<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getUniqueTermCount(SIMPLE_TERM)<<" SIMPLE_TERM uniques"<<endl;       //3.6 getUniqueTermCount()
         cout<<setw(8)<<setfill(' ')<<nindTermAmose.getUniqueTermCount(MULTI_TERM)<<" MULTI_TERM uniques"<<endl;
         cout<<setw(8)<<setfill(' ')<<nindTermAmose.getUniqueTermCount(NAMED_ENTITY)<<" NAMED_ENTITY uniques"<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(SIMPLE_TERM)<<" occurrences de SIMPLE_TERM"<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(SIMPLE_TERM)<<" occurrences de SIMPLE_TERM"<<endl;  //3.7 getTermOccurrences()
         cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(MULTI_TERM)<<" occurrences de MULTI_TERM"<<endl;
         cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(NAMED_ENTITY)<<" occurrences de NAMED_ENTITY"<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.getDocCount()<<" documents indexés"<<endl;
-        
-        
+        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.getDocCount()<<" documents indexés"<<endl;                          //3.8 getDocCount()
+       
         while (true) {
             char str [80];
             cout<<endl<<BLUE<<"Entrez le terme à rechercher (ex \"bleu\") : "<<OFF;
@@ -90,10 +95,12 @@ int main(int argc, char *argv[]) {
             const string word = string(str);
             if (word.empty()) break;
             //le terme
-            list<string> componants;
-            split(word, componants);
+            string lemma;
+            AmoseTypes type;
+            string entitejNommeje;
+            analyzeWord(word, lemma, type, entitejNommeje);
             //trouve son identifiant
-            const unsigned int ident = nindLexicon.getId(componants);
+            const unsigned int ident = nindLexicon.getTermId(lemma, type, entitejNommeje);
             if (ident == 0) {
                 cout<<"INCONNU"<<endl;
                 continue;
@@ -102,11 +109,11 @@ int main(int argc, char *argv[]) {
             //const unsigned int nbOcc = nindTermAmose.getTermFreq(ident);
             //cout<<nbOcc<<" occurences trouvées"<<endl;
             //recupere le nombre de documents pour ce terme
-            const unsigned int nbDocs = nindTermAmose.getDocFreq(ident);
+            const unsigned int nbDocs = nindTermAmose.getDocFreq(ident);                        //3.5 getDocFreq()
             cout<<nbDocs<<" documents trouvés"<<endl;
             //recupere l'index inverse pour ce terme
             list<unsigned int> documents;
-            nindTermAmose.getDocList(ident, documents);
+            nindTermAmose.getDocList(ident, documents);                                         //3.1 getDocList()
             for (list<unsigned int>::const_iterator it2 = documents.begin(); it2 != documents.end(); it2++) {
                 cout<<(*it2)<<" ";
             }
@@ -115,12 +122,8 @@ int main(int argc, char *argv[]) {
             cin.getline(str, 80, '\n');
             const unsigned int noDoc = atoi(str);
             //recupere la taille du doc en nombre d'occurences de termes
-            const unsigned int nbTerms = nindLocalAmose.getDocLength(noDoc);
+            const unsigned int nbTerms = nindLocalAmose.getDocLength(noDoc);                    //3.4 getDocLength()
             cout<<nbTerms<<" termes indexés dans ce document"<<endl;
-            //recupere les termes + CG uniques indexes dans ce document
-            //set<NindLocalAmose::TermCg> uniqueTermsSet;
-            //nindLocalAmose.getUniqueTerms(noDoc, uniqueTermsSet);
-            //cout<<uniqueTermsSet.size()<<" termes uniques indexés dans ce document"<<endl;
             //recupere l'index local du doc             
             list<NindLocalIndex::Term> localIndex;
             nindLocalAmose.getLocalIndex(noDoc, localIndex);
@@ -140,6 +143,14 @@ int main(int argc, char *argv[]) {
                 }
             }
             cout<<endl;
+            //affiche les termes uniques dans le document en fonction du type 
+            afficheTermesUniques(nindLocalAmose, noDoc, SIMPLE_TERM, "SIMPLE_TERM");
+            afficheTermesUniques(nindLocalAmose, noDoc, MULTI_TERM, "MULTI_TERM");
+            afficheTermesUniques(nindLocalAmose, noDoc, NAMED_ENTITY, "NAMED_ENTITY");
+            //set<NindLocalAmose::TermCg> uniqueTermsSet;
+            //nindLocalAmose.getUniqueTerms(noDoc, uniqueTermsSet);
+            //cout<<uniqueTermsSet.size()<<" termes uniques indexés dans ce document"<<endl;
+
         }
     }
     catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; return false;}
@@ -147,24 +158,42 @@ int main(int argc, char *argv[]) {
     catch (...) {cerr<<"EXCEPTION unknown"<< endl; return false; }
 }
 ////////////////////////////////////////////////////////////
-//brief split words into single words
-//param word composed word with "_"
-//param simpleWords return list of single words */
-static void split(const string &word, 
-                  list<string> &simpleWords)
+static void analyzeWord(const string &word, 
+                        string &lemma, 
+                        AmoseTypes &type, 
+                        string &entitejNommeje)
 {
-    simpleWords.clear();
-    size_t posDeb = 0;
-    while (true) {
-        const size_t posSep = word.find('_', posDeb);
-        if (posSep == string::npos) {
-            //separateur pas trouve
-            if (posDeb != word.size()) simpleWords.push_back(word.substr(posDeb));
-            break;
-        }
-        //separateur trouve
-        simpleWords.push_back(word.substr(posDeb, posSep-posDeb));
-        posDeb = posSep + 1;
+    //si c'est une entitej nommeje, la sejpare en 2
+    const size_t pos = word.find(':');
+    if (pos != string::npos) {
+        entitejNommeje = word.substr(0, pos);
+        lemma = word.substr(pos +1);
+        type = NAMED_ENTITY;
     }
+    else if (word.find('_') != string::npos) {
+        lemma = word;
+        type = MULTI_TERM;
+    }
+    else {
+        lemma = word;
+        type = SIMPLE_TERM;
+    }
+}
+////////////////////////////////////////////////////////////
+static void afficheTermesUniques(NindLocalAmose &nindLocalAmose, 
+                                 const unsigned int noDoc,
+                                 const AmoseTypes termType, 
+                                 const string &titre)
+{
+    //rejcupehre la liste des termes uniques
+    set<string> termsSet;
+    nindLocalAmose.getDocTerms(noDoc, termType, termsSet);                                      //3.3 getDocTerms()
+    cout<<termsSet.size()<<" "<<titre<<" uniques dans ce document"<<endl;
+    string sep = "";
+    for (set<string>::const_iterator itterms = termsSet.begin(); itterms != termsSet.end(); itterms++) {
+        cout<<sep<<(*itterms);
+        sep = ", ";
+    }
+    cout<<endl;
 }
 ////////////////////////////////////////////////////////////

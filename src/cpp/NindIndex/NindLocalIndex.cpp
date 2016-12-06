@@ -23,8 +23,8 @@
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
-// <definition>            ::= <flagDefinition> <identifiantDoc> <identifiantExterne> <longueurDonnees> <donneesDoc>
-// <flagDefinition>        ::= <Integer1>
+// <definition>            ::= <flagDefinition=19> <identifiantDoc> <identifiantExterne> <longueurDonnees> <donneesDoc>
+// <flagDefinition=19>     ::= <Integer1>
 // <identifiantDoc>        ::= <Integer3>
 // <identifiantExterne>    ::= <Integer4>
 // <longueurDonnees>       ::= <Integer3>
@@ -37,31 +37,21 @@ using namespace std;
 // <localisationRelatif>   ::= <IntegerSLat>
 // <longueur>              ::= <Integer1>
 ////////////////////////////////////////////////////////////
-//Le bloc 0 est le lexique du fichier des index locaux, il donne le n° exerne des documents
-//Il a une structure particulière
-// <definition>            ::= <flagLexique> <nombreDocuments> { <identifiantExterne> }
-// <flagLexique>           ::= <Integer1>
-// <nombreDocuments>       ::= <Integer3>
-// <identifiantExterne>    ::= <Integer3>
-////////////////////////////////////////////////////////////
-#define FLAG_DEFINITION 17
-#define FLAG_LEXIQUE 19
-//<flagDefinition>(1) <identifiantDoc>(3) <identifiantExterne>(4) = 8
+#define FLAG_DEFINITION 19
+//<flagDefinition=19>(1) <identifiantDoc>(3) <identifiantExterne>(4) = 8
 #define TETE_IDENT_EXTERNE 8
-//<flagDefinition>(1) <identifiantDoc>(3) <identifiantExterne>(4) = 8
+//<flagDefinition=19>(1) <identifiantDoc>(3) <identifiantExterne>(4) = 8
 #define OFFSET_LONGUEUR 8
-//<flagDefinition>(1) <identifiantDoc>(3) <identifiantExterne>(4) <longueurDonnees>(3) = 11
+//<flagDefinition=19>(1) <identifiantDoc>(3) <identifiantExterne>(4) <longueurDonnees>(3) = 11
 #define TETE_DEFINITION 11
 //<identTermeRelatif>(3) <categorie>(1) <nbreLocalisations>(1) = 5
 #define TETE_DEFINITION_MAXIMUM 5
-//<flagDefinition>(1) <identifiantDoc>(3) <identifiantExterne>(4) <longueurDonnees>(3) 
+//<flagDefinition=19>(1) <identifiantDoc>(3) <identifiantExterne>(4) <longueurDonnees>(3) 
 //<identTermeRelatif>(3) <categorie>(1) <nbreLocalisations>(1) 
 //<localisationRelatif>(1) <longueur>(1) = 18
 #define TAILLE_DEFINITION_MINIMUM 18
 //<localisationRelatif>(2) <longueur>(1) = 3
 #define TAILLE_LOC_MAXIMUM 3
-//<flagIdentification> <maxIdentifiant> <identifieurUnique> = 8
-#define TAILLE_IDENTIFICATION 8
 //taille minimum du buffer d'ecriture
 #define TAILLE_BUFFER_MINIMUM 128
 ////////////////////////////////////////////////////////////
@@ -79,23 +69,15 @@ NindLocalIndex::NindLocalIndex(const std::string &fileName,
               lexiconIdentification, 
               TAILLE_DEFINITION_MINIMUM, 
               indirectionBlocSize),
+    m_identification(),
     m_docIdTradExtInt(),
     m_currIdent(0)
 {
     try {
+        //mejmorise l'identification du fichier
+        getFileIdentification(m_identification);
         //initialise la map de traduction des id externes -> id internes
-        const unsigned int maxIdent = getMaxIdent();
-        for (unsigned int ident = 1; ident != maxIdent; ident++) {
-            const bool existe = getDefinition(ident, TETE_IDENT_EXTERNE);
-            if (!existe) continue;
-            //<flagDefinition> <identifiantDoc> <identifiantExterne> 
-            if (m_file.getInt1() != FLAG_DEFINITION) throw InvalidFileException("NindLocalIndex::NindLocalIndex A : " + m_fileName);
-            const unsigned int identDoc = m_file.getInt3();
-            if (identDoc != ident) throw InvalidFileException("NindLocalIndex::NindLocalIndex B : " + m_fileName);
-            const unsigned int identExt = m_file.getInt4();       //<identifiantExterne>
-            m_docIdTradExtInt[identExt] = identDoc;
-            m_currIdent = identDoc;
-        }
+        fillDocIdTradExtInt(1, m_identification.specificFileIdent +1);
     }
     catch (FileException &exc) {
         cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
@@ -118,12 +100,13 @@ bool NindLocalIndex::getLocalIndex(const unsigned int ident,
         //raz rejsultat
         localIndex.clear();
         //trouve l'identifiant interne du doc 
-        map<unsigned int, unsigned int>::const_iterator itident = m_docIdTradExtInt.find(ident);
-        if (itident == m_docIdTradExtInt.end()) return false;
-        const unsigned int identInt = (*itident).second;
+        const unsigned int identInt = getInternalIdent(ident);
+        //si pas trouvej retourne faux
+        if (identInt == 0) return false;
+        //rejcupehre la dejfinition
         const bool existe = getDefinition(identInt);
         if (!existe) return false;
-        //<flagDefinition> <identifiantDoc> <identifiantExterne> <longueurDonnees> <donneesDoc>
+        //<flagDefinition=19> <identifiantDoc> <identifiantExterne> <longueurDonnees> <donneesDoc>
         if (m_file.getInt1() != FLAG_DEFINITION) throw InvalidFileException("NindLocalIndex::getLocalIndex A : " + m_fileName);
         const unsigned int identDoc = m_file.getInt3();
         if (identDoc != identInt) throw InvalidFileException("NindLocalIndex::getLocalIndex B : " + m_fileName);
@@ -186,11 +169,6 @@ void NindLocalIndex::setLocalIndex(const unsigned int ident,
                                    const Identification &lexiconIdentification)
 {
     try {
-        //effacement ?
-        if (localIndex.size() == 0) {
-            deleteLocalIndex(ident, lexiconIdentification);
-            return;
-        }
         //est-ce que ce document est dejah connu ?
         map<unsigned int, unsigned int>::const_iterator itident = m_docIdTradExtInt.find(ident);
         //si non, on le creje
@@ -199,12 +177,19 @@ void NindLocalIndex::setLocalIndex(const unsigned int ident,
             itident = m_docIdTradExtInt.find(ident);
         }
         const unsigned int identInt = (*itident).second;
+        //ejtablit la nouvelle identification
+        m_identification = lexiconIdentification;
+        m_identification.specificFileIdent = m_currIdent;
         //1) verifie que l'identInt n'est pas en dehors du dernier bloc d'indirection
         //il faut le faire maintenant parce que le buffer d'ecriture est unique
-        checkExtendIndirection(identInt, lexiconIdentification);
-        
+        checkExtendIndirection(identInt, m_identification);
+        //effacement ?
+        if (localIndex.size() == 0) {
+            deleteLocalIndex(ident, m_identification);
+            return;
+        }
         //2) calcule la taille maximum du buffer d'ecriture
-        //<flagDefinition> <identifiantDoc> <identifiantExterne> <longueurDonnees> <donneesDoc>
+        //<flagDefinition=19> <identifiantDoc> <identifiantExterne> <longueurDonnees> <donneesDoc>
         unsigned int tailleMaximum = TETE_DEFINITION;   
         for (list<struct Term>::const_iterator it1 = localIndex.begin(); it1 != localIndex.end(); it1++) {
             //<identTermeRelatif> <categorie> <nbreLocalisations> <localisations>
@@ -217,7 +202,7 @@ void NindLocalIndex::setLocalIndex(const unsigned int ident,
         
         //3) forme le buffer a ecrire sur le fichier
         m_file.createBuffer(tailleMaximum); 
-        //<flagDefinition> <identifiantDoc> <identifiantExterne> <longueurDonnees> <donneesDoc>
+        //<flagDefinition=19> <identifiantDoc> <identifiantExterne> <longueurDonnees> <donneesDoc>
         m_file.putInt1(FLAG_DEFINITION);
         m_file.putInt3(identInt);
         m_file.putInt4(ident);
@@ -242,7 +227,7 @@ void NindLocalIndex::setLocalIndex(const unsigned int ident,
         const unsigned int longueurDonnees = m_file.getOutBufferSize() - TETE_DEFINITION;
         m_file.putInt3(longueurDonnees, OFFSET_LONGUEUR);  //la taille dans la trame
         //4) ecrit la definition du terme et gere le fichier
-        setDefinition(identInt, lexiconIdentification);
+        setDefinition(identInt, m_identification);
     }
     catch (FileException &exc) {
         cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
@@ -258,7 +243,7 @@ unsigned int NindLocalIndex::getDocCount() const
 }
 ////////////////////////////////////////////////////////////
 void NindLocalIndex::deleteLocalIndex(const unsigned int ident,
-                                      const Identification &lexiconIdentification)
+                                      const Identification &identification)
 {
     map<unsigned int, unsigned int>::const_iterator itident = m_docIdTradExtInt.find(ident);
     //si effacement de pas connu, raf
@@ -266,26 +251,51 @@ void NindLocalIndex::deleteLocalIndex(const unsigned int ident,
     const unsigned int identInt = (*itident).second;
     //efface dans le fichier
     m_file.createBuffer(0); 
-    setDefinition(identInt, lexiconIdentification);
-    //efface dans la map de traduction des identifiants
-    m_docIdTradExtInt.erase(itident);
+    setDefinition(identInt, identification);
+    //n'efface pas dans la map de traduction des identifiants, le fichier sera trouvej vide
+    //m_docIdTradExtInt.erase(itident);
 }
 ////////////////////////////////////////////////////////////
-//Sauvegarde la map des identifiants externes sur le fichier ah l'index 0
-void NindLocalIndex::saveExternalIdents(const Identification &lexiconIdentification)
+//Rejcupehre l'identifiant interne 
+unsigned int NindLocalIndex::getInternalIdent(const unsigned int ident)
 {
-    // <flagLexique> <nombreDocuments> { <identifiantExterne> }
-    //calcule taille du buffer
-    const unsigned int tailleBuffer = m_docIdTradExtInt.size() * 3 + 4;
-    //forme le buffer a ecrire sur le fichier
-    m_file.createBuffer(tailleBuffer);
-    m_file.putInt1(FLAG_LEXIQUE);
-    m_file.putInt3(m_docIdTradExtInt.size());
- }
-////////////////////////////////////////////////////////////
-//Restaure la map des identifiants externes depuis le fichier ah l'index 0
-void NindLocalIndex::restoreExternalIdents()
-{
+    //cherche l'identifiant dans la map courante
+    map<unsigned int, unsigned int>::const_iterator itident = m_docIdTradExtInt.find(ident);
+    //si l'identifiant externe est connu, retourne l'identifiant interne
+    if (itident != m_docIdTradExtInt.end()) return (*itident).second;
+    //l'identifiant externe n'est pas connu
+    //regarde si le fichier a changej depuis le dernier calcul de traduction des identifiants
+    Identification identification;
+    getFileIdentification(identification);
+    //si pas de changement, identifiant inconnu, retourne 0
+    if (identification == m_identification) return 0;
+    //met ah jour l'identification
+    m_identification = identification;
+    //met ah jour la map
+    //initialise la map de traduction des id externes -> id internes
+    fillDocIdTradExtInt(m_currIdent +1, m_identification.specificFileIdent +1);
+    //cherche l'identifiant dans la map courante
+    itident = m_docIdTradExtInt.find(ident);
+    //si l'identifiant externe est connu, retourne l'identifiant interne
+    if (itident != m_docIdTradExtInt.end()) return (*itident).second;
+    //sinon retourne 0
+    return 0;
 }
 ////////////////////////////////////////////////////////////
-
+//met ah jour la map de traduction des id externes -> id internes
+void NindLocalIndex::fillDocIdTradExtInt(const unsigned int intIdMin,
+                                         const unsigned int intIdMax) 
+{
+    for (unsigned int ident = intIdMin; ident != intIdMax; ident++) {
+        const bool existe = getDefinition(ident, TETE_IDENT_EXTERNE);
+        if (!existe) continue;
+        //<flagDefinition=19> <identifiantDoc> <identifiantExterne> 
+        if (m_file.getInt1() != FLAG_DEFINITION) throw InvalidFileException("NindLocalIndex::fillDocIdTradExtInt A : " + m_fileName);
+        const unsigned int identDoc = m_file.getInt3();
+        if (identDoc != ident) throw InvalidFileException("NindLocalIndex::fillDocIdTradExtInt B : " + m_fileName);
+        const unsigned int identExt = m_file.getInt4();       //<identifiantExterne>
+        m_docIdTradExtInt[identExt] = identDoc;
+        m_currIdent = identDoc;
+    }
+}
+////////////////////////////////////////////////////////////

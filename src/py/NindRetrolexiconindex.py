@@ -36,51 +36,23 @@ def main():
     nindRetrolexiconindex = NindRetrolexiconindex(lexiconindexFileName)
     print nindRetrolexiconindex.getTerme(ident)
 
-# <fichier>               ::= <blocAccesDirect> <blocChaine> <blocIdentification> 
+#<definition>            ::= <flagDefinition=17> <identifiantTerme> <longueurDonnees> <donneesTerme>
+#<flagDefinition=17>     ::= <Integer1>
+#<identifiantTerme>      ::= <Integer3>
+#<longueurDonnees>       ::= <Integer3>
+#<donneesTerme>          ::= <termeCompose> | <termeSimple>
+#<termeCompose>          ::= <flagCompose=31> <identifiantA> <identifiantRelS>
+#<flagCompose=31>        ::= <Integer1>
+#<identifiantA>          ::= <Integer3>
+#<identifiantRelS>       ::= <IntegerSLat>
+#<termeSimple>           ::= <flagSimple=37> <longueurTerme> <termeUtf8>
+#<flagSimple=37>         ::= <Integer1>
+#<longueurTerme>         ::= <Integer1>
+#<termeUtf8>             ::= { <Octet> }
 
-# <blocAccesDirect>       ::= { <terme> }
-# <terme>                 ::= <termeCompose> | <termeSimple>
-# <termeCompose>          ::= <flagCompose> <identA> <identB>
-# <flagCompose>           ::= <Integer1>
-# <identA>                ::= <Integer3>
-# <identB>                ::= <Integer3>
-# <termeSimple>           ::= <flagSimple> <longueurChaine> <addresseChaine>
-# <flagSimple>            ::= <Integer1>
-# <longueurChaine>        ::= <Integer1>
-# <addresseChaine>        ::= <Integer5>
-
-# <blocChaine>            ::= { <chaine> }
-# <chaine>                ::= { <Octet> }
-
-# <blocIdentification>    ::= <flagIdentification> <maxIdentifiant> <identifieurUnique>
-# <flagIdentification>    ::= <Integer1>
-# <maxIdentifiant>        ::= <Integer3>
-# <identifieurUnique>     ::= <dateHeure>
-# <dateHeure >            ::= <Integer4>
-
-# <definition>            ::= <flagDefinition> <identifiantTerme> <longueurDonnees> <donneesTerme>
-# <flagDefinition>        ::= <Integer1>
-# <identifiantTerme>      ::= <Integer3>
-# <longueurDonnees>       ::= <Integer3>
-# <donneesTerme>          ::= <termeCompose> | <termeSimple>
-# <termeCompose>          ::= <flagCompose> <identifiantA> <identifiantRelS>
-# <flagCompose>           ::= <Integer1>
-# <identifiantA>          ::= <Integer3>
-# <identifiantRelS>       ::= <IntegerSLat>
-# <termeSimple>           ::= <flagSimple> <longueurTerme> <termeUtf8>
-# <flagSimple>            ::= <Integer1>
-# <longueurTerme>         ::= <Integer1>
-# <termeUtf8>             ::= { <Octet> }
-
-
-FLAG_INDIRECTION = 47
 FLAG_DEFINITION = 17
-FLAG_IDENTIFICATION = 53
 FLAG_COMPOSE = 31
 FLAG_SIMPLE = 37
-TAILLE_IDENTIFICATION = 8
-TAILLE_DEFINITION = 7
-TETE_DEFINITION = 7
 TAILLE_COMPOSE_MAXIMUM = 30
 
 class NindRetrolexiconindex(NindIndex):
@@ -100,81 +72,6 @@ class NindRetrolexiconindex(NindIndex):
 
     def createFile(self):
         return
-        ##ouvre en lecture
-        #lexiconindexFile = NindLateconFile(self.lexiconindexFileName)
-        #lexiconindexFile2 = NindLateconFile(self.lexiconindexFileName)
-        ##ouvre en ecriture
-        #retrolexiconindexFile = NindLateconFile(self.retrolexiconindexFileName, True)
-        ##lit l'identification du lexique
-        #(maxIdentifiant, dateHeure) = getIdentification(lexiconindexFile, self.lexiconindexFileName)
-        ##<blocAccesDirect> <blocChaine> <blocIdentification> 
-        ##ecrit le <blocAccesDirect>
-        #for i in range(maxIdentifiant): 
-            #retrolexiconindexFile.ecritNombre4(0)
-            #retrolexiconindexFile.ecritNombre4(0)
-        ##peuple le fichier
-        #lexiconindexFile.seek(0, 0)
-        #addrIndirection = lexiconindexFile.tell()
-        ##<flagIndirection> <addrBlocSuivant> <nombreIndirection>
-        #if lexiconindexFile.litNombre1() != FLAG_INDIRECTION: 
-            #raise Exception('pas FLAG_INDIRECTION sur %s'%(self.lexiconindexFileName))
-        #if lexiconindexFile.litNombre5() != 0: 
-            #raise Exception("plusieurs blocs d'indirection sur %s"%(self.lexiconindexFileName))
-        #nombreIndirection = lexiconindexFile.litNombre3()
-        #for noDef in range(nombreIndirection):
-            ##<offsetDefinition> <longueurDefinition>
-            #offsetDefinition = lexiconindexFile.litNombre5()
-            #longueurDefinition = lexiconindexFile.litNombre3()
-            #if offsetDefinition == 0: continue 
-            #lexiconindexFile2.seek(offsetDefinition, 0)
-            ##<flagDefinition> <identifiantHash> <longueurDonnees> 
-            #if lexiconindexFile2.litNombre1() != FLAG_DEFINITION: 
-                #raise Exception('pas FLAG_DEFINITION sur %s à %08X'%(self.lexiconindexFileName, offsetDefinition))
-            #if lexiconindexFile2.litNombre3() != noDef: 
-                #raise Exception('%d pas trouvé sur %s à %08X'%(noDoc, self.lexiconindexFileName, offsetDefinition+1))
-            #longueurDonnees = lexiconindexFile2.litNombre3()
-            #finDonnees = offsetDefinition + longueurDonnees + TETE_DEFINITION
-            #while lexiconindexFile2.tell() < finDonnees:
-                ##<termeSimple> <identifiantS> <nbreComposes> <composes>
-                #termeSimple = lexiconindexFile2.litString()
-                #identifiantS = lexiconindexFile2.litNombre3()
-                ##1) ecrit le terme simple 
-                #if identifiantS > maxIdentifiant:
-                    #raise Exception('%d > %d dans %s'%(identifiantS, maxIdentifiant, self.lexiconindexFileName))
-                ##ecrit la chaine a la fin dans <blocChaine>
-                #retrolexiconindexFile.seek(0, 2)
-                #adrChaine = retrolexiconindexFile.tell()
-                #retrolexiconindexFile.ecritChaine(termeSimple)
-                ##ecrit dans <blocAccesDirect>
-                ##<flagSimple> <longueurChaine> <addresseChaine>
-                #retrolexiconindexFile.seek((identifiantS - 1) * TAILLE_DEFINITION, 0)
-                #retrolexiconindexFile.ecritNombre1(FLAG_TERME_SIMPLE)
-                ##la longueur de la chaine en nombre d'octets utf-8
-                #retrolexiconindexFile.ecritNombre1(len(termeSimple.encode('utf-8'))) 
-                #retrolexiconindexFile.ecritNombre5(adrChaine)
-                ##2) ecrit les termes composes
-                #nbreComposes = lexiconindexFile2.litNombreULat()
-                #identifiantC = identifiantS
-                #for noc in range(nbreComposes):
-                    ##<identifiantA> <identifiantRelC>
-                    #identifiantA = lexiconindexFile2.litNombre3()
-                    #identifiantC += lexiconindexFile2.litNombreSLat()
-                    #if identifiantC > maxIdentifiant:
-                        #raise Exception('%d > %d dans %s'%(identifiantC, maxIdentifiant, self.lexiconindexFileName))
-                    ##ecrit dans <blocAccesDirect>
-                    ##<flagCompose> <identA> <identB>
-                    #retrolexiconindexFile.seek((identifiantC - 1) * TAILLE_DEFINITION, 0)
-                    #retrolexiconindexFile.ecritNombre1(FLAG_TERME_COMPOSE)
-                    #retrolexiconindexFile.ecritNombre3(identifiantA)
-                    #retrolexiconindexFile.ecritNombre3(identifiantS)
-        ##ecrit le <blocIdentification>
-        #retrolexiconindexFile.seek(0, 2)     
-        #retrolexiconindexFile.ecritNombre1(FLAG_IDENTIFICATION)
-        #retrolexiconindexFile.ecritNombre3(maxIdentifiant)
-        #retrolexiconindexFile.ecritNombre4(dateHeure)
-        #lexiconindexFile.close()
-        #lexiconindexFile2.close()
-        #retrolexiconindexFile.close()
                
     def getTerme (self, ident):
         terme = []
@@ -210,7 +107,7 @@ class NindRetrolexiconindex(NindIndex):
         if offsetDefinition == 0: return (False, "", 0, 0)          #terme inconnu
         #lit l'indirection
         self.seek(offsetDefinition, 0)
-        #<flagDefinition> <identifiantTerme> <longueurDonnees>
+        #<flagDefinition=17> <identifiantTerme> <longueurDonnees>
         if self.litNombre1() != FLAG_DEFINITION: 
             raise Exception('%s : pas FLAG_DEFINITION à %08X'%(self.latFileName, offsetDefinition))
         if self.litNombre3() != ident: 
@@ -220,10 +117,10 @@ class NindRetrolexiconindex(NindIndex):
         #lit les donnees 
         flag = self.litNombre1()
         if flag == FLAG_SIMPLE:
-            #<flagSimple> <longueurTerme> <termeUtf8>
+            #<flagSimple=37> <longueurTerme> <termeUtf8>
             return (True, self.litString(), 0, 0)
         elif flag == FLAG_COMPOSE:
-            #<flagCompose> <identifiantA> <identifiantRelS>
+            #<flagCompose=31> <identifiantA> <identifiantRelS>
             return (True, '', self.litNombre3(), ident + self.litNombreSLat())
         else: 
             raise Exception("%d mauvaise définition %s"%(ident, self.latFileName))

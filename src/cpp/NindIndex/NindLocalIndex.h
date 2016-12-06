@@ -95,14 +95,17 @@ public:
 private:
     //Effacement d'un document dans le fichier
     void deleteLocalIndex(const unsigned int ident,
-                          const Identification &lexiconIdentification);
+                          const Identification &identification);
     
-    //Sauvegarde la map des identifiants externes sur le fichier ah l'index 0
-    void saveExternalIdents(const Identification &lexiconIdentification);
-
-    //Restaure la map des identifiants externes depuis le fichier ah l'index 0
-    void restoreExternalIdents();
-
+    //Rejcupehre l'identifiant interne 
+    unsigned int getInternalIdent(const unsigned int ident);
+    
+    //met ah jour la map de traduction des id externes -> id internes
+    void fillDocIdTradExtInt(const unsigned int intIdMin,
+                             const unsigned int intIdMax);
+   
+    //mejmorisation identification fichier
+    Identification m_identification;
     //map de traduction des identifiants externes vers les identifiants internes
     std::map<unsigned int, unsigned int> m_docIdTradExtInt;
     //max des identifiants internes, pour la numejrotation

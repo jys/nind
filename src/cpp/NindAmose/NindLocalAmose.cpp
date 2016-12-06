@@ -19,6 +19,7 @@
 ////////////////////////////////////////////////////////////
 #include "NindLocalAmose.h"
 #include <map>
+#include <iostream>
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
@@ -108,13 +109,17 @@ bool NindLocalAmose::getDocTerms(const unsigned int docId,
     if (!trouvej) return false;
     //examine chaque occurrence de terme
     for (set<unsigned int>::const_iterator itterm = termIdents.begin(); itterm != termIdents.end(); itterm++) {
+        //cerr<<"NindLocalAmose::getDocTerms (*itterm)="<<(*itterm)<<endl;
         //rejcupehre le terme en string
         string lemma;
         unsigned int type;
         string namedEntity;
         const bool trouvej = m_nindLexicon.getTerm((*itterm), lemma, type, namedEntity);
         if (!trouvej) throw IncompatibleFileException("Unknown term into lexicon");
-        if (type == termType) termsSet.insert(lemma);
+        if (type == termType) 
+            if (type == NAMED_ENTITY)
+                termsSet.insert(namedEntity + ":" + lemma);
+            else termsSet.insert(lemma);
     }
     return true;
 }

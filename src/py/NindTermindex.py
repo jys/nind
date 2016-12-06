@@ -43,13 +43,13 @@ def main():
         for (noDoc, frequenceDoc) in docs: docsListe.append('%d(%d)'%(noDoc, frequenceDoc))
         print '%s[%s] %s%s %d fois dans %s'%(RED, terme, NindLateconFile.catNb2Str(categorie), OFF, frequenceTerme, ' '.join(docsListe))
 
-#<definition>            ::= <flagDefinition> <identifiantTerme> <longueurDonnees> <donneesTerme>
-#<flagDefinition>        ::= <Integer1>
+#<definition>            ::= <flagDefinition=17> <identifiantTerme> <longueurDonnees> <donneesTerme>
+#<flagDefinition=17>     ::= <Integer1>
 #<identifiantTerme>      ::= <Integer3>
 #<longueurDonnees>       ::= <Integer3>
 #<donneesTerme>          ::= { <donneesCG> }
-#<donneesCG>             ::= <flagCg> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
-#<flagCg>                ::= <Integer1>
+#<donneesCG>             ::= <flagCg=61> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
+#<flagCg=61>             ::= <Integer1>
 #<categorie>             ::= <Integer1>
 #<frequenceTerme>        ::= <IntegerULat>
 #<nbreDocs>              ::= <IntegerULat>
@@ -69,7 +69,7 @@ class NindTermindex(NindIndex):
         if offsetDefinition == 0: return []          #terme inconnu
         #lit l'indirection
         self.seek(offsetDefinition, 0)
-        #<flagDefinition> <identifiantTerme> <longueurDonnees>
+        #<flagDefinition=17> <identifiantTerme> <longueurDonnees>
         if self.litNombre1() != FLAG_DEFINITION: 
             raise Exception('%s : pas FLAG_DEFINITION à %08X'%(self.latFileName, offsetDefinition))
         if self.litNombre3() != ident: 
@@ -79,7 +79,7 @@ class NindTermindex(NindIndex):
         #lit les donnes
         resultat = []
         while self.tell() < finDonnees:
-            #<flagCg> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
+            #<flagCg=61> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
             if self.litNombre1() != FLAG_CG: raise Exception('pas FLAG_CG à %d'%(self.tell() -1))
             categorie = self.litNombre1()
             frequenceTerme = self.litNombreULat()

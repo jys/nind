@@ -30,8 +30,8 @@ def main():
         
     #<fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 
 
-    #<blocIndirection>       ::= <flagIndirection> <addrBlocSuivant> <nombreIndirection> { indirection }
-    #<flagIndirection>       ::= <Integer1>
+    #<blocIndirection>       ::= <flagIndirection=47> <addrBlocSuivant> <nombreIndirection> { indirection }
+    #<flagIndirection=47>    ::= <Integer1>
     #<addrBlocSuivant>       ::= <Integer5>
     #<nombreIndirection>     ::= <Integer3>
     #<indirection>           ::= <offsetDefinition> <longueurDefinition> 
@@ -39,8 +39,8 @@ def main():
     #<longueurDefinition>    ::= <Integer3>
 
     #<blocDefinition>        ::= { <definition> | <vide> }
-    #<definition>            ::= <flagDefinition> <identifiantHash> <longueurDonnees> <donneesHash>
-    #<flagDefinition>        ::= <Integer1>
+    #<definition>            ::= <flagDefinition=17> <identifiantHash> <longueurDonnees> <donneesHash>
+    #<flagDefinition=17>     ::= <Integer1>
     #<identifiantHash>       ::= <Integer3>
     #<longueurDonnees>       ::= <Integer3>
     #<donneesHash>           ::= { <terme> }
@@ -56,16 +56,17 @@ def main():
     #<identifiantRelC>       ::= <IntegerSLat>
     #<vide>                  ::= { <Octet> }
 
-    #<blocIdentification>    ::= <flagIdentification> <maxIdentifiant> <identifieurUnique>
-    #<flagIdentification>    ::= <Integer1>
+    #<blocIdentification>    ::= <flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
+    #<flagIdentification=53> ::= <Integer1>
     #<maxIdentifiant>        ::= <Integer3>
     #<identifieurUnique>     ::= <dateHeure>
     #<dateHeure >            ::= <Integer4>
+    #<identifieurSpecifique> ::= <Integer4>
     
     FLAG_INDIRECTION = 47
     FLAG_DEFINITION = 17
     FLAG_IDENTIFICATION = 53
-    TAILLE_IDENTIFICATION = 8
+    TAILLE_IDENTIFICATION = 12
     TETE_INDIRECTION = 9
     TAILLE_INDIRECTION = 8
     TETE_DEFINITION = 7
@@ -79,9 +80,10 @@ def main():
         nbreTermesS = nbreTermesC = nbreDef = 0
         noDef = 0
         repartDef = {}
+        maxComposejs = []
         inFile.seek(0, 0)
         addrIndirection = inFile.tell()
-        #<flagIndirection> <addrBlocSuivant> <nombreIndirection>
+        #<flagIndirection=47> <addrBlocSuivant> <nombreIndirection>
         if inFile.litNombre1() != FLAG_INDIRECTION: raise Exception('pas FLAG_INDIRECTION à %08X'%(addrIndirection))
         if inFile.litNombre5() != 0: raise Exception("plusieurs blocs d'indirection")
         nombreIndirection = inFile.litNombre3()
@@ -93,7 +95,7 @@ def main():
             if offsetDefinition != 0: 
                 nbreDef +=1
                 inFile2.seek(offsetDefinition, 0)
-                #<flagDefinition> <identifiantHash> <longueurDonnees> 
+                #<flagDefinition=17> <identifiantHash> <longueurDonnees> 
                 if inFile2.litNombre1() != FLAG_DEFINITION: raise Exception('pas FLAG_DEFINITION à %08X'%(offsetDefinition))
                 if inFile2.litNombre3() != noDef: raise Exception('%d pas trouvé à %08X'%(noDef, offsetDefinition+1))
                 longueurDonnees = inFile2.litNombre3()
@@ -113,6 +115,10 @@ def main():
                     termeSimple = inFile2.litString()
                     identifiantS = inFile2.litNombre3()
                     nbreComposes = inFile2.litNombreULat()
+                    maxComposejs.append((nbreComposes, termeSimple))
+                    maxComposejs.sort()
+                    maxComposejs.reverse()
+                    if len(maxComposejs) > 10: maxComposejs.pop()
                     outFile.write('[%s] %06d (%d) '%(termeSimple, identifiantS, nbreComposes))
                     identifiantC = identifiantS
                     composes = []
@@ -147,8 +153,12 @@ def main():
     keys.sort()
     resultRepart = []
     for key in keys: resultRepart.append('%d:%d'%(key, repartDef[key]))
-    print 'répartition des %d termes sur les %d indirections'%(nbreTermesS, nombreIndirection)
+    print 'répartition des %d termes sur les %d indirections :'%(nbreTermesS, nombreIndirection)
     print ', '.join(resultRepart)
+    print
+    print 'top 10 des listes de termes composés les plus longues avec le mot terminal:'
+    for (nbreComposes, termeSimple) in maxComposejs:
+        print u'% 5d composés pour "%s"'%(nbreComposes, termeSimple)
     
 if __name__ == '__main__':
         main()

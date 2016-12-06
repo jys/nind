@@ -41,9 +41,12 @@ public:
     struct Identification {
         unsigned int lexiconWordsNb;
         unsigned int lexiconTime;
-        Identification(): lexiconWordsNb(0), lexiconTime(0) {}
-        Identification(const unsigned int nb, const unsigned int id): lexiconWordsNb(nb), lexiconTime(id) {}
+        unsigned int specificFileIdent;
+        Identification(): lexiconWordsNb(0), lexiconTime(0), specificFileIdent(0) {}
+        Identification(const unsigned int nb, const unsigned int id, const unsigned int spe): 
+            lexiconWordsNb(nb), lexiconTime(id), specificFileIdent(spe) {}
         ~Identification() {}
+        //specificFileIdent n'inervient pas dans les comparaisons
         bool operator==(const Identification &id2) const {
             return (this->lexiconWordsNb == id2.lexiconWordsNb && this->lexiconTime == id2.lexiconTime); }
         bool operator!=(const Identification &id2) const {
@@ -51,6 +54,8 @@ public:
     };
 
 protected:
+    //<flagIdentification>(1) <maxIdentifiant>(3) <identifieurUnique>(4) <identifieurSpecifique>(4) = 12
+#define TAILLE_IDENTIFICATION 12
 
     /**\brief Creates NindIndex with a specified name associated with.
     *\param fileName absolute path file name
@@ -90,7 +95,6 @@ protected:
     unsigned int getFirstIndirectionBlockSize();
     
     /**\brief get identification of lexicon
-    *\param wordsNb where number of words contained in lexicon is returned
     *\param identification where unique identification of lexicon is returned */
     void getFileIdentification(Identification &identification);
         

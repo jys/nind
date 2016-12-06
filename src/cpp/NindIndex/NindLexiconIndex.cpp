@@ -24,8 +24,8 @@
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
-// <definition>            ::= <flagDefinition> <identifiantHash> <longueurDonnees> <donneesHash>
-// <flagDefinition>        ::= <Integer1>
+// <definition>            ::= <flagDefinition=17> <identifiantHash> <longueurDonnees> <donneesHash>
+// <flagDefinition=17>     ::= <Integer1>
 // <identifiantHash>       ::= <Integer3>
 // <longueurDonnees>       ::= <Integer3>
 // <donneesHash>           ::= { <terme> }
@@ -41,17 +41,17 @@ using namespace std;
 // <identifiantRelC>       ::= <IntegerSLat>
 ////////////////////////////////////////////////////////////
 #define FLAG_DEFINITION 17
-//<flagDefinition> <identifiantHash> <longueurDonnees> = 7
+//<flagDefinition=17>(1) <identifiantHash>(3) = 4
+#define OFFSET_LONGUEUR 4
+//<flagDefinition=17> <identifiantHash> <longueurDonnees> = 7
 #define TETE_DEFINITION 7
 //<identTermeRelatif>(3) <categorie>(1) <nbreLocalisations>(1) = 5
 //#define TETE_DEFINITION_MAXIMUM 5
-//<flagDefinition>(1) <identifiantHash>(3) <longueurDonnees>(3) 
+//<flagDefinition=17>(1) <identifiantHash>(3) <longueurDonnees>(3) 
 //<clefA>(4) <clefB>(4) <identifiantS>(3) <nbreComposes>(1) = 19
 #define TAILLE_DEFINITION_MINIMUM 19
 //<localisationRelatif>(2) <longueur>(1) = 3
 //#define TAILLE_LOC_MAXIMUM 3
-//<flagIdentification> <maxIdentifiant> <identifieurUnique> = 8
-#define TAILLE_IDENTIFICATION 8
 ////////////////////////////////////////////////////////////
 static unsigned int clef(const string &mot);
 ////////////////////////////////////////////////////////////
@@ -68,11 +68,11 @@ NindLexiconIndex::NindLexiconIndex(const string &fileName,
                                    const unsigned int retroIndirectionBlocSize):
     NindIndex(fileName, 
         isLexiconWriter, 
-        Identification(0, 0),
+        Identification(0, 0, 0),
         TAILLE_DEFINITION_MINIMUM, 
         indirectionBlocSize),
     m_modulo(0),
-    m_identification(Identification(0, 0)),
+    m_identification(Identification(0, 0, 0)),
     m_withRetrolexicon(withRetrolexicon)
 {
     //la taille du bloc d'indirection du fichier reel est structurante
@@ -187,7 +187,7 @@ unsigned int NindLexiconIndex::getIdentifiant(const string &termeSimple,
     //lit ce qui concerne cet identifiant
     const bool existe = getDefinition(ident);
     if (!existe) return 0;              //pas trouve de definition => mot inconnu
-    //<flagDefinition> <identifiantHash> <longueurDonnees> <donneesHash>
+    //<flagDefinition=17> <identifiantHash> <longueurDonnees> <donneesHash>
     if (m_file.getInt1() != FLAG_DEFINITION) 
         throw InvalidFileException("NindLexiconIndex::getDefinitionTerme A : " + m_fileName);
     if (m_file.getInt3() != ident) 
@@ -238,7 +238,7 @@ unsigned int NindLexiconIndex::getDefinitionTermes(const string &termeSimple,
     //lit ce qui concerne cet identifiant
     const bool existe = getDefinition(ident);
     if (existe) {
-        //<flagDefinition> <identifiantHash> <longueurDonnees> <donneesHash>
+        //<flagDefinition=17> <identifiantHash> <longueurDonnees> <donneesHash>
         if (m_file.getInt1() != FLAG_DEFINITION) 
             throw InvalidFileException("NindLexiconIndex::getDefinitionTerme A : " + m_fileName);
         if (m_file.getInt3() != ident) 
@@ -307,7 +307,7 @@ void NindLexiconIndex::setDefinitionTermes(const list<Terme> &definition,
     const Terme &premierTerme = definition.front();
     const unsigned int ident =  clef(premierTerme.termeSimple) % m_modulo;
     m_file.createBuffer(tailleMaximum); 
-    //<flagDefinition> <identifiantHash> <longueurDonnees> 
+    //<flagDefinition=17> <identifiantHash> <longueurDonnees> 
     m_file.putInt1(FLAG_DEFINITION);
     m_file.putInt3(ident);
     m_file.putInt3(0);         //la taille des donnees sera ecrite plus tard, quand elle sera connue
@@ -326,7 +326,7 @@ void NindLexiconIndex::setDefinitionTermes(const list<Terme> &definition,
     }
     //ecrit la taille reelle du buffer
     const unsigned int longueurDonnees = m_file.getOutBufferSize() - TETE_DEFINITION;
-    m_file.putInt3(longueurDonnees, 4);  //la taille dans la trame
+    m_file.putInt3(longueurDonnees, OFFSET_LONGUEUR);  //la taille dans la trame
     //3) ecrit la definition du terme et gere le fichier
     setDefinition(ident, lexiconIdentification);   
 }

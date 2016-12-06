@@ -26,8 +26,8 @@ using namespace std;
 ////////////////////////////////////////////////////////////
 // <fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 
 //
-// <blocIndirection>       ::= <flagIndirection> <addrBlocSuivant> <nombreIndirection> { indirection }
-// <flagIndirection>       ::= <Integer1>
+// <blocIndirection>       ::= <flagIndirection=47> <addrBlocSuivant> <nombreIndirection> { indirection }
+// <flagIndirection=47>    ::= <Integer1>
 // <addrBlocSuivant>       ::= <Integer5>
 // <nombreIndirection>     ::= <Integer3>
 // <indirection>           ::= <offsetDefinition> <longueurDefinition> 
@@ -38,18 +38,17 @@ using namespace std;
 // <definition>            ::= { <Octet> }
 // <vide>                  ::= { <Octet> }
 //
-// <blocIdentification>    ::= <flagIdentification> <maxIdentifiant> <identifieurUnique>
-// <flagIdentification>    ::= <Integer1>
+// <blocIdentification>    ::= <flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
+// <flagIdentification=53> ::= <Integer1>
 // <maxIdentifiant>        ::= <Integer3>
 // <identifieurUnique>     ::= <dateHeure>
 // <dateHeure >            ::= <Integer4>
+// <identifieurSpecifique> ::= <Integer4>
 //
 ////////////////////////////////////////////////////////////
 #define FLAG_INDIRECTION 47
 #define FLAG_IDENTIFICATION 53
-//<flagIdentification> <maxIdentifiant> <identifieurUnique> = 8
-#define TAILLE_IDENTIFICATION 8
-//<flagIndirection> <addrBlocSuivant> <nombreIndirection> = 9
+//<flagIndirection=47>(1) <addrBlocSuivant>(5) <nombreIndirection>(3) = 9
 #define TETE_INDIRECTION 9
 //<offsetDefinition> <longueurDefinition> = 8
 #define TAILLE_INDIRECTION 8
@@ -217,11 +216,12 @@ void NindIndex::setDefinition(const unsigned int ident,
     //6) ecrit la nouvelle identification si pas deja ecrite
     if (!identOk) {
         m_file.setPos(-TAILLE_IDENTIFICATION, SEEK_END);       //se positionne sur l'identification
-        //<flagIdentification> <maxIdentifiant> <identifieurUnique>
+        //<flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
         m_file.createBuffer(TAILLE_IDENTIFICATION);
         m_file.putInt1(FLAG_IDENTIFICATION);
         m_file.putInt3(lexiconIdentification.lexiconWordsNb);
         m_file.putInt4(lexiconIdentification.lexiconTime);
+        m_file.putInt4(lexiconIdentification.specificFileIdent);
         m_file.writeBuffer();                       //ecriture effective sur le fichier  
         m_file.flush();
     }
@@ -229,7 +229,6 @@ void NindIndex::setDefinition(const unsigned int ident,
 ////////////////////////////////////////////////////////////
 //brief verifie que l'indirection existe et cree un bloc supplementaire si c'est pertinent
 //param ident ident of definition
-//param lexiconWordsNb number of words contained in lexicon 
 //param lexiconIdentification unique identification of lexicon 
 void NindIndex::checkExtendIndirection(const unsigned int ident,
                                        const Identification &lexiconIdentification)
@@ -243,7 +242,7 @@ void NindIndex::checkExtendIndirection(const unsigned int ident,
         addIndirection(lexiconIdentification);  //bloc d'indirection = identification a la fin 
         pair<unsigned long int, unsigned int> &indirectionBlocPrec = m_indirectionMapping.back();
         //se positionne sur le <addrBlocSuivant> du dernier bloc
-        //<flagIndirection> <addrBlocSuivant> <nombreIndirection> { indirection }
+        //<flagIndirection=47> <addrBlocSuivant> <nombreIndirection> { indirection }
         m_file.setPos(indirectionBlocPrec.first -8, SEEK_SET);   //pour pointer <addrBlocSuivant>
         m_file.createBuffer(5);
         m_file.putInt5(blocIndirection);
@@ -261,7 +260,7 @@ void NindIndex::checkExtendIndirection(const unsigned int ident,
 unsigned int NindIndex::getFirstIndirectionBlockSize()
 {
     m_file.setPos(0, SEEK_SET);  //positionne en tete du fichier
-    //<flagIndirection> <addrBlocSuivant> <nombreIndirection>
+    //<flagIndirection=47> <addrBlocSuivant> <nombreIndirection>
     m_file.readBuffer(TETE_INDIRECTION);
     if (m_file.getInt1() != FLAG_INDIRECTION) 
         throw InvalidFileException("NindIndex::getFirstIndirectionBlockSize : " + m_fileName);
@@ -270,18 +269,18 @@ unsigned int NindIndex::getFirstIndirectionBlockSize()
 }
 ////////////////////////////////////////////////////////////
 //brief get identification of lexicon
-//param wordsNb where number of words contained in lexicon is returned
 //param identification where unique identification of lexicon is returned */
 void NindIndex::getFileIdentification(Identification &identification)
 {
     m_file.setPos(-TAILLE_IDENTIFICATION, SEEK_END);       //se positionne sur l'identification
-    //<flagIdentification> <maxIdentifiant> <identifieurUnique>
+    //<flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
     m_file.readBuffer(TAILLE_IDENTIFICATION);
     if (m_file.getInt1() != FLAG_IDENTIFICATION) 
         throw InvalidFileException("NindIndex::getIdentification : " + m_fileName);
     const unsigned int wordsNb = m_file.getInt3();
     const unsigned int time = m_file.getInt4();
-    identification = Identification(wordsNb, time);
+    const unsigned int specific = m_file.getInt4();
+    identification = Identification(wordsNb, time, specific);
 }
 ////////////////////////////////////////////////////////////
 //return l'identifiant maximum possible avec le systehme actuel d'indirection
@@ -299,7 +298,7 @@ void NindIndex::mapIndirection()
 {
     m_file.setPos(0, SEEK_SET);  //positionne en tete du fichier
     while (true) {
-        //<flagIndirection> <addrBlocSuivant> <nombreIndirection>
+        //<flagIndirection=47> <addrBlocSuivant> <nombreIndirection>
         m_file.readBuffer(TETE_INDIRECTION);
         if (m_file.getInt1() != FLAG_INDIRECTION) 
             throw InvalidFileException("NindIndex::mapIndirection : " + m_fileName);
@@ -333,8 +332,8 @@ unsigned long int NindIndex::getIndirection(const unsigned int ident)
 void NindIndex::addIndirection(const Identification &lexiconIdentification)
 {
     //le fichier est deja positionne au bon endroit
-    //<flagIndirection_1> <addrBlocSuivant_5> <nombreIndirection_3>
-    m_file.createBuffer(TETE_INDIRECTION);
+    //l'identification (12)  est plus volumineuse que l'indirection (9)
+    m_file.createBuffer(TAILLE_IDENTIFICATION);
     m_file.putInt1(FLAG_INDIRECTION);
     m_file.putInt5(0);
     m_file.putInt3(m_indirectionBlocSize);
@@ -343,10 +342,11 @@ void NindIndex::addIndirection(const Identification &lexiconIdentification)
     m_file.writeValue(0, m_indirectionBlocSize*TAILLE_INDIRECTION);
     //lui colle l'identification du lexique a suivre
     //utilise le meme buffer
-    //<flagIdentification_1> <maxIdentifiant_3> <identifieurUnique_4>
+    //<flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
     m_file.putInt1(FLAG_IDENTIFICATION);
     m_file.putInt3(lexiconIdentification.lexiconWordsNb);
     m_file.putInt4(lexiconIdentification.lexiconTime);
+    m_file.putInt4(lexiconIdentification.specificFileIdent);
     m_file.writeBuffer();                               //ecriture effective sur le fichier
 }
 ////////////////////////////////////////////////////////////
@@ -354,16 +354,16 @@ void NindIndex::addIndirection(const Identification &lexiconIdentification)
 void NindIndex::checkIdentification(const Identification &lexiconIdentification)
 {
     m_file.setPos(-TAILLE_IDENTIFICATION, SEEK_END);       //se positionne sur l'identification
-    //<flagIdentification> <maxIdentifiant> <identifieurUnique>
+    //<flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
     m_file.readBuffer(TAILLE_IDENTIFICATION);
     if (m_file.getInt1() != FLAG_IDENTIFICATION) 
         throw InvalidFileException("NindIndex::checkIdentification : " + m_fileName);
     const unsigned int maxIdent = m_file.getInt3();
     const unsigned int identification = m_file.getInt4();
-    //si c'est le fichier lexique qui est verifie, pas de comparaison de valeurs
-    if (lexiconIdentification == Identification(0, 0)) return;
-    //si ce n'est pas le fichier lexique qui est verifie, comparaison de valeurs
-    if (Identification(maxIdent, identification) != lexiconIdentification) {
+    //si c'est le fichier lexique qui est verifiej, pas de comparaison de valeurs
+    if (lexiconIdentification == Identification(0, 0, 0)) return;
+    //si ce n'est pas le fichier lexique qui est verifiej, comparaison de valeurs non spejcifiques
+    if (Identification(maxIdent, identification, 0) != lexiconIdentification) {
         std::cerr << "NindIndex::checkIdentification failed "
                   << m_fileName << " : "
                   << maxIdent << "/" << lexiconIdentification.lexiconWordsNb
@@ -403,7 +403,7 @@ void NindIndex::mapEmptySpaces()
     } 
     //ajoute l'identification dans les non vides
     m_file.setPos(-TAILLE_IDENTIFICATION, SEEK_END);       //se positionne sur l'identification
-    //<flagIdentification> <maxIdentifiant> <identifieurUnique>
+    //<flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
     const pair<unsigned long int, unsigned int> nonVide(m_file.getPos(), TAILLE_IDENTIFICATION);
     nonVidesList.push_back(nonVide);
     //ordonne les non vides
@@ -471,10 +471,11 @@ bool NindIndex::findNewArea(const unsigned int definitionSize,
             //comme c'est en fin de fichier, il faut ecrire la taille de definitionSize
             m_file.putPad(definitionSize - dataSize);                
             //et l'identification au bout
-            //<flagIdentification> <maxIdentifiant> <identifieurUnique>
+            //<flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
             m_file.putInt1(FLAG_IDENTIFICATION);  
             m_file.putInt3(lexiconIdentification.lexiconWordsNb);  
             m_file.putInt4(lexiconIdentification.lexiconTime); 
+            m_file.putInt4(lexiconIdentification.specificFileIdent); 
             return true;
         }
     }

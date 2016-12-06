@@ -18,7 +18,6 @@
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
 #include "NindTermAmose.h"
-#include "NindLexiconAmose.h"
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
@@ -53,7 +52,7 @@ NindTermAmose::~NindTermAmose()
 //param newDocuments list of documents ids + frequencies where term is in 
 //param lexiconIdentification unique identification of lexicon */
 void NindTermAmose::addDocsToTerm(const unsigned int ident,
-                                  const unsigned int type,
+                                  const AmoseTypes type,
                                   const list<Document> &newDocuments,
                                   const Identification &lexiconIdentification)
 {
@@ -107,7 +106,7 @@ void NindTermAmose::addDocsToTerm(const unsigned int ident,
 //param documentId id of document to remove
 //param lexiconIdentification unique identification of lexicon */
 void NindTermAmose::removeDocFromTerm(const unsigned int ident,
-                                      const unsigned int type,
+                                      const AmoseTypes type,
                                       const unsigned int documentId,
                                       const Identification &lexiconIdentification)
 {
@@ -202,7 +201,7 @@ unsigned int NindTermAmose::getDocFreq(const unsigned int termId)
 //brief number of unique terms  
 //param type: type of the terms (0: simple term, 1: multi-term, 2: named entity) 
 //return number of unique terms of specified type into the base */
-unsigned int NindTermAmose::getUniqueTermCount(const unsigned int type)
+unsigned int NindTermAmose::getUniqueTermCount(const AmoseTypes type)
 {
     map<unsigned int, unsigned int>::const_iterator itcount = m_uniqueTermCount.find(type);
     if (itcount == m_uniqueTermCount.end()) return 0;
@@ -212,7 +211,7 @@ unsigned int NindTermAmose::getUniqueTermCount(const unsigned int type)
 //brief number of terms occurrences 
 //param type: type of the terms (0: simple term, 1: multi-term, 2: named entity) 
 //return number  of terms of specified type into the base */
-unsigned int NindTermAmose::getTermOccurrences(const unsigned int type)
+unsigned int NindTermAmose::getTermOccurrences(const AmoseTypes type)
 {
     map<unsigned int, unsigned int>::const_iterator itcount = m_termOccurrences.find(type);
     if (itcount == m_termOccurrences.end()) return 0;

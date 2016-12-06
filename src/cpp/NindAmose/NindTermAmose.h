@@ -21,6 +21,7 @@
 #define NindTermAmose_H
 ////////////////////////////////////////////////////////////
 #include "NindIndex/NindTermIndex.h"
+#include "NindLexiconAmose.h"
 #include "NindCommonExport.h"
 #include "NindExceptions.h"
 #include <string>
@@ -52,7 +53,7 @@ public:
     *\param newDocuments list of documents ids + frequencies where term is in 
     *\param lexiconIdentification unique identification of lexicon */
     void addDocsToTerm(const unsigned int ident,
-                       const unsigned int type,
+                       const AmoseTypes type,
                        const std::list<Document> &newDocuments,
                        const Identification &lexiconIdentification);
     
@@ -62,7 +63,7 @@ public:
     *\param documentId id of document to remove
     *\param lexiconIdentification unique identification of lexicon */
     void removeDocFromTerm(const unsigned int ident,
-                           const unsigned int type,
+                           const AmoseTypes type,
                            const unsigned int documentId,
                            const Identification &lexiconIdentification);
 
@@ -111,7 +112,7 @@ public:
     /** \brief number of unique terms  
     *\param type: type of the terms (0: simple term, 1: multi-term, 2: named entity) 
     *\return number of unique terms of specified type into the base */
-    unsigned int getUniqueTermCount(const unsigned int type);
+    unsigned int getUniqueTermCount(const AmoseTypes type);
     
     
 // @brief number of terms occurrences 
@@ -121,7 +122,7 @@ public:
     /** \brief number of terms occurrences 
     *\param type: type of the terms (0: simple term, 1: multi-term, 2: named entity) 
     *\return number  of terms occurrences of specified type into the base */
-    unsigned int getTermOccurrences(const unsigned int type);
+    unsigned int getTermOccurrences(const AmoseTypes type);
     
 private:
     /**\brief write specific counts on termindex file

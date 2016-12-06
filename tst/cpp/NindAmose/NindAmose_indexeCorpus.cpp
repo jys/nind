@@ -22,6 +22,7 @@
 #include <time.h>
 #include <string>
 #include <list>
+#include <vector>
 #include <iostream>
 #include <iomanip> 
 #include <fstream>
@@ -46,11 +47,14 @@ static void displayHelp(char* arg0) {
     cout<<"ex :   "<<arg0<<" sample_fre.xml.mult.xml.txt 100003 100000 5000"<<endl;
 }
 ////////////////////////////////////////////////////////////
-static void majInverse (const unsigned int id,
-                        const unsigned int noDoc,
-                        list<NindTermIndex::TermCG> &termIndex);
+static bool oldFiles(const list<string> filesNames);
+static void analyzeWord(const string &word, 
+                        string &lemma, 
+                        AmoseTypes &type, 
+                        string &entitejNommeje);
 ////////////////////////////////////////////////////////////
 #define NO_CG 0
+#define TERMS_BUFFER_SIZE 200000
 ////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
     setlocale( LC_ALL, "French" );
@@ -75,30 +79,8 @@ int main(int argc, char *argv[]) {
         //pour calculer le temps consomme
         clock_t start, end;
         double cpuTimeUsed;
-
         /////////////////////////////////////
-        bool noOldFiles = true;
-        FILE *file =  fopen(lexiconFileName.c_str(), "rb");
-        if (file) {
-            fclose(file);
-            noOldFiles = false;
-        }
-        file =  fopen(retrolexiconFileName.c_str(), "rb");
-        if (file) {
-            fclose(file);
-            noOldFiles = false;
-        }
-        file =  fopen(termindexFileName.c_str(), "rb");
-        if (file) {
-            fclose(file);
-            noOldFiles = false;
-        }
-        file =  fopen(localindexFileName.c_str(), "rb");
-        if (file) {
-            fclose(file);
-            noOldFiles = false;
-        }
-        if (!noOldFiles) {
+        if (oldFiles(list<string>({ lexiconFileName, retrolexiconFileName, termindexFileName, localindexFileName }))) {
             cout<<"Des anciens fichiers lexiques existent !"<<endl;
             cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".*index"<<endl;
             return false;
@@ -118,6 +100,8 @@ int main(int argc, char *argv[]) {
         unsigned int docsNb = 0;
         unsigned int nbMaj = 0;
         string dumpLine;
+        //buferisation des termes
+        map<unsigned int, pair<AmoseTypes, list<NindTermIndex::Document> > > bufferTermes;
         ifstream docsFile(docsFileName.c_str(), ifstream::in);
         if (docsFile.fail()) throw OpenFileException(docsFileName);
         while (getline(docsFile, dumpLine)) {
@@ -132,55 +116,75 @@ int main(int argc, char *argv[]) {
             unsigned int position, taille;
             char comma;
             sdumpLine >> noDoc;
-            //noDoc -= 10170000;
             //la structure d'index locaux se fabrique pour un document complet
             list<NindLocalIndex::Term> localIndex;
+            //bufferisation des termes pour un mesme document
+            map<unsigned int, pair<AmoseTypes, unsigned int> > bufferTermesParDoc;
             //lit tous les termes et leur localisation/taille
             //le python de construction atteste de la validite du format, pas la peine de controler
             while (sdumpLine >> word >> position >> comma >> taille) {
-                //cout<<"#"<<word<<"#"<<pos<<"#"<<taille<<endl;
                 //le terme
                 string lemma;
-                unsigned int type;
+                AmoseTypes type;
                 string entitejNommeje;
-                //si c'est une entitej nommeje, la sejpare en 2
-                const size_t pos = word.find(':');
-                if (pos != string::npos) {
-                    entitejNommeje = word.substr(0, pos);
-                    lemma = word.substr(pos);
-                    type = NAMED_ENTITY;
-                }
-                else if (word.find('_') != string::npos) {
-                    lemma = word;
-                    type = MULTI_TERM;
-                }
-                else {
-                    lemma = word;
-                    type = SIMPLE_TERM;
-                }
+                analyzeWord(word, lemma, type, entitejNommeje);
+                //si le lemme est vide, raf
+                if (lemma.empty()) continue;
                 //recupere l'id du terme dans le lexique, l'ajoute eventuellement
                 const unsigned int id = nindLexicon.addTerm(lemma, type, entitejNommeje);
-//                 //recupere l'index inverse pour ce terme
-//                 list<NindTermIndex::TermCG> termIndex;
-//                 //met a jour la definition du terme
-//                 nindTermAmose->getTermIndex(id, termIndex);
-//                 //si le terme n'existe pas encore, la liste reste vide
-//                 majInverse(id, noDoc, termIndex); 
-                //recupere l'identification du lexique
-                nindLexicon.getIdentification(identification);
-                //ecrit sur le fichier inverse
-                list<NindTermIndex::Document> newDocuments;
-                newDocuments.push_back(NindTermIndex::Document(noDoc, 1));
-                nindTermAmose.addDocsToTerm(id, type, newDocuments, identification);
-                nbMaj +=1;
+                //bufferise le terme
+                //cherche s'il existe dejjah dans le buffer
+                map<unsigned int, pair<AmoseTypes, unsigned int> >::iterator itterm = bufferTermesParDoc.find(id);
+                //s'il n'existe pas, le creje 
+                if (itterm == bufferTermesParDoc.end()) bufferTermesParDoc[id] = pair<AmoseTypes, unsigned int>(type, 1);
+                //sinon increjmente le compteur
+                else (*itterm).second.second +=1;             
                 //augmente l'index local 
                 localIndex.push_back(NindLocalIndex::Term(id, NO_CG));
                 NindLocalIndex::Term &term = localIndex.back();
                 term.localisation.push_back(NindLocalIndex::Localisation(position, taille));               
             }
+            //recupere l'identification du lexique
+            nindLexicon.getIdentification(identification);
             //ecrit la definition sur le fichier des index locaux
             nindLocalAmose.setLocalIndex(noDoc, localIndex, identification);
+            //bufferise termes + docs 
+            for (map<unsigned int, pair<AmoseTypes, unsigned int> >::const_iterator itterm = bufferTermesParDoc.begin();
+                 itterm != bufferTermesParDoc.end(); itterm++) {
+                const unsigned int &idterm = (*itterm).first;
+                const AmoseTypes &type = (*itterm).second.first;
+                const unsigned int &freq = (*itterm).second.second;
+                //cherche s'il existe dejjah dans le buffer
+                map<unsigned int, pair<AmoseTypes, list<NindTermIndex::Document> > >::iterator itterm2 = bufferTermes.find(idterm);
+                //s'il n'existe pas, le creje 
+                if (itterm2 == bufferTermes.end()) 
+                    bufferTermes[idterm] = pair<AmoseTypes, list<NindTermIndex::Document> >(type, { NindTermIndex::Document(noDoc,freq) });
+                //sinon ajoute le document
+                else (*itterm2).second.second.push_back(NindTermIndex::Document(noDoc,freq));          
+            }
+            //vejrifie si le buffer a dejpassej ses limites
+            if (bufferTermes.size() < TERMS_BUFFER_SIZE) continue;
+            //ejcrit le buffer sur disque
+            for (map<unsigned int, pair<AmoseTypes, list<NindTermIndex::Document> > >::const_iterator itterm2 = bufferTermes.begin();
+                 itterm2 != bufferTermes.end(); itterm2++) {
+                const unsigned int &termid = (*itterm2).first;
+                const AmoseTypes &type = (*itterm2).second.first;
+                const list<NindTermIndex::Document> &documents = (*itterm2).second.second;
+                nindTermAmose.addDocsToTerm(termid, type, documents, identification);                   
+                nbMaj +=1;
+            }
+            //raz buffer
+            bufferTermes.clear();
         }
+        for (map<unsigned int, pair<AmoseTypes, list<NindTermIndex::Document> > >::const_iterator itterm2 = bufferTermes.begin();
+                itterm2 != bufferTermes.end(); itterm2++) {
+            const unsigned int &termid = (*itterm2).first;
+            const AmoseTypes &type = (*itterm2).second.first;
+            const list<NindTermIndex::Document> &documents = (*itterm2).second.second;
+            nindTermAmose.addDocsToTerm(termid, type, documents, identification);                   
+            nbMaj +=1;
+        }
+        //ejcrit le buffer sur disque
         docsFile.close();
         end = clock();
         cout<<nbMaj<<" accès / mises à jour sur "<<lexiconFileName<<endl;
@@ -200,5 +204,39 @@ int main(int argc, char *argv[]) {
     catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; throw; return false;}
     catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; throw; return false;}
     catch (...) {cerr<<"EXCEPTION unknown"<< endl; throw; return false; }
+}
+////////////////////////////////////////////////////////////
+static bool oldFiles(const list<string> filesNames) 
+{
+    for (list<string>::const_iterator itname = filesNames.begin(); itname != filesNames.end(); itname++) {
+        FILE *file =  fopen((*itname).c_str(), "rb");
+        if (file) {
+            fclose(file);
+            return true;
+        }
+    }
+    return false;
+}
+////////////////////////////////////////////////////////////
+static void analyzeWord(const string &word, 
+                        string &lemma, 
+                        AmoseTypes &type, 
+                        string &entitejNommeje)
+{
+    //si c'est une entitej nommeje, la sejpare en 2
+    const size_t pos = word.find(':');
+    if (pos != string::npos) {
+        entitejNommeje = word.substr(0, pos);
+        lemma = word.substr(pos +1);
+        type = NAMED_ENTITY;
+    }
+    else if (word.find('_') != string::npos) {
+        lemma = word;
+        type = MULTI_TERM;
+    }
+    else {
+        lemma = word;
+        type = SIMPLE_TERM;
+    }
 }
 ////////////////////////////////////////////////////////////

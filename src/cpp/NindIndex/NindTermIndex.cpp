@@ -23,13 +23,13 @@
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
-// <definition>            ::= <flagDefinition> <identifiantTerme> <longueurDonnees> <donneesTerme>
-// <flagDefinition>        ::= <Integer1>
+// <definition>            ::= <flagDefinition=17> <identifiantTerme> <longueurDonnees> <donneesTerme>
+// <flagDefinition=17>     ::= <Integer1>
 // <identifiantTerme>      ::= <Integer3>
 // <longueurDonnees>       ::= <Integer3>
 // <donneesTerme>          ::= { <donneesCG> }
-// <donneesCG>             ::= <flagCg> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
-// <flagCg>                ::= <Integer1>
+// <donneesCG>             ::= <flagCg=61> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
+// <flagCg=61>             ::= <Integer1>
 // <categorie>             ::= <Integer1>
 // <frequenceTerme>        ::= <IntegerULat>
 // <nbreDocs>              ::= <IntegerULat>
@@ -39,17 +39,17 @@ using namespace std;
 ////////////////////////////////////////////////////////////
 #define FLAG_DEFINITION 17
 #define FLAG_CG 61
-//<flagDefinition>(1) <identifiantTerme>(3) <longueurDonnees>(3) = 7
+//<flagDefinition=17>(1) <identifiantTerme>(3) = 4
+#define OFFSET_LONGUEUR 4
+//<flagDefinition=17>(1) <identifiantTerme>(3) <longueurDonnees>(3) = 7
 #define TETE_DEFINITION 7
-//<flagDefinition>(1) <identifiantTerme>(3) <longueurDonnees>(3) <flagCg>(1) <categorie>(1) <frequenceTerme>(1) 
+//<flagDefinition=17>(1) <identifiantTerme>(3) <longueurDonnees>(3) <flagCg>(1) <categorie>(1) <frequenceTerme>(1) 
 //<nbreDocs>(1) <identDocRelatif>(3) <frequenceDoc>(1) = 15
 #define TAILLE_DEFINITION_MINIMUM 15
 //<flagCg>(1) <categorie>(1) <frequenceTerme>(3) <nbreDocs>(3) = 8
 #define TETE_DEFINITION_MAXIMUM 8
 //<identDocRelatif>(3) <frequenceDoc>(2) = 5
 #define TAILLE_DOC_MAXIMUM 5
-//<flagIdentification> <maxIdentifiant> <identifieurUnique> = 8
-#define TAILLE_IDENTIFICATION 8
 //taille minimum du buffer d'ecriture
 #define TAILLE_BUFFER_MINIMUM 128
 ////////////////////////////////////////////////////////////
@@ -85,7 +85,7 @@ bool NindTermIndex::getTermIndex(const unsigned int ident,
     try {
         const bool existe = getDefinition(ident);
         if (!existe) return false;
-        //<flagDefinition> <identifiantTerme> <longueurDonnees> <donnees>
+        //<flagDefinition=17> <identifiantTerme> <longueurDonnees> <donnees>
         if (m_file.getInt1() != FLAG_DEFINITION) throw InvalidFileException("NindTermIndex::getTermIndex A : " + m_fileName);
         const unsigned int identTerme = m_file.getInt3();
         if (identTerme != ident) throw InvalidFileException("NindTermIndex::getTermIndex B : " + m_fileName);
@@ -132,7 +132,7 @@ void NindTermIndex::setTermIndex(const unsigned int ident,
         checkExtendIndirection(ident, lexiconIdentification);
         
         //2) calcule la taille maximum du buffer d'ecriture
-        //<flagDefinition> <identifiantTerme> <longueurDonnees> <donneesTerme>
+        //<flagDefinition=17> <identifiantTerme> <longueurDonnees> <donneesTerme>
         unsigned int tailleMaximum = TETE_DEFINITION;   
         for (list<struct TermCG>::const_iterator it1 = termIndex.begin(); it1 != termIndex.end(); it1++) {
             //<flagCg> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
@@ -144,7 +144,7 @@ void NindTermIndex::setTermIndex(const unsigned int ident,
         }
         //3) forme le buffer a ecrire sur le fichier
         m_file.createBuffer(tailleMaximum); 
-        //<flagDefinition> <identifiantTerme> <longueurDonnees> <donneesTerme>
+        //<flagDefinition=17> <identifiantTerme> <longueurDonnees> <donneesTerme>
         m_file.putInt1(FLAG_DEFINITION);
         m_file.putInt3(ident);
         m_file.putInt3(0);         //la taille des donnees sera ecrite plus tard, quand elle sera connue
@@ -165,7 +165,7 @@ void NindTermIndex::setTermIndex(const unsigned int ident,
         }
         //ecrit la taille reelle du buffer
         const unsigned int longueurDonnees = m_file.getOutBufferSize() - TETE_DEFINITION;
-        m_file.putInt3(longueurDonnees, 4);  //la taille dans la trame
+        m_file.putInt3(longueurDonnees, OFFSET_LONGUEUR);  //la taille dans la trame
         //4) ecrit la definition du terme et gere le fichier
         setDefinition(ident, lexiconIdentification);
     }
