@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
             list<string> componants;
             nindIndexTest.split(word, componants);
             //trouve son identifiant
-            const unsigned int ident = nindLexicon.getId(componants);
+            const unsigned int ident = nindLexicon.getWordId(componants);
             if (ident == 0) {
                 cout<<"INCONNU"<<endl;
                 continue;

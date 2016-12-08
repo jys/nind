@@ -38,7 +38,7 @@ def main():
     (noDocExterne, termList) = nindLocalindex.getTermList(noDoc)
     resultat = []
     for (noTerme, categorie, localisationsList) in termList:
-        terme = nindRetrolexiconindex.getTerme(noTerme)
+        terme = nindRetrolexiconindex.getWord(noTerme)
         resultat.append('%s [%s]'%(terme, NindLateconFile.catNb2Str(categorie)))
     print ', '.join(resultat)
    

@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
             list<string> componants;
             nindIndexTest.split(word, componants);
             //recupere l'id du terme dans le lexique
-            if (timeControl < 3) id = nindLexicon.getId(componants);
+            if (timeControl < 3) id = nindLexicon.getWordId(componants);
             if (id == 0) throw IntegrityException(word);
             //recupere l'index inverse pour ce terme
             list<NindTermIndex::TermCG> termIndex;

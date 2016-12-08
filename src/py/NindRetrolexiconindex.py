@@ -12,16 +12,16 @@ def usage():
     print """© l'ATEJCON.
 Programme de test de la classe NindRetrolexiconindex.
 Cette classe gère le lexique inverse du fichier lexique spécifié.
-Le lexique inverse permet de trouver un terme à partir de son identifiant.
+Le lexique inverse permet de trouver un mot à partir de son identifiant.
 Le format du fichier est défini dans le document LAT2014.JYS.440.
 Si le fichier <nom>.retrolexiconindex existe et est appairé avec le fichier
 <nom>.lexiconindex, il est ouvert en lecture.
 Sinon, l'erreur est signalée et le fichier <nom>.B.retrolexiconindex est
 créé en analysant <nom>.lexiconindex.
-Puis le programme de test affiche le terme correspondant à l'identifiant 
+Puis le programme de test affiche le mot correspondant à l'identifiant 
 spécifié.
 
-usage   : %s <fichier lexiconindex> <ident terme>
+usage   : %s <fichier lexiconindex> <ident mot>
 exemple : %s box/dumps/boxon/FRE.lexiconindex 203547
 """%(script, script)
 
@@ -34,21 +34,21 @@ def main():
     
     #la classe
     nindRetrolexiconindex = NindRetrolexiconindex(lexiconindexFileName)
-    print nindRetrolexiconindex.getTerme(ident)
+    print nindRetrolexiconindex.getWord(ident)
 
-#<definition>            ::= <flagDefinition=17> <identifiantTerme> <longueurDonnees> <donneesTerme>
-#<flagDefinition=17>     ::= <Integer1>
-#<identifiantTerme>      ::= <Integer3>
-#<longueurDonnees>       ::= <Integer3>
-#<donneesTerme>          ::= <termeCompose> | <termeSimple>
-#<termeCompose>          ::= <flagCompose=31> <identifiantA> <identifiantRelS>
-#<flagCompose=31>        ::= <Integer1>
-#<identifiantA>          ::= <Integer3>
-#<identifiantRelS>       ::= <IntegerSLat>
-#<termeSimple>           ::= <flagSimple=37> <longueurTerme> <termeUtf8>
-#<flagSimple=37>         ::= <Integer1>
-#<longueurTerme>         ::= <Integer1>
-#<termeUtf8>             ::= { <Octet> }
+#// <definition>            ::= <flagDefinition=17> <identifiantMot> <longueurDonnees> <donneesMot>
+#// <flagDefinition=17>     ::= <Integer1>
+#// <identifiantMot>        ::= <Integer3>
+#// <longueurDonnees>       ::= <Integer3>
+#// <donneesMot>            ::= <motCompose> | <motSimple>
+#// <motCompose>            ::= <flagCompose=31> <identifiantA> <identifiantRelS>
+#// <flagCompose=31>        ::= <Integer1>
+#// <identifiantA>          ::= <Integer3>
+#// <identifiantRelS>       ::= <IntegerSLat>
+#// <motSimple>             ::= <flagSimple=37> <longueurMot> <motUtf8>
+#// <flagSimple=37>         ::= <Integer1>
+#// <longueurMot>           ::= <Integer1>
+#// <motUtf8>               ::= { <Octet> }
 
 FLAG_DEFINITION = 17
 FLAG_COMPOSE = 31
@@ -73,41 +73,41 @@ class NindRetrolexiconindex(NindIndex):
     def createFile(self):
         return
                
-    def getTerme (self, ident):
-        terme = []
-        (trouvej, termeSimple, identifiantA, identifiantS) = self.getTermDef(ident)
-        #print 'A', ident, trouvej, termeSimple, identifiantA, identifiantS
+    def getWord (self, ident):
+        mot = []
+        (trouvej, motSimple, identifiantA, identifiantS) = self.getWordDef(ident)
+        #print 'A', ident, trouvej, motSimple, identifiantA, identifiantS
         #si pas trouvej, retourne chaisne vide
         if not trouvej: return ''
         while True:
-            #si c'est un terme simple, c'est la fin 
+            #si c'est un mot simple, c'est la fin 
             if identifiantA == 0:
-                terme.insert(0, termeSimple)
+                mot.insert(0, motSimple)
                 break
-            #si c'est un terme composej, recupehre le terme simple du couple
-            (trouvej, termeSimple, identifiantA2, identifiantS2) = self.getTermDef(identifiantS)
-            #print 'B', identifiantS, trouvej, termeSimple, identifiantA2, identifiantS2
+            #si c'est un mot composej, recupehre le mot simple du couple
+            (trouvej, motSimple, identifiantA2, identifiantS2) = self.getWordDef(identifiantS)
+            #print 'B', identifiantS, trouvej, motSimple, identifiantA2, identifiantS2
             if not trouvej: raise Exception("%d pas trouvé dans %s"%(identifiantS, self.latFileName))
             if identifiantA2 != 0: raise Exception("%d pas terminal %s"%(identifiantS, self.latFileName))
-            terme.insert(0, termeSimple)
-            #recupere l'autre terme du couple
-            (trouvej, termeSimple, identifiantA, identifiantS) = self.getTermDef(identifiantA)
-            #print 'C', identifiantA, trouvej, termeSimple, identifiantA, identifiantS
+            mot.insert(0, motSimple)
+            #recupere l'autre mot du couple
+            (trouvej, motSimple, identifiantA, identifiantS) = self.getWordDef(identifiantA)
+            #print 'C', identifiantA, trouvej, motSimple, identifiantA, identifiantS
             if not trouvej: raise Exception("%d pas trouvé dans %s"%(identifiantA, self.latFileName))
             #pour detecter les bouclages induits par un fichier bouclant
-            if len(terme) == TAILLE_COMPOSE_MAXIMUM: 
+            if len(mot) == TAILLE_COMPOSE_MAXIMUM: 
                 raise Exception("%d bouclage dans %s"%(ident, self.latFileName))
         #retourne la chaisne
-        return '_'.join(terme)
+        return '_'.join(mot)
     
-    def getTermDef(self, ident):
+    def getWordDef(self, ident):
         #trouve l'adresse des donnees dans le fichier
         (offsetDefinition, longueurDefinition) = self.getDefinitionAddr(ident)
-        #si pas trouve, le terme est inconnu
-        if offsetDefinition == 0: return (False, "", 0, 0)          #terme inconnu
+        #si pas trouve, le mot est inconnu
+        if offsetDefinition == 0: return (False, "", 0, 0)          #mot inconnu
         #lit l'indirection
         self.seek(offsetDefinition, 0)
-        #<flagDefinition=17> <identifiantTerme> <longueurDonnees>
+        #<flagDefinition=17> <identifiantMot> <longueurDonnees>
         if self.litNombre1() != FLAG_DEFINITION: 
             raise Exception('%s : pas FLAG_DEFINITION à %08X'%(self.latFileName, offsetDefinition))
         if self.litNombre3() != ident: 
@@ -117,7 +117,7 @@ class NindRetrolexiconindex(NindIndex):
         #lit les donnees 
         flag = self.litNombre1()
         if flag == FLAG_SIMPLE:
-            #<flagSimple=37> <longueurTerme> <termeUtf8>
+            #<flagSimple=37> <longueurMot> <motUtf8>
             return (True, self.litString(), 0, 0)
         elif flag == FLAG_COMPOSE:
             #<flagCompose=31> <identifiantA> <identifiantRelS>

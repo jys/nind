@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
                 const unsigned char cg = nindIndexTest.getCgIdent((*wordIt).cg);
                 unsigned int id = 0;
                 //recupere l'id du terme dans le lexique
-                if (timeControl < 3) id = nindLexicon.getId(componants);
+                if (timeControl < 3) id = nindLexicon.getWordId(componants);
                 if (id == 0) {
                     nbInconnus +=1;
                     nbTermNok +=1;

@@ -28,8 +28,8 @@ def main():
 
     #<fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 
 
-    #<blocIndirection>       ::= <flagIndirection> <addrBlocSuivant> <nombreIndirection> { indirection }
-    #<flagIndirection>       ::= <Integer1>
+    #<blocIndirection>       ::= <flagIndirection=47> <addrBlocSuivant> <nombreIndirection> { indirection }
+    #<flagIndirection=47>    ::= <Integer1>
     #<addrBlocSuivant>       ::= <Integer5>
     #<nombreIndirection>     ::= <Integer3>
     #<indirection>           ::= <offsetDefinition> <longueurDefinition> 
@@ -37,8 +37,8 @@ def main():
     #<longueurDefinition>    ::= <Integer3>
 
     #<blocDefinition>        ::= { <definition> | <vide> }
-    #<definition>            ::= <flagDefinition> <identifiantDoc> <identifiantExterne> <longueurDonnees> <donneesDoc>
-    #<flagDefinition>        ::= <Integer1>
+    #<definition>            ::= <flagDefinition=19> <identifiantDoc> <identifiantExterne> <longueurDonnees> <donneesDoc>
+    #<flagDefinition=19>     ::= <Integer1>
     #<identifiantDoc>        ::= <Integer3>
     #<identifiantExterne>    ::= <Integer4>
     #<longueurDonnees>       ::= <Integer3>
@@ -53,20 +53,20 @@ def main():
     #<frequenceDoc>          ::= <IntegerULat>
     #<vide>                  ::= { <octet> }
 
-    #<blocIdentification>    ::= <flagIdentification> <maxIdentifiant> <identifieurUnique>
-    #<flagIdentification>    ::= <Integer1>
+    #<blocIdentification>    ::= <flagIdentification=53> <maxIdentifiant> <identifieurUnique>
+    #<flagIdentification=53> ::= <Integer1>
     #<maxIdentifiant>        ::= <Integer3>
     #<identifieurUnique>     ::= <dateHeure>
     #<dateHeure >            ::= <Integer4>
     
     INDIRECTION_FLAG = 47
-    DEFINITION_FLAG = 17
+    DEFINITION_FLAG = 19
     IDENTIFICATION_FLAG = 53
     CG_FLAG = 61
     IDENTIFICATION_SIZE = 8
     INDIRECTION_HEAD = 9
     ENTREE_SIZE = 8
-    #<flagDefinition>(1) <identifiantDoc>(3) <identifiantExterne>(4) <longueurDonnees>(3) = 11
+    #<flagDefinition=19>(1) <identifiantDoc>(3) <identifiantExterne>(4) <longueurDonnees>(3) = 11
     DEFINITION_HEAD = 11
     #DEF_CG_HEAD = 8
     #DOCUMENT_SIZE = 5
@@ -78,12 +78,15 @@ def main():
         nbreDefinition = nbreExtension = 0
         tailleDefinition = tailleExtension = 0 
         occurencesGenerale = nbreDoc = 0
+        tailleMax = 0
+        tailleMin = 0xFFFFFF
+        docMax = docMin = 0
         localisations = [0, 0, 0, 0]
         noDoc = 0
         localindexFile.seek(0, 0)
         while True:
             addrIndirection = localindexFile.tell()
-            #<flagIndirection> <addrBlocSuivant> <nombreIndirection>
+            #<flagIndirection=47> <addrBlocSuivant> <nombreIndirection>
             if localindexFile.litNombre1() != INDIRECTION_FLAG: raise Exception('pas INDIRECTION_FLAG à %08X'%(addrIndirection))
             indirectionSuivante = localindexFile.litNombre5()
             nombreIndirection = localindexFile.litNombre3()
@@ -93,9 +96,15 @@ def main():
                 offsetEntree = localindexFile.litNombre5()
                 longueurEntree = localindexFile.litNombre3()
                 if offsetEntree != 0: 
+                    if tailleMax < longueurEntree: 
+                        docMax = noDoc
+                        tailleMax = longueurEntree
+                    if tailleMin > longueurEntree:
+                        docMin = noDoc
+                        tailleMin = longueurEntree
                     nbreDoc +=1
                     localindexFile2.seek(offsetEntree, 0)
-                    #<flagDefinition> <identifiantDoc> <identifiantExterne> <longueurDonnees>
+                    #<flagDefinition=19> <identifiantDoc> <identifiantExterne> <longueurDonnees>
                     if localindexFile2.litNombre1() != DEFINITION_FLAG: raise Exception('pas DEFINITION_FLAG à %08X'%(offsetEntree))
                     if localindexFile2.litNombre3() != noDoc: raise Exception('%d pas trouvé à %08X'%(noDoc, offsetEntree+1))
                     identifiantExterne = localindexFile2.litNombre4()
@@ -147,6 +156,9 @@ def main():
     print "taille fichier % 10d %08X"%(offsetFin, offsetFin)
     print
     print "%0.2f octets / occurrence de terme"%(float(offsetFin)/occurencesGenerale)
+    print
+    print '% 8d octets pour le doc % 4d (le plus petit)'%(tailleMin, docMin)
+    print '% 8d octets pour le doc % 4d (le plus grand)'%(tailleMax, docMax)
     localindexFile.close()
     localindexFile2.close()
 

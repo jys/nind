@@ -24,7 +24,6 @@ using namespace std;
 //brief Creates NindTermAmose with a specified name associated with.
 //param fileName absolute path file name
 //param isTermIndexWriter true if termIndex writer, false if termIndex reader  */
-//param lexiconWordsNb number of words contained in lexicon 
 //param lexiconIdentification unique identification of lexicon */
 //param indirectionBlocSize number of entries in a single indirection block */
 NindTermAmose::NindTermAmose(const string &fileName,

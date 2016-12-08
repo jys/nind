@@ -32,13 +32,11 @@ using namespace std;
 ////////////////////////////////////////////////////////////
 static void displayHelp(char* arg0) {
     cout<<"© l'ATEJCON"<<endl;
-    cout<<"Programme d'indexation d'un corpus déjà syntaxiquement analysé issu d'un"<<endl;
-    cout<<"dump Lucene d'un corpus Amose."<<endl;
+    cout<<"Programme d'indexation d'un corpus déjà syntaxiquement analysé par Amose."<<endl;
     cout<<"Le corpus est un fichier texte avec une ligne par document :"<<endl;
     cout<<"<n° document>  { <terme> <localisation>,<taille> }"<<endl;
     cout<<"Le lexique et les fichiers inverse et d'index locaux sont créés."<<endl;
     cout<<"Les fichiers lexique, inverse et d'index locaux doivent être absents."<<endl;
-    cout<<"Les documents sont indexés au fur et à mesure de leur lecture."<<endl;
     cout<<"Le nombre d'entrées des blocs d'indirection est spécifiée pour le lexique,"<<endl;
     cout<<"le fichier inversé et le fichier des index locaux."<<endl;
 
@@ -97,8 +95,7 @@ int main(int argc, char *argv[]) {
         //le fichier des index locaux
         NindLocalAmose nindLocalAmose(localindexFileName, true, identification, localindexEntryNb);
         //lit le fichier dump de documents
-        unsigned int docsNb = 0;
-        unsigned int nbMaj = 0;
+        unsigned int docsNb, termsNb, nbMajTerm, nbMajLex = 0;
         string dumpLine;
         //buferisation des termes
         map<unsigned int, pair<AmoseTypes, list<NindTermIndex::Document> > > bufferTermes;
@@ -130,8 +127,10 @@ int main(int argc, char *argv[]) {
                 analyzeWord(word, lemma, type, entitejNommeje);
                 //si le lemme est vide, raf
                 if (lemma.empty()) continue;
+                termsNb++;
                 //recupere l'id du terme dans le lexique, l'ajoute eventuellement
-                const unsigned int id = nindLexicon.addTerm(lemma, type, entitejNommeje);
+                const unsigned int id = nindLexicon.addWord(lemma, type, entitejNommeje);
+                nbMajLex++;
                 //bufferise le terme
                 //cherche s'il existe dejjah dans le buffer
                 map<unsigned int, pair<AmoseTypes, unsigned int> >::iterator itterm = bufferTermesParDoc.find(id);
@@ -171,7 +170,7 @@ int main(int argc, char *argv[]) {
                 const AmoseTypes &type = (*itterm2).second.first;
                 const list<NindTermIndex::Document> &documents = (*itterm2).second.second;
                 nindTermAmose.addDocsToTerm(termid, type, documents, identification);                   
-                nbMaj +=1;
+                nbMajTerm++;
             }
             //raz buffer
             bufferTermes.clear();
@@ -182,14 +181,15 @@ int main(int argc, char *argv[]) {
             const AmoseTypes &type = (*itterm2).second.first;
             const list<NindTermIndex::Document> &documents = (*itterm2).second.second;
             nindTermAmose.addDocsToTerm(termid, type, documents, identification);                   
-            nbMaj +=1;
+            nbMajTerm++;
         }
         //ejcrit le buffer sur disque
         docsFile.close();
         end = clock();
-        cout<<nbMaj<<" accès / mises à jour sur "<<lexiconFileName<<endl;
-        cout<<nbMaj<<" mises à jour sur "<<termindexFileName<<endl;
-        cout<<docsNb<<" mises à jour sur "<<localindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nbMajLex<<" accès / mises à jour sur "<<lexiconFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<termsNb<<" occurences de termes ajoutés sur "<<termindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nbMajTerm<<" mises à jour sur "<<termindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<docsNb<<" mises à jour sur "<<localindexFileName<<endl;
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
         cout<<cpuTimeUsed<<" secondes"<<endl;
         cout<<endl;

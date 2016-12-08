@@ -72,13 +72,13 @@ class DumpParser():
             lemma = attr.getValue('lemma')
             position = int(attr.getValue('position'))
             length = int(attr.getValue('length'))
-            self.termSet.add((position, length, lemma))
+            if len(lemma) != 0: self.termSet.add((position, length, lemma))
         elif path.endswith('bowNamedEntity'):
             lemma = attr.getValue('lemma')
             position = int(attr.getValue('position'))
             length = int(attr.getValue('length'))
             typeNe = attr.getValue('type')
-            self.termSet.add((position, length, typeNe + ':' + lemma))
+            if len(lemma) != 0: self.termSet.add((position, length, typeNe + ':' + lemma))
                   
     def endNodeCallback(self, path):
         if path == '/MultimediaDocuments/node/node':

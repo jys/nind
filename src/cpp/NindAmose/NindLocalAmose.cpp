@@ -97,7 +97,7 @@ void NindLocalAmose::getTermPositionIndocs(const vector<unsigned int>& termIds,
 //param termType type of terms (0: simple term, 1: multi-term, 2: named entity) 
 //param termsSet set de termes uniques dans le document */
 bool NindLocalAmose::getDocTerms(const unsigned int docId,
-                                 const unsigned int termType,
+                                 const AmoseTypes termType,
                                  set<string> &termsSet)
 {
     //raz rejsultat
@@ -112,9 +112,9 @@ bool NindLocalAmose::getDocTerms(const unsigned int docId,
         //cerr<<"NindLocalAmose::getDocTerms (*itterm)="<<(*itterm)<<endl;
         //rejcupehre le terme en string
         string lemma;
-        unsigned int type;
+        AmoseTypes type;
         string namedEntity;
-        const bool trouvej = m_nindLexicon.getTerm((*itterm), lemma, type, namedEntity);
+        const bool trouvej = m_nindLexicon.getWord((*itterm), lemma, type, namedEntity);
         if (!trouvej) throw IncompatibleFileException("Unknown term into lexicon");
         if (type == termType) 
             if (type == NAMED_ENTITY)

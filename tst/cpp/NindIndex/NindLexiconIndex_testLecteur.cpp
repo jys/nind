@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
                 //le terme
                 list<string> componants;
                 nindIndexTest.split(word, componants);
-                const unsigned int id = nindLexicon.getId(componants);
+                const unsigned int id = nindLexicon.getWordId(componants);
                 if (id == 0) throw IntegrityException(word);
                 allWords.push_back(pair<unsigned int, string>(id, word));
             }
@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
              wordIt != allWords.end(); wordIt++) {
             list<string> componants;
             nindIndexTest.split(wordIt->second, componants);
-            const unsigned int id = nindLexicon.getId(componants);
+            const unsigned int id = nindLexicon.getWordId(componants);
             if (id != wordIt->first) throw IntegrityException(wordIt->second);
         }
         end = clock();

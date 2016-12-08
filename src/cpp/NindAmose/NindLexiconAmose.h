@@ -3,11 +3,12 @@
 //
 // Description: L'adaptation de nind à amose
 // voir "Adaptation de l'indexation nind au moteur de recherche Amose", LAT2015.JYS.448
-// Cette classe gere les spejcificitejs du lexique d'Amose, particuliehrement les types de termes.
+// Cette classe gere les spejcificitejs du lexique d'Amose, particuliehrement les types de mots.
 //
 // Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2016
 //
 // Copyright: See LICENCE.md file that comes with this distribution
+////////////////////////////////////////////////////////////
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -27,6 +28,9 @@
 namespace latecon {
     namespace nindex {
 ////////////////////////////////////////////////////////////
+/**\brief various types of Amose words */
+enum AmoseTypes { SIMPLE_TERM = 0, MULTI_TERM, NAMED_ENTITY }; 
+////////////////////////////////////////////////////////////
 class DLLExportLexicon NindLexiconAmose : public NindLexiconIndex {
 public:
 
@@ -42,43 +46,40 @@ public:
 
     virtual ~NindLexiconAmose();
     
-    /**\brief add specified term in lexicon if it doesn't still exist in,
-    * In all cases, term ident is returned.
+    /**\brief add specified word in lexicon if it doesn't still exist in,
+    * In all cases, word ident is returned.
     * \param lemma word to be lexiced. Compound word is structured with "_"
-    * \param type type of the terms (0: simple term, 1: multi-term, 2: named entity) 
+    * \param type type of the words (0: simple word, 1: multi-word, 2: named entity) 
     * \param namedEntity type of named entity, eventually
     * \return ident of word */
-    unsigned int addTerm(const std::string &lemma,
-                         const unsigned int type,
+    unsigned int addWord(const std::string &lemma,
+                         const AmoseTypes type,
                          const std::string &namedEntity = "");
 
-    /**\brief get ident of a specified term
+    /**\brief get ident of a specified word
     * if word exists in lexicon, its ident is returned
     * else, return 0 (0 is not a valid ident !)
     * \param lemma word to be searched. Compound word is structured with "_"
-    * \param type type of the terms (0: simple term, 1: multi-term, 2: named entity) 
+    * \param type type of the words (0: simple word, 1: multi-word, 2: named entity) 
     * \param namedEntity type of named entity, eventually
     * \return ident of word */
-    unsigned int getTermId(const std::string &lemma,
-                           const unsigned int type,
+    unsigned int getWordId(const std::string &lemma,
+                           const AmoseTypes type,
                            const std::string &namedEntity = "");
 
-    /**\brief get term components from a specified term id 
-    * \param lemma word corresponding to term id. Compound word is structured with "_"
-    * \param type type of the terms (0: simple term, 1: multi-term, 2: named entity) 
+    /**\brief get word components from a specified word id 
+    * \param lemma word corresponding to word id. Compound word is structured with "_"
+    * \param type type of the words (0: simple word, 1: multi-word, 2: named entity) 
     * \param namedEntity type of named entity, eventually
-    * \return true if term exists, false otherwise */
-    bool getTerm(const unsigned int termId,
+    * \return true if word exists, false otherwise */
+    bool getWord(const unsigned int wordId,
                  std::string &lemma,
-                 unsigned int &type,
+                 AmoseTypes &type,
                  std::string &namedEntity);
     
 private:
     unsigned int m_semicolonIdent;
 };
-////////////////////////////////////////////////////////////
-/**\brief various types of Amose terms */
-enum AmoseTypes { SIMPLE_TERM = 0, MULTI_TERM, NAMED_ENTITY };
 ////////////////////////////////////////////////////////////
     } // end namespace
 } // end namespace

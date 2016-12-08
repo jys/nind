@@ -44,6 +44,9 @@ def main():
         print '<flagDefinition>   = %d'%(flagDefinition)
         identifiantTerme = nindIndex.litNombre3()
         print '<identifiant> = %d'%(identifiantTerme)
+        if flagDefinition == 19:
+            identifiant = nindIndex.litNombre4()
+            print '<identifiant> = %d'%(identifiant)
         longueurDonnees = nindIndex.litNombre3()
         print '<longueurDonnees>  = %d'%(longueurDonnees)
         octets = []

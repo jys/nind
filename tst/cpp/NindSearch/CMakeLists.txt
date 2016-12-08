@@ -24,3 +24,14 @@ target_link_libraries(NindSearchAmose NindIndexTest NindAmose NindIndex NindBasi
 install(TARGETS NindSearchAmose DESTINATION bin)
 
 ########### next target ###############
+SET(NindGetDocTerms_SRCS
+   NindGetDocTerms.cpp
+)
+
+add_executable(NindGetDocTerms ${NindGetDocTerms_SRCS})
+
+target_link_libraries(NindGetDocTerms NindIndexTest NindAmose NindIndex NindBasics)
+
+install(TARGETS NindGetDocTerms DESTINATION bin)
+
+########### next target ###############

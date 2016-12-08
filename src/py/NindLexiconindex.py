@@ -13,10 +13,10 @@ def usage():
 Programme de test de la classe NindLexiconindex.
 Cette classe gère le lexique contenu dans le fichier lexique spécifié.
 Le format du fichier est défini dans le document LAT2014.JYS.440.
-Le programme de test affiche l'identifiant du terme spécifié,
+Le programme de test affiche l'identifiant du mot spécifié,
 simple ou composé (avec notation dièsée).
 
-usage   : %s <fichier lexiconindex> <terme cherché>
+usage   : %s <fichier lexiconindex> <mot cherché>
 exemple : %s box/dumps/boxon/FRE.lexiconindex syntagme#nominal
 """%(script, script)
 
@@ -25,48 +25,48 @@ def main():
         usage()
         sys.exit()
     lexiconindexFileName = path.abspath(sys.argv[1])
-    terme = sys.argv[2].decode('utf-8').strip()
+    motCherchej = sys.argv[2].decode('utf-8').strip()
     
     #la classe
     nindLexiconindex = NindLexiconindex(lexiconindexFileName)
     #affiche l'identification du fichier
     (maxIdentifiant, dateHeure) = nindLexiconindex.getIdentification()
     print "max=%d dateheure=%d (%s)"%(maxIdentifiant, dateHeure, ctime(int(dateHeure)))
-    #trouve l'identifiant du terme
-    #trouve la clef des termes simples
-    termesSimples = terme.split('#')
+    #trouve l'identifiant du mot
+    #trouve la clef des mots simples
+    motsSimples = motCherchej.split('#')
     sousMotId = 0
-    for mot in termesSimples:
+    for mot in motsSimples:
         sousMotId = nindLexiconindex.getIdent(mot, sousMotId)
         if sousMotId == 0: break
     if sousMotId == 0: print 'INCONNU'
     else: print 'identifiant=',sousMotId
 
-# <fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 
-#
-# <blocIndirection>       ::= <flagIndirection=47> <addrBlocSuivant> <nombreIndirection> { indirection }
-# <flagIndirection=47>    ::= <Integer1>
-# <addrBlocSuivant>       ::= <Integer5>
-# <nombreIndirection>     ::= <Integer3>
-# <indirection>           ::= <offsetDefinition> <longueurDefinition> 
-# <offsetDefinition>      ::= <Integer5>
-# <longueurDefinition>    ::= <Integer3>
-#
-#<definition>            ::= <flagDefinition=17> <identifiantHash> <longueurDonnees> <donneesHash>
-#<flagDefinition=17>        ::= <Integer1>
-#<identifiantHash>       ::= <Integer3>
-#<longueurDonnees>       ::= <Integer3>
-#<donneesHash>           ::= { <terme> }
-#<terme>                 ::= <termeSimple> <identifiantS> <nbreComposes> <composes>
-#<termeSimple>           ::= <longueurTerme> <termeUtf8>
-#<longueurTerme>         ::= <Integer1>
-#<termeUtf8>             ::= { <Octet> }
-#<identifiantS>          ::= <Integer3>
-#<nbreComposes>          ::= <IntegerULat>
-#<composes>              ::= { <compose> } 
-#<compose>               ::= <identifiantA> <identifiantRelC>
-#<identifiantA>          ::= <Integer3>
-#<identifiantRelC>       ::= <IntegerSLat>
+#// <fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 
+#//
+#// <blocIndirection>       ::= <flagIndirection=47> <addrBlocSuivant> <nombreIndirection> { indirection }
+#// <flagIndirection=47>    ::= <Integer1>
+#// <addrBlocSuivant>       ::= <Integer5>
+#// <nombreIndirection>     ::= <Integer3>
+#// <indirection>           ::= <offsetDefinition> <longueurDefinition> 
+#// <offsetDefinition>      ::= <Integer5>
+#// <longueurDefinition>    ::= <Integer3>
+
+#// <definition>            ::= <flagDefinition=17> <identifiantHash> <longueurDonnees> <donneesHash>
+#// <flagDefinition=17>     ::= <Integer1>
+#// <identifiantHash>       ::= <Integer3>
+#// <longueurDonnees>       ::= <Integer3>
+#// <donneesHash>           ::= { <mot> }
+#// <mot>                   ::= <motSimple> <identifiantS> <nbreComposes> <composes>
+#// <motSimple>             ::= <longueurMot> <motUtf8>
+#// <longueurMot>           ::= <Integer1>
+#// <motUtf8>               ::= { <Octet> }
+#// <identifiantS>          ::= <Integer3>
+#// <nbreComposes>          ::= <IntegerULat>
+#// <composes>              ::= { <compose> } 
+#// <compose>               ::= <identifiantA> <identifiantRelC>
+#// <identifiantA>          ::= <Integer3>
+#// <identifiantRelC>       ::= <IntegerSLat>
 
 FLAG_INDIRECTION = 47
 FLAG_DEFINITION = 17
@@ -88,7 +88,7 @@ class NindLexiconindex(NindIndex):
     def getIdent(self, mot, sousMotId):
         clefB = NindLateconFile.clefB(mot)
         index = clefB % self.nombreIndirection
-        #lit la définition du terme
+        #lit la définition du mot
         addrIndir = TETE_INDIRECTION + (index * TAILLE_INDIRECTION)
         self.seek(addrIndir, 0)
         #<offsetDefinition> <longueurDefinition>
@@ -104,17 +104,17 @@ class NindLexiconindex(NindIndex):
         longueurDonnees = self.litNombre3()
         finDonnees = offsetDefinition + longueurDonnees + TETE_DEFINITION
         while self.tell() < finDonnees:
-            #<termeSimple> <identifiantS> <nbreComposes> <composes>
-            termeSimple = self.litString()
-            if termeSimple != mot: 
-                #pas le terme cherche, on continue
+            #<motSimple> <identifiantS> <nbreComposes> <composes>
+            motSimple = self.litString()
+            if motSimple != mot: 
+                #pas le mot cherche, on continue
                 self.litNombre3()      #identifiantS
                 nbreComposes = self.litNombreULat()
                 for i in range(nbreComposes):
                     self.litNombre3()          #identifiantA
                     self.litNombreSLat()       #identifiantRelC
                 continue
-            #c'est le terme cherche
+            #c'est le mot cherche
             identifiantS = self.litNombre3()
             if sousMotId == 0: return identifiantS        #identifiant simple trouve
             nbreComposes = self.litNombreULat()

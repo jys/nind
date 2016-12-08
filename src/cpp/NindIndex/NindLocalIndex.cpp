@@ -158,6 +158,7 @@ bool NindLocalIndex::getTermIdents(const unsigned int ident,
         const NindLocalIndex::Term &term = (*it);
         termIdents.insert(term.term);
     } 
+    return true;
 }
 ////////////////////////////////////////////////////////////
 //brief Write a full termIndex as a list of structures

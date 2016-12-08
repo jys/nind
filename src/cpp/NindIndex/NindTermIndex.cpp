@@ -56,7 +56,6 @@ using namespace std;
 //brief Creates NindTermIndex with a specified name associated with.
 //param fileName absolute path file name
 //param isTermIndexWriter true if termIndex writer, false if termIndex reader  */
-//param lexiconWordsNb number of words contained in lexicon 
 //param lexiconIdentification unique identification of lexicon */
 //param indirectionBlocSize number of entries in a single indirection block */
 NindTermIndex::NindTermIndex(const std::string &fileName,
@@ -120,7 +119,6 @@ bool NindTermIndex::getTermIndex(const unsigned int ident,
 //brief Write a full termIndex as as a list of structures
 //param ident ident of term
 //param termIndex structure containing all datas of the specified term */
-//param lexiconWordsNb number of words contained in lexicon 
 //param lexiconIdentification unique identification of lexicon */
 void NindTermIndex::setTermIndex(const unsigned int ident,
                                  const list<struct TermCG> &termIndex,

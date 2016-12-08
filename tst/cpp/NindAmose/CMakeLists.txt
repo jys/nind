@@ -25,15 +25,15 @@ target_link_libraries(Nind_indexeCorpus NindIndex NindBasics NindAmose)
 install(TARGETS Nind_indexeCorpus DESTINATION bin)
 
 ########### next target ###############
-
-SET(NindAmose_effaceDocument_SRCS
-   NindAmose_effaceDocument.cpp
-)
-
-add_executable(NindAmose_effaceDocument ${NindAmose_effaceDocument_SRCS})
-
-target_link_libraries(NindAmose_effaceDocument NindIndex NindBasics NindAmose)
-
-install(TARGETS NindAmose_effaceDocument DESTINATION bin)
-
+# 
+# SET(NindAmose_effaceDocument_SRCS
+#    NindAmose_effaceDocument.cpp
+# )
+# 
+# add_executable(NindAmose_effaceDocument ${NindAmose_effaceDocument_SRCS})
+# 
+# target_link_libraries(NindAmose_effaceDocument NindIndex NindBasics NindAmose)
+# 
+# install(TARGETS NindAmose_effaceDocument DESTINATION bin)
+# 
 ########### next target ###############

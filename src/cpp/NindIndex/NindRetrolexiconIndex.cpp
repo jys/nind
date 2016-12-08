@@ -23,36 +23,36 @@
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
-// <definition>            ::= <flagDefinition=17> <identifiantTerme> <longueurDonnees> <donneesTerme>
+// <definition>            ::= <flagDefinition=17> <identifiantMot> <longueurDonnees> <donneesMot>
 // <flagDefinition=17>     ::= <Integer1>
-// <identifiantTerme>      ::= <Integer3>
+// <identifiantMot>        ::= <Integer3>
 // <longueurDonnees>       ::= <Integer3>
-// <donneesTerme>          ::= <termeCompose> | <termeSimple>
-// <termeCompose>          ::= <flagCompose=31> <identifiantA> <identifiantRelS>
+// <donneesMot>            ::= <motCompose> | <motSimple>
+// <motCompose>            ::= <flagCompose=31> <identifiantA> <identifiantRelS>
 // <flagCompose=31>        ::= <Integer1>
 // <identifiantA>          ::= <Integer3>
 // <identifiantRelS>       ::= <IntegerSLat>
-// <termeSimple>           ::= <flagSimple=37> <longueurTerme> <termeUtf8>
+// <motSimple>             ::= <flagSimple=37> <longueurMot> <motUtf8>
 // <flagSimple=37>         ::= <Integer1>
-// <longueurTerme>         ::= <Integer1>
-// <termeUtf8>             ::= { <Octet> }
+// <longueurMot>           ::= <Integer1>
+// <motUtf8>               ::= { <Octet> }
 ////////////////////////////////////////////////////////////
 #define FLAG_DEFINITION 17
 #define FLAG_COMPOSE 31
 #define FLAG_SIMPLE 37
-//<flagDefinition=17>(1) <identifiantTerme>(3) = 4
+//<flagDefinition=17>(1) <identifiantMot>(3) = 4
 #define OFFSET_LONGUEUR 4
-//<flagDefinition=17>(1) <identifiantTerme>(3) <longueurDonnees>(3) = 7
+//<flagDefinition=17>(1) <identifiantMot>(3) <longueurDonnees>(3) = 7
 #define TETE_DEFINITION 7
-//<flagDefinition=17>(1) <identifiantTerme>(3) <longueurDonnees>(3) <flagCompose=31>(1) <identifiantA>(3) 
+//<flagDefinition=17>(1) <identifiantMot>(3) <longueurDonnees>(3) <flagCompose=31>(1) <identifiantA>(3) 
 //<identifiantRelS>(1) = 12
-//<flagDefinition=17>(1) <identifiantTerme>(3) <longueurDonnees>(3) <flagSimple=37>(1) <longueurTerme>(1) 
-//<termeUtf8>(1) = 10
+//<flagDefinition=17>(1) <identifiantMot>(3) <longueurDonnees>(3) <flagSimple=37>(1) <longueurMot>(1) 
+//<motUtf8>(1) = 10
 #define TAILLE_DEFINITION_MINIMUM 10
-//<flagDefinition=17>(1) <identifiantTerme>(3) <longueurDonnees>(3) <flagSimple=37>(1) <longueurTerme>(1) 
-//<termeUtf8>(255) = 264
+//<flagDefinition=17>(1) <identifiantMot>(3) <longueurDonnees>(3) <flagSimple=37>(1) <longueurMot>(1) 
+//<motUtf8>(255) = 264
 #define TAILLE_DEFINITION_MAXIMUM 264
-//<flagCg>(1) <categorie>(1) <frequenceTerme>(3) <nbreDocs>(3) = 8
+//<flagCg>(1) <categorie>(1) <frequenceMot>(3) <nbreDocs>(3) = 8
 //#define TETE_DEFINITION_MAXIMUM 8
 //<identDocRelatif>(3) <frequenceDoc>(2) = 5
 //#define TAILLE_DOC_MAXIMUM 5
@@ -79,44 +79,44 @@ NindRetrolexiconIndex::~NindRetrolexiconIndex()
 {
 }
 ////////////////////////////////////////////////////////////
-//brief add a list of term idents in retro lexicon. If one of idents still exists, exception is raised
-//param termDefs list of terms definitions 
+//brief add a list of word idents in retro lexicon. If one of idents still exists, exception is raised
+//param retroWords list of words definitions 
 //param lexiconWordsNb number of words contained in lexicon 
 //param lexiconIdentification unique identification of lexicon */
-void NindRetrolexiconIndex::addTerms(const list<struct TermDef> &termDefs,
+void NindRetrolexiconIndex::addRetroWords(const list<struct RetroWord> &retroWords,
                                      const Identification &lexiconIdentification)
 {
     try {
         if (!m_isWriter) throw BadUseException("retro lexicon is not writable");
         //il y a autant d'ajout au fichier qu'il y a de nouveaux identifiants
-        for (list<struct TermDef>::const_iterator it1 = termDefs.begin(); it1 != termDefs.end(); it1++) {
-            const struct TermDef &termDef = (*it1);
-            //1) verifie que le terme n'est pas en dehors du dernier bloc d'indirection
+        for (list<struct RetroWord>::const_iterator it1 = retroWords.begin(); it1 != retroWords.end(); it1++) {
+            const struct RetroWord &retroWord = (*it1);
+            //1) verifie que le mot n'est pas en dehors du dernier bloc d'indirection
             //il faut le faire maintenant parce que le buffer d'ecriture est unique
-            checkExtendIndirection(termDef.identifiant, lexiconIdentification);
+            checkExtendIndirection(retroWord.identifiant, lexiconIdentification);
             //2) forme le buffer a ecrire sur le fichier
             m_file.createBuffer(TAILLE_DEFINITION_MAXIMUM); 
-            //<flagDefinition=17> <identifiantTerme> <longueurDonnees> <donneesTerme>
+            //<flagDefinition=17> <identifiantMot> <longueurDonnees> <donneesMot>
             m_file.putInt1(FLAG_DEFINITION);
-            m_file.putInt3(termDef.identifiant);
+            m_file.putInt3(retroWord.identifiant);
             m_file.putInt3(0);         //la taille des donnees sera ecrite plus tard, quand elle sera connue
             //simple si pas compose (pas avec la chaine vide)
-            if (termDef.identifiantA == 0) {
-                //<flagSimple=37> <longueurTerme> <termeUtf8>
+            if (retroWord.identifiantA == 0) {
+                //<flagSimple=37> <longueurMot> <motUtf8>
                 m_file.putInt1(FLAG_SIMPLE);
-                m_file.putString(termDef.termeSimple);
+                m_file.putString(retroWord.motSimple);
             }
             else {
                 //<flagCompose=31> <identifiantA> <identifiantRelS>
                 m_file.putInt1(FLAG_COMPOSE);
-                m_file.putInt3(termDef.identifiantA);
-                m_file.putSIntLat(termDef.identifiantS - termDef.identifiant);
+                m_file.putInt3(retroWord.identifiantA);
+                m_file.putSIntLat(retroWord.identifiantS - retroWord.identifiant);
             }
             //ecrit la taille reelle du buffer
             const unsigned int longueurDonnees = m_file.getOutBufferSize() - TETE_DEFINITION;
             m_file.putInt3(longueurDonnees, OFFSET_LONGUEUR);  //la taille dans la trame
-            //4) ecrit la definition du terme et gere le fichier
-            setDefinition(termDef.identifiant, lexiconIdentification);           
+            //4) ecrit la definition du mot et gere le fichier
+            setDefinition(retroWord.identifiant, lexiconIdentification);           
         }
     }
     catch (FileException &exc) {
@@ -126,72 +126,72 @@ void NindRetrolexiconIndex::addTerms(const list<struct TermDef> &termDefs,
 }
 ////////////////////////////////////////////////////////////
 //brief get word components from the specified ident
-//param ident ident of term
+//param ident ident of word
 //param components list of components of a word 
 //(1 component = simple word, more components = compound word) */
-//return true if term was found, false otherwise */
+//return true if word was found, false otherwise */
 bool NindRetrolexiconIndex::getComponents(const unsigned int ident,
                                           list<string> &components)
 {
     //raz resultat
     components.clear();
-    //lecture du terme sur le retro lexique
-    struct TermDef termDef;
-    bool existe = getTermDef(ident, termDef);
-    //si le terme est inconnu, retour false
+    //lecture du mot sur le retro lexique
+    struct RetroWord retroWord;
+    bool existe = getRetroWord(ident, retroWord);
+    //si le mot est inconnu, retour false
     if (!existe) return false;
-    //le terme existe, on le decode
+    //le mot existe, on le decode
     while (true) {
-        if (termDef.identifiantA == 0) {
-            //c'est un terme simple et c'est la fin 
-            components.push_front(termDef.termeSimple);
+        if (retroWord.identifiantA == 0) {
+            //c'est un mot simple et c'est la fin 
+            components.push_front(retroWord.motSimple);
             return true;
         }
-        //c'est un terme compose
-        //recupere le terme simple du couple
-        struct TermDef termDefS;
-        existe = getTermDef(termDef.identifiantS, termDefS);
+        //c'est un mot compose
+        //recupere le mot simple du couple
+        struct RetroWord retroWordS;
+        existe = getRetroWord(retroWord.identifiantS, retroWordS);
         if (!existe) throw InvalidFileException("NindRetrolexiconIndex::getComponents A : " + m_fileName);
-        if (termDefS.identifiantA != 0) InvalidFileException("NindRetrolexiconIndex::getComponents B : " + m_fileName);
-        components.push_front(termDefS.termeSimple);
-        //recupere l'autre terme du couple
-        existe = getTermDef(termDef.identifiantA, termDef);
+        if (retroWordS.identifiantA != 0) InvalidFileException("NindRetrolexiconIndex::getComponents B : " + m_fileName);
+        components.push_front(retroWordS.motSimple);
+        //recupere l'autre mot du couple
+        existe = getRetroWord(retroWord.identifiantA, retroWord);
         if (!existe) throw InvalidFileException("NindRetrolexiconIndex::getComponents C : " + m_fileName);  
         //pour detecter les bouclages induits par un fichier bouclant
         if (components.size() == TAILLE_COMPOSE_MAXIMUM) throw InvalidFileException("NindRetrolexiconIndex::getComponents D : " + m_fileName);  
     }    
 }    
 ////////////////////////////////////////////////////////////
-//Recupere sur le fichier retro lexique la definition d'un terme specifie par son identifiant
-//ident identifiant du terme
-//termDef structure ou est ecrite la definition
-//retourne true si le terme existe, sinon false
-bool NindRetrolexiconIndex::getTermDef(const unsigned int ident,
-                                       struct TermDef &termDef)   
+//Recupere sur le fichier retro lexique la definition d'un mot specifie par son identifiant
+//ident identifiant du mot
+//retroWord structure ou est ecrite la definition
+//retourne true si le mot existe, sinon false
+bool NindRetrolexiconIndex::getRetroWord(const unsigned int ident,
+                                       struct RetroWord &retroWord)   
 {
     try {
         const bool existe = getDefinition(ident);
         if (!existe) return false;
-        //<flagDefinition=17> <identifiantTerme> <longueurDonnees> <donnees>
-        if (m_file.getInt1() != FLAG_DEFINITION) throw InvalidFileException("NindRetrolexiconIndex::getTermDef A : " + m_fileName);
-        const unsigned int identTerme = m_file.getInt3();
-        if (identTerme != ident) throw InvalidFileException("NindRetrolexiconIndex::getTermDef B : " + m_fileName);
+        //<flagDefinition=17> <identifiantMot> <longueurDonnees> <donnees>
+        if (m_file.getInt1() != FLAG_DEFINITION) throw InvalidFileException("NindRetrolexiconIndex::getRetroWord A : " + m_fileName);
+        const unsigned int identifiantMot = m_file.getInt3();
+        if (identifiantMot != ident) throw InvalidFileException("NindRetrolexiconIndex::getRetroWord B : " + m_fileName);
         const unsigned int longueurDonnees = m_file.getInt3();
-        //positionne la fin de buffer en fonction de la longueur effective des donneesTerme
+        //positionne la fin de buffer en fonction de la longueur effective des donneesMot
         m_file.setEndInBuffer(longueurDonnees);
         const unsigned char flag = m_file.getInt1();
         //<flagCompose=31> <identifiantA> <identifiantRelS>
         if (flag == FLAG_COMPOSE) {
             const unsigned int identifiantA = m_file.getInt3();
-            const unsigned int identifiantS = identTerme + m_file.getSIntLat();
-            termDef = TermDef(ident, identifiantA, identifiantS);
+            const unsigned int identifiantS = identifiantMot + m_file.getSIntLat();
+            retroWord = RetroWord(ident, identifiantA, identifiantS);
         }
-        //<flagSimple=37> <longueurTerme> <termeUtf8>
+        //<flagSimple=37> <longueurMot> <motUtf8>
         else if (flag == FLAG_SIMPLE) {
-            const string termeUtf8 = m_file.getString();
-            termDef = TermDef(ident, termeUtf8);
+            const string motUtf8 = m_file.getString();
+            retroWord = RetroWord(ident, motUtf8);
         }
-        else throw InvalidFileException("NindRetrolexiconIndex::getTermDef C : " + m_fileName);    
+        else throw InvalidFileException("NindRetrolexiconIndex::getRetroWord C : " + m_fileName);    
         return true;
     }
     catch (FileException &exc) {

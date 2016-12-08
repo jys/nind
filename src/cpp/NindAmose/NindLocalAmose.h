@@ -91,7 +91,7 @@ public:
     * \param termType type of terms (0: simple term, 1: multi-term, 2: named entity) 
     * \param termsSet set de termes uniques dans le document */
     bool getDocTerms(const unsigned int docId,
-                     const unsigned int termType,
+                     const AmoseTypes termType,
                      std::set<std::string> &termsSet);
  
 // /** 

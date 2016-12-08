@@ -160,8 +160,8 @@ void NindIndex::setDefinition(const unsigned int ident,
     bool identOk = false;
     //1) trouve l'ancienne indirection si elle existe
     unsigned long int indirection = getIndirection(ident);
-    if (indirection == 0) throw OutOfBoundException("NindIndex::setTermIndex : " + m_fileName);
-    m_file.setPos(indirection, SEEK_SET);    //se positionne sur l'indirection du terme
+    if (indirection == 0) throw OutOfBoundException("NindIndex::setDefinition : " + m_fileName);
+    m_file.setPos(indirection, SEEK_SET);    //se positionne sur l'indirection de la dejfinition
     //<offsetDefinition> <longueurDefinition> 
     m_file.readBuffer(TAILLE_INDIRECTION);
     const unsigned long int oldOffsetEntry = m_file.getInt5();
@@ -188,7 +188,7 @@ void NindIndex::setDefinition(const unsigned int ident,
         if (definitionSize <= oldLengthEntry) {
             //Si la taille est compatible avec l'ancienne, ecrit au meme endroit
             //3a) ecrit les nouvelles donnees
-            m_file.setPos(oldOffsetEntry, SEEK_SET);    //se positionne sur le terme
+            m_file.setPos(oldOffsetEntry, SEEK_SET);    //se positionne sur la dejfinition
             m_file.writeBuffer();                           //ecrit le nouveau buffer
             //l'indirection reste inchangee
         }
@@ -200,12 +200,12 @@ void NindIndex::setDefinition(const unsigned int ident,
             //cherche d'abord une place compatible (>= tailleDefinition et < tailleDefinition + m_definitionMinimumSize)
             identOk = findNewArea(definitionSize, dataSize, lexiconIdentification, offsetDefinition, longueurDefinition);
             //3b) ecrit les nouvelles donnees
-            m_file.setPos(offsetDefinition, SEEK_SET);    //se positionne sur le terme
+            m_file.setPos(offsetDefinition, SEEK_SET);    //se positionne sur la dejfinition
             m_file.writeBuffer();                     //ecrit le nouveau buffer
             //4) met a jour la liste des emplacements vides s'il y a des anciennes donnees
             if (oldLengthEntry != 0) vacateOldArea(oldOffsetEntry, oldLengthEntry);
             //5) ecrit la nouvelle indirection
-            m_file.setPos(indirection, SEEK_SET);       //se positionne sur l'indirection du terme
+            m_file.setPos(indirection, SEEK_SET);       //se positionne sur l'indirection de la dejfinition
             //<offsetDefinition> <longueurDefinition> 
             m_file.createBuffer(TAILLE_INDIRECTION);
             m_file.putInt5(offsetDefinition);               // <offsetDefinition> 
@@ -233,10 +233,10 @@ void NindIndex::setDefinition(const unsigned int ident,
 void NindIndex::checkExtendIndirection(const unsigned int ident,
                                        const Identification &lexiconIdentification)
 {
-    //si le terme n'a pas d'indirection, ajoute un bloc d'indirection
+    //si la dejfinition n'a pas d'indirection, ajoute un bloc d'indirection
     unsigned long int indirection = getIndirection(ident);
     if (indirection == 0) {
-        //le terme est hors des blocs d'indexation actuels, cree un nouveau bloc d'indirection
+        //la dejfinition est hors des blocs d'indexation actuels, cree un nouveau bloc d'indirection
         m_file.setPos(-TAILLE_IDENTIFICATION, SEEK_END);       //se positionne sur l'identification
         const unsigned long int blocIndirection = m_file.getPos();
         addIndirection(lexiconIdentification);  //bloc d'indirection = identification a la fin 
@@ -249,7 +249,7 @@ void NindIndex::checkExtendIndirection(const unsigned int ident,
         m_file.writeBuffer();
         const pair<unsigned long int, unsigned int> indirectionBloc(blocIndirection + TETE_INDIRECTION, m_indirectionBlocSize);
         m_indirectionMapping.push_back(indirectionBloc);
-        //redemande l'indirection pour le terme, erreur si hors limite
+        //redemande l'indirection pour la dejfinition, erreur si hors limite
         indirection = getIndirection(ident);
         if (indirection == 0) throw OutOfBoundException("NindIndex::checkExtendIndirection : " + m_fileName);
     }
@@ -313,10 +313,10 @@ void NindIndex::mapIndirection()
     }
 }
 ////////////////////////////////////////////////////////////
-//return l'offset de l'indirection du terme specifie, 0 si hors limite
+//return l'offset de l'indirection de la dejfinition specifiej, 0 si hors limite
 unsigned long int NindIndex::getIndirection(const unsigned int ident)
 {
-    //trouve l'indirection du terme
+    //trouve l'indirection de la dejfinition
     unsigned int firstIdent = 0;
     list<pair<unsigned long int, unsigned int> >::const_iterator it = m_indirectionMapping.begin(); 
     while (it != m_indirectionMapping.end()) {
@@ -324,7 +324,7 @@ unsigned long int NindIndex::getIndirection(const unsigned int ident)
         firstIdent += (*it).second;
         it++;
     }
-    //si le terme cherche n'a pas d'indirection, retourne 0
+    //si la dejfinition chercheje n'a pas d'indirection, retourne 0
     return 0;
 }
 ////////////////////////////////////////////////////////////
@@ -388,12 +388,12 @@ void NindIndex::mapEmptySpaces()
     unsigned int ident = 0;
     unsigned long int indirection = getIndirection(ident);
     while (indirection != 0) {
-        m_file.setPos(indirection, SEEK_SET);    //se positionne sur l'indirection du terme
+        m_file.setPos(indirection, SEEK_SET);    //se positionne sur l'indirection de la dejfinition
         m_file.readBuffer(TAILLE_INDIRECTION);
         //<offsetDefinition> <longueurDefinition> 
         const unsigned long int offsetDefinition = m_file.getInt5();
         const unsigned int longueurDefinition = m_file.getInt3();
-        //si le terme n'a pas encore ete indexe, n'en tient pas compte
+        //si la dejfinition n'a pas encore ete indexe, n'en tient pas compte
         if (offsetDefinition != 0) {
             const pair<unsigned long int, unsigned int> nonVide(offsetDefinition, longueurDefinition);
             nonVidesList.push_back(nonVide);

@@ -47,45 +47,45 @@ public:
 
     virtual ~NindRetrolexiconIndex();
 
-// <donneesTerme>          ::= <termeCompose> | <termeSimple>
-// <termeCompose>          ::= <flagCompose> <identifiantA> <identifiantRelS>
-// <termeSimple>           ::= <flagSimple> <longueurTerme> <termeUtf8>
-    struct TermDef {
+// <donneesMot>          ::= <motCompose> | <motSimple>
+// <motCompose>          ::= <flagCompose> <identifiantA> <identifiantRelS>
+// <motSimple>           ::= <flagSimple> <longueurMot> <motUtf8>
+    struct RetroWord {
         unsigned int identifiant;
-        std::string termeSimple;
+        std::string motSimple;
         unsigned int identifiantA;
         unsigned int identifiantS;
-        TermDef(): identifiant(0), termeSimple(), identifiantA(0), identifiantS(0) {}
-        TermDef(const unsigned int id, const std::string terS): 
-            identifiant(id), termeSimple(terS), identifiantA(0), identifiantS(0) {}
-        TermDef(const unsigned int id, const unsigned int idA, const unsigned int idS): 
-            identifiant(id), termeSimple(), identifiantA(idA), identifiantS(idS) {}
-        ~TermDef() {}
+        RetroWord(): identifiant(0), motSimple(), identifiantA(0), identifiantS(0) {}
+        RetroWord(const unsigned int id, const std::string terS): 
+            identifiant(id), motSimple(terS), identifiantA(0), identifiantS(0) {}
+        RetroWord(const unsigned int id, const unsigned int idA, const unsigned int idS): 
+            identifiant(id), motSimple(), identifiantA(idA), identifiantS(idS) {}
+        ~RetroWord() {}
     };
 
-    /**\brief add a list of term idents in retro lexicon. If one of idents still exists, exception is raised
-    * \param termDefs list of terms definitions 
+    /**\brief add a list of word idents in retro lexicon. If one of idents still exists, exception is raised
+    * \param retroWords list of words definitions 
     * \param lexiconWordsNb number of words contained in lexicon 
     * \param lexiconIdentification unique identification of lexicon */
-    void addTerms(const std::list<struct TermDef> &termDefs,
+    void addRetroWords(const std::list<struct RetroWord> &retroWords,
                   const Identification &lexiconIdentification);
     
     /**\brief get word components from the specified ident
-    * \param ident ident of term
+    * \param ident ident of word
     * \param components list of components of a word 
     * (1 component = simple word, more components = compound word) 
-    * \return true if term was found, false otherwise */
+    * \return true if word was found, false otherwise */
     bool getComponents(const unsigned int ident,
                        std::list<std::string> &components);
 
 
 private:
-    //Recupere sur le fichier retro lexique la definition d'un terme specifie par son identifiant
-    //ident identifiant du terme
-    //termDef structure ou est ecrite la definition
-    //retourne true si le terme existe, sinon false
-    bool getTermDef(const unsigned int ident,
-                    struct TermDef &termDef);
+    //Recupere sur le fichier retro lexique la definition d'un mot specifie par son identifiant
+    //ident identifiant du mot
+    //retroWord structure ou est ecrite la definition
+    //retourne true si le mot existe, sinon false
+    bool getRetroWord(const unsigned int ident,
+                    struct RetroWord &retroWord);
 };
     } // end namespace
 } // end namespace

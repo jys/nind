@@ -82,7 +82,6 @@ public:
     /**\brief Write a full termIndex as a list of structures
     *\param ident ident of doc
     *\param localIndex structure containing all datas of the specified doc . empty when deletion
-    *\param lexiconWordsNb number of words contained in lexicon 
     *\param lexiconIdentification unique identification of lexicon */
     void setLocalIndex(const unsigned int ident,
                       const std::list<struct Term> &localIndex,

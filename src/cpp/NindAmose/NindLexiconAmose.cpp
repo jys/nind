@@ -3,7 +3,7 @@
 //
 // Description: L'adaptation de nind à amose
 // voir "Adaptation de l'indexation nind au moteur de recherche Amose", LAT2015.JYS.448
-// Cette classe gere les spejcificitejs du lexique d'Amose, particuliehrement les types de termes.
+// Cette classe gere les spejcificitejs du lexique d'Amose, particuliehrement les types de mots.
 //
 // Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2016
 //
@@ -21,7 +21,7 @@
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
-static void splitTerm(const string &lemma,
+static void splitWord(const string &lemma,
                       const unsigned int type,
                       const string &namedEntity,
                       list<string> &simpleWords);
@@ -48,52 +48,52 @@ NindLexiconAmose::~NindLexiconAmose()
 {
 }
 ////////////////////////////////////////////////////////////
-//brief add specified term in lexicon if it doesn't still exist in,
-//In all cases, term ident is returned.
+//brief add specified word in lexicon if it doesn't still exist in,
+//In all cases, word ident is returned.
 //param lemma word to be lexiced. Compound word is structured with "_"
-//param type type of the terms (0: simple term, 1: multi-term, 2: named entity) 
+//param type type of the words (0: simple word, 1: multi-word, 2: named entity) 
 //param namedEntity type of named entity, eventually
 //return ident of word */
-unsigned int NindLexiconAmose::addTerm(const string &lemma,
-                                       const unsigned int type,
+unsigned int NindLexiconAmose::addWord(const string &lemma,
+                                       const AmoseTypes type,
                                        const std::string &namedEntity)
 {
     list<string> simpleWords;
-    splitTerm(lemma, type, namedEntity, simpleWords);
-    return addWord(simpleWords);
+    splitWord(lemma, type, namedEntity, simpleWords);
+    return NindLexiconIndex::addWord(simpleWords);
 }
 ////////////////////////////////////////////////////////////
-//brief get ident of a specified term
+//brief get ident of a specified word
 //if word exists in lexicon, its ident is returned
 //else, return 0 (0 is not a valid ident !)
 //param lemma word to be searched. Compound word is structured with "_"
-//param type type of the terms (0: simple term, 1: multi-term, 2: named entity) 
+//param type type of the words (0: simple word, 1: multi-word, 2: named entity) 
 //param namedEntity type of named entity, eventually
 //return ident of word */
-unsigned int NindLexiconAmose::getTermId(const string &lemma,
-                                         const unsigned int type,
+unsigned int NindLexiconAmose::getWordId(const string &lemma,
+                                         const AmoseTypes type,
                                          const string &namedEntity)
 {
     list<string> simpleWords;
-    splitTerm(lemma, type, namedEntity, simpleWords);
-    return getId(simpleWords);
+    splitWord(lemma, type, namedEntity, simpleWords);
+    return NindLexiconIndex::getWordId(simpleWords);
 }
 ////////////////////////////////////////////////////////////
-//brief get term components from a specified term id 
-//param lemma word corresponding to term id. Compound word is structured with "_"
-//param type type of the terms (0: simple term, 1: multi-term, 2: named entity) 
+//brief get word components from a specified word id 
+//param lemma word corresponding to word id. Compound word is structured with "_"
+//param type type of the words (0: simple word, 1: multi-word, 2: named entity) 
 //param namedEntity type of named entity, eventually
-//return true if term exists, false otherwise */
-bool NindLexiconAmose::getTerm(const unsigned int termId,
+//return true if word exists, false otherwise */
+bool NindLexiconAmose::getWord(const unsigned int wordId,
                                string &lemma,
-                               unsigned int &type,
+                               AmoseTypes &type,
                                string &namedEntity)
 {
     //rejcupehre la liste des composants
     list<string> components;
-    const bool trouvej = getComponents(termId, components);
+    const bool trouvej = getComponents(wordId, components);
     if (!trouvej) return false;
-    if (components.size() == 0) throw NindLexiconException("empty term");
+    if (components.size() == 0) throw NindLexiconException("empty word");
     if (components.size() == 1) type = SIMPLE_TERM;
     else type = MULTI_TERM;
     list<string>::const_iterator itcomp = components.begin();
@@ -109,8 +109,8 @@ bool NindLexiconAmose::getTerm(const unsigned int termId,
     return true;
 }
 ////////////////////////////////////////////////////////////
-//met en forme le terme pour interroger le lexique
-static void splitTerm(const string &lemma,
+//met en forme le mot pour interroger le lexique
+static void splitWord(const string &lemma,
                       const unsigned int type,
                       const string &namedEntity,
                       list<string> &simpleWords)

@@ -178,7 +178,7 @@ void interrogeLexique(const bool pourDeVrai,
         list<string> componants;
         nindIndexTest.split(wordIt->second, componants);
         if (pourDeVrai) {
-            const unsigned int id = nindLexicon.getId(componants);
+            const unsigned int id = nindLexicon.getWordId(componants);
             if (id != wordIt->first) throw IntegrityException(wordIt->second);
         }
     }
