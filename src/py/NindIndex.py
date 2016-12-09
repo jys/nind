@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 import sys
 from os import getenv, path
-#import codecs
-#import datetime
 from time import ctime
 from NindLateconFile import NindLateconFile
 
@@ -69,11 +67,12 @@ def main():
 # <definition>            ::= { <Octet> }
 # <vide>                  ::= { <Octet> }
 #
-# <blocIdentification>    ::= <flagIdentification=53> <maxIdentifiant> <identifieurUnique>
+# <blocIdentification>    ::= <flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
 # <flagIdentification=53> ::= <Integer1>
 # <maxIdentifiant>        ::= <Integer3>
 # <identifieurUnique>     ::= <dateHeure>
 # <dateHeure >            ::= <Integer4>
+# <identifieurSpecifique> ::= <Integer4>
 
 class NindIndex(NindLateconFile):
     
@@ -88,8 +87,9 @@ class NindIndex(NindLateconFile):
         self.seek(-TAILLE_IDENTIFICATION, 2)
         if self.litNombre1() != FLAG_IDENTIFICATION: raise Exception('pas FLAG_IDENTIFICATION sur %s'%(self.latFileName))
         maxIdentifiant = self.litNombre3()
-        dateHeure = self.litNombre4()
-        return (maxIdentifiant, dateHeure)
+        identifieurUnique = self.litNombre4()
+        identifieurSpecifique = self.litNombre4()
+        return (maxIdentifiant, identifieurUnique, identifieurSpecifique)
         
     def getDefinitionAddr(self, identifiant):
         FLAG_INDIRECTION = 47  

@@ -18,7 +18,7 @@ Donne des informations sur la composition du fichier
 et donne quelques statistiques
 
 usage   : %s <fichier lexiconindex>
-exemple : %s box/dumps/boxon/FRE.lexiconindex
+exemple : %s FRE.lexiconindex
 """%(script, script)
 
 def main():
@@ -43,11 +43,11 @@ def main():
     #<flagDefinition=17>     ::= <Integer1>
     #<identifiantHash>       ::= <Integer3>
     #<longueurDonnees>       ::= <Integer3>
-    #<donneesHash>           ::= { <terme> }
-    #<terme>                 ::= <termeSimple> <identifiantS> <nbreComposes> <composes>
-    #<termeSimple>           ::= <longueurTerme> <termeUtf8>
-    #<longueurTerme>         ::= <Integer1>
-    #<termeUtf8>             ::= { <Octet> }
+    #<donneesHash>           ::= { <mot> }
+    #<mot>                 ::= <motSimple> <identifiantS> <nbreComposes> <composes>
+    #<motSimple>           ::= <longueurMot> <motUtf8>
+    #<longueurMot>         ::= <Integer1>
+    #<motUtf8>             ::= { <Octet> }
     #<identifiantS>          ::= <Integer3>
     #<nbreComposes>          ::= <IntegerULat>
     #<composes>              ::= { <compose> } 
@@ -77,7 +77,7 @@ def main():
     try:
         nbreDefinition = nbreExtension = 0
         tailleDefinition = tailleExtension = 0 
-        nbreTermesS = nbreTermesC = nbreDef = 0
+        nbreMotsS = nbreMotsC = nbreDef = 0
         noDef = 0
         repartDef = {}
         maxComposejs = []
@@ -91,7 +91,7 @@ def main():
             #<offsetDefinition> <longueurDefinition>
             offsetDefinition = inFile.litNombre5()
             longueurDefinition = inFile.litNombre3()
-            nbreTermes = 0
+            nbreMots = 0
             if offsetDefinition != 0: 
                 nbreDef +=1
                 inFile2.seek(offsetDefinition, 0)
@@ -109,29 +109,29 @@ def main():
                 #examine les données
                 finDonnees = offsetDefinition + longueurDonnees + TETE_DEFINITION
                 while inFile2.tell() < finDonnees:
-                    nbreTermesS +=1
-                    nbreTermes +=1
-                    #<termeSimple> <identifiantS> <nbreComposes> <composes>
-                    termeSimple = inFile2.litString()
+                    nbreMotsS +=1
+                    nbreMots +=1
+                    #<motSimple> <identifiantS> <nbreComposes> <composes>
+                    motSimple = inFile2.litString()
                     identifiantS = inFile2.litNombre3()
                     nbreComposes = inFile2.litNombreULat()
-                    maxComposejs.append((nbreComposes, termeSimple))
+                    maxComposejs.append((nbreComposes, motSimple))
                     maxComposejs.sort()
                     maxComposejs.reverse()
                     if len(maxComposejs) > 10: maxComposejs.pop()
-                    outFile.write('[%s] %06d (%d) '%(termeSimple, identifiantS, nbreComposes))
+                    outFile.write('[%s] %06d (%d) '%(motSimple, identifiantS, nbreComposes))
                     identifiantC = identifiantS
                     composes = []
                     for i in range(nbreComposes):
-                        nbreTermesC +=1
+                        nbreMotsC +=1
                         #<identifiantA> <identifiantRelC>
                         identifiantA = inFile2.litNombre3()
                         identifiantC += inFile2.litNombreSLat()
                         composes.append('%06d %06d'%(identifiantA, identifiantC))
                     outFile.write(' <%s>\n'%(', '.join(composes)))
             noDef +=1
-            if nbreTermes not in repartDef: repartDef[nbreTermes] = 0
-            repartDef[nbreTermes] +=1
+            if nbreMots not in repartDef: repartDef[nbreMots] = 0
+            repartDef[nbreMots] +=1
     except Exception as exc: 
         print 'ERREUR :', exc.args[0]
     outFile.close()
@@ -139,13 +139,13 @@ def main():
     print "%d définitions de taille totale %d octets"%(nbreDefinition, tailleDefinition)
     print "%d extensions de taille totale %d octets"%(nbreExtension, tailleExtension)
     print "%d définitions"%(nbreDef)
-    print "%d termes simples"%(nbreTermesS)
-    print "%d termes composés"%(nbreTermesC)
+    print "%d mots simples"%(nbreMotsS)
+    print "%d mots composés"%(nbreMotsC)
     inFile.seek(0, 2)
     offsetFin = inFile.tell()
     print "taille fichier % 10d %08X"%(offsetFin, offsetFin)
     print
-    print "%0.2f octets / terme"%(float(offsetFin)/(nbreTermesS+nbreTermesC))
+    print "%0.2f octets / mot"%(float(offsetFin)/(nbreMotsS+nbreMotsC))
     inFile.close()
     inFile2.close()
     print
@@ -153,12 +153,12 @@ def main():
     keys.sort()
     resultRepart = []
     for key in keys: resultRepart.append('%d:%d'%(key, repartDef[key]))
-    print 'répartition des %d termes sur les %d indirections :'%(nbreTermesS, nombreIndirection)
+    print 'répartition des %d mots sur les %d indirections :'%(nbreMotsS, nombreIndirection)
     print ', '.join(resultRepart)
     print
-    print 'top 10 des listes de termes composés les plus longues avec le mot terminal:'
-    for (nbreComposes, termeSimple) in maxComposejs:
-        print u'% 5d composés pour "%s"'%(nbreComposes, termeSimple)
+    print 'top 10 des listes de mots composés les plus longues avec le mot terminal:'
+    for (nbreComposes, motSimple) in maxComposejs:
+        print u'% 5d composés pour "%s"'%(nbreComposes, motSimple)
     
 if __name__ == '__main__':
         main()

@@ -3,7 +3,7 @@
 import sys
 from os import path, getenv
 import codecs
-import NindLateconFile
+from NindLateconFile import NindLateconFile
 
 def usage():
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
@@ -16,7 +16,7 @@ Donne des informations sur la composition du fichier
 et donne quelques statistiques
 
 usage   : %s <fichier termindex>
-exemple : %s box/dumps/boxon/FRE.termindex
+exemple : %s FRE.termindex
 """%(script, script)
 
 def main():
@@ -26,15 +26,15 @@ def main():
     termindexFileName = path.abspath(sys.argv[1])
     outFileName = '%s-dump.txt'%(termindexFileName)
 
-    #<fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 
-
-    #<blocIndirection>       ::= <flagIndirection=47> <addrBlocSuivant> <nombreIndirection> { indirection }
-    #<flagIndirection=47>    ::= <Integer1>
-    #<addrBlocSuivant>       ::= <Integer5>
-    #<nombreIndirection>     ::= <Integer3>
-    #<indirection>           ::= <offsetDefinition> <longueurDefinition> 
-    #<offsetDefinition>      ::= <Integer5>
-    #<longueurDefinition>    ::= <Integer3>
+    # <fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 
+    #
+    # <blocIndirection>       ::= <flagIndirection=47> <addrBlocSuivant> <nombreIndirection> { indirection }
+    # <flagIndirection=47>    ::= <Integer1>
+    # <addrBlocSuivant>       ::= <Integer5>
+    # <nombreIndirection>     ::= <Integer3>
+    # <indirection>           ::= <offsetDefinition> <longueurDefinition> 
+    # <offsetDefinition>      ::= <Integer5>
+    # <longueurDefinition>    ::= <Integer3>
 
     #<blocDefinition>        ::= { <definition> | <vide> }
     #<definition>            ::= <flagDefinition=17> <identifiantTerme> <longueurDonnees> <donneesTerme>
@@ -52,24 +52,26 @@ def main():
     #<frequenceDoc>          ::= <IntegerULat>
     #<vide>                  ::= { <octet> }
 
-    #<blocIdentification>    ::= <flagIdentification=53> <maxIdentifiant> <identifieurUnique>
-    #<flagIdentification=53> ::= <Integer1>
-    #<maxIdentifiant>        ::= <Integer3>
-    #<identifieurUnique>     ::= <dateHeure>
-    #<dateHeure >            ::= <Integer4>    
+    # <blocIdentification>    ::= <flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
+    # <flagIdentification=53> ::= <Integer1>
+    # <maxIdentifiant>        ::= <Integer3>
+    # <identifieurUnique>     ::= <dateHeure>
+    # <dateHeure >            ::= <Integer4>
+    # <identifieurSpecifique> ::= <Integer4>
+    
     INDIRECTION_FLAG = 47
     DEFINITION_FLAG = 17
     IDENTIFICATION_FLAG = 53
     CG_FLAG = 61
-    IDENTIFICATION_SIZE = 8
+    IDENTIFICATION_SIZE = 12
     INDIRECTION_HEAD = 9
     ENTREE_SIZE = 8
     DEFINITION_HEAD = 7
     DEF_CG_HEAD = 8
     DOCUMENT_SIZE = 5
   
-    termindexFile = NindLateconFile.NindLateconFile(termindexFileName)
-    termindexFile2 = NindLateconFile.NindLateconFile(termindexFileName)
+    termindexFile = NindLateconFile(termindexFileName)
+    termindexFile2 = NindLateconFile(termindexFileName)
     outFile = codecs.open(outFileName, 'w', 'utf-8')
     try:
         nbreDefinition = nbreExtension = 0
@@ -77,7 +79,7 @@ def main():
         occurencesGenerale = occurencesDoc = 0
         nbreHapax = 0
         noTerm = 0
-        maxFreq = 0
+        maxFreq = []
         termindexFile.seek(0, 0)
         while True:
             addrIndirection = termindexFile.tell()
@@ -133,7 +135,10 @@ def main():
                         if totalFrequences == 1: nbreHapax +=1
                 outFile.write('frequence totale de %06d : %d\n'%(noTerm, frequenceGlobale))
                 outFile.write('\n')
-                maxFreq = max(maxFreq, frequenceGlobale)
+                maxFreq.append((frequenceGlobale, noTerm))
+                maxFreq.sort()
+                maxFreq.reverse()
+                if len(maxFreq) > 10: maxFreq.pop()
                 noTerm +=1
             if indirectionSuivante == 0: break
             termindexFile.seek(indirectionSuivante, 0)
@@ -146,7 +151,10 @@ def main():
     print "%d occurrences de couples termes-doc"%(occurencesDoc)
     print "%d occurrences de termes"%(occurencesGenerale)
     print "%d hapax (%0.2f %%)"%(nbreHapax, float(100)*nbreHapax/nbreDefinition)
-    print "%d comme fréquence maximum pour un terme"%(maxFreq)
+    print
+    print 'top 10 des fréquences de termes les plus élevées:'
+    for (frequenceGlobale, noTerm) in maxFreq:
+        print u'% 6d de fréquence pour % 6d'%(frequenceGlobale, noTerm)
     
     termindexFile.seek(0, 2)
     offsetFin = termindexFile.tell()

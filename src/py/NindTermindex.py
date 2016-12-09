@@ -18,7 +18,7 @@ terme spécifié par son identifiant du lexique, ainsi que les
 catégories grammaticales et les fréquences.
 
 usage   : %s <fichier termindex> <identifiant terme>
-exemple : %s box/dumps/boxon/FRE.termindex 203547
+exemple : %s FRE.termindex 203547
 """%(script, script)
 
 OFF = "\033[m"
@@ -34,7 +34,7 @@ def main():
     #la classe
     nindTermindex = NindTermindex(termindexFileName)
     #affiche l'identification du fichier
-    (maxIdentifiant, dateHeure) = nindTermindex.getIdentification()
+    (maxIdentifiant, dateHeure, spejcifique) = nindTermindex.getIdentification()
     print "max=%d dateheure=%d (%s)"%(maxIdentifiant, dateHeure, ctime(int(dateHeure)))
     #trouve les utilisations du terme dans le fichier inverse et les affiche
     termesCGList = nindTermindex.getTermCGList(terme)

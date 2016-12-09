@@ -16,7 +16,7 @@ Donne des informations sur la composition du fichier
 et donne quelques statistiques
 
 usage   : %s <fichier localindex>
-exemple : %s box/dumps/boxon/FRE.localindex
+exemple : %s FRE.localindex
 """%(script, script)
 
 def main():
@@ -53,17 +53,18 @@ def main():
     #<frequenceDoc>          ::= <IntegerULat>
     #<vide>                  ::= { <octet> }
 
-    #<blocIdentification>    ::= <flagIdentification=53> <maxIdentifiant> <identifieurUnique>
-    #<flagIdentification=53> ::= <Integer1>
-    #<maxIdentifiant>        ::= <Integer3>
-    #<identifieurUnique>     ::= <dateHeure>
-    #<dateHeure >            ::= <Integer4>
+    # <blocIdentification>    ::= <flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
+    # <flagIdentification=53> ::= <Integer1>
+    # <maxIdentifiant>        ::= <Integer3>
+    # <identifieurUnique>     ::= <dateHeure>
+    # <dateHeure >            ::= <Integer4>
+    # <identifieurSpecifique> ::= <Integer4>
     
     INDIRECTION_FLAG = 47
     DEFINITION_FLAG = 19
     IDENTIFICATION_FLAG = 53
     CG_FLAG = 61
-    IDENTIFICATION_SIZE = 8
+    IDENTIFICATION_SIZE = 12
     INDIRECTION_HEAD = 9
     ENTREE_SIZE = 8
     #<flagDefinition=19>(1) <identifiantDoc>(3) <identifiantExterne>(4) <longueurDonnees>(3) = 11
@@ -96,12 +97,6 @@ def main():
                 offsetEntree = localindexFile.litNombre5()
                 longueurEntree = localindexFile.litNombre3()
                 if offsetEntree != 0: 
-                    if tailleMax < longueurEntree: 
-                        docMax = noDoc
-                        tailleMax = longueurEntree
-                    if tailleMin > longueurEntree:
-                        docMin = noDoc
-                        tailleMin = longueurEntree
                     nbreDoc +=1
                     localindexFile2.seek(offsetEntree, 0)
                     #<flagDefinition=19> <identifiantDoc> <identifiantExterne> <longueurDonnees>
@@ -109,6 +104,13 @@ def main():
                     if localindexFile2.litNombre3() != noDoc: raise Exception('%d pas trouvé à %08X'%(noDoc, offsetEntree+1))
                     identifiantExterne = localindexFile2.litNombre4()
                     longueurDonnees = localindexFile2.litNombre3()
+                    #mejmorise le plus petit document et le plus gros
+                    if tailleMax < longueurEntree: 
+                        docMax = identifiantExterne
+                        tailleMax = longueurEntree
+                    if tailleMin > longueurEntree:
+                        docMin = identifiantExterne
+                        tailleMin = longueurEntree
                     #print '%d, %d, %d'%(noDoc, identifiantExterne, longueurDonnees)
                     nbreDefinition +=1
                     tailleDefinition += longueurDonnees + DEFINITION_HEAD

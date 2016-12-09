@@ -14,15 +14,11 @@ Programme de test de la classe NindRetrolexiconindex.
 Cette classe gère le lexique inverse du fichier lexique spécifié.
 Le lexique inverse permet de trouver un mot à partir de son identifiant.
 Le format du fichier est défini dans le document LAT2014.JYS.440.
-Si le fichier <nom>.retrolexiconindex existe et est appairé avec le fichier
-<nom>.lexiconindex, il est ouvert en lecture.
-Sinon, l'erreur est signalée et le fichier <nom>.B.retrolexiconindex est
-créé en analysant <nom>.lexiconindex.
-Puis le programme de test affiche le mot correspondant à l'identifiant 
-spécifié.
+Le programme de test affiche les mots correspondants aux identifiants 
+spécifiés.
 
 usage   : %s <fichier lexiconindex> <ident mot>
-exemple : %s box/dumps/boxon/FRE.lexiconindex 203547
+exemple : %s FRE.lexiconindex 203547,203548,203549
 """%(script, script)
 
 def main():
@@ -30,11 +26,17 @@ def main():
         usage()
         sys.exit()
     lexiconindexFileName = path.abspath(sys.argv[1])
-    ident = int(sys.argv[2])
+    identsStr = sys.argv[2]
     
+    idents = identsStr.split(',')
     #la classe
     nindRetrolexiconindex = NindRetrolexiconindex(lexiconindexFileName)
-    print nindRetrolexiconindex.getWord(ident)
+    #affiche l'identification du fichier
+    (maxIdentifiant, dateHeure, spejcifique) = nindRetrolexiconindex.getIdentification()
+    print "max=%d dateheure=%d (%s)"%(maxIdentifiant, dateHeure, ctime(int(dateHeure)))
+    rejsultat = []
+    for ident in idents: rejsultat.append(nindRetrolexiconindex.getWord(int(ident)))
+    print ',  '.join(rejsultat)
 
 #// <definition>            ::= <flagDefinition=17> <identifiantMot> <longueurDonnees> <donneesMot>
 #// <flagDefinition=17>     ::= <Integer1>

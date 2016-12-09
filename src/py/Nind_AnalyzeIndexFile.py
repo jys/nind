@@ -11,12 +11,11 @@ def usage():
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
     else: script = sys.argv[0]
     print """© l'ATEJCON.
-Analyse un fichier index (lexique, inversé ou d'index locaux) 
-et affiche les stats. 
+Analyse un fichier index et affiche les stats. 
 Le format du fichier est défini dans le document LAT2014.JYS.440.
 
 usage   : %s <fichier termindex>
-exemple : %s box/dumps/boxon/FRE.termindex
+exemple : %s FRE.termindex
 """%(script, script)
 
 def main():

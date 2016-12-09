@@ -1,38 +1,37 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
-import os
-import codecs
-import datetime
-import time
+from os import getenv, path
+from time import ctime
 import NindLateconFile
-import NindLexiconindex
-import NindTermindex
-import NindLocalindex
+from NindLexiconindex import NindLexiconindex
+from NindTermindex import NindTermindex
+from NindLocalindex import NindLocalindex
 
 def usage():
-    print """© l'ATÉCON.
+    if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
+    else: script = sys.argv[0]
+    print """© l'ATEJCON.
 Programme d'interrogation d'une base nind préalablement indexée
 L'utilisateur indique le terme cherché, simple ou composé.
-Un terme composé a la forme dièsée (ex kyrielle#outil#informatique).
+Un terme composé a la forme blanc-souligné (ex kyrielle_outil_informatique).
 L'utilisateur indique ensuite le document examiné
 et la localisation du terme cherché est affichée.
 Le format des fichiers est défini dans le document LAT2014.JYS.440.
 
 usage   : %s <fichier lexiconindex> <terme cherché>
-exemple : %s box/dumps/boxon/FRE.lexiconindex syntagme#nominal
-"""%(sys.argv[0], sys.argv[0])
+exemple : %s FRE.lexiconindex syntagme_nominal
+"""%(script, script)
 
 OFF = "\033[m"
 BLUE = "\033[0;34m"
 RED = "\033[1;31m"
 
-
 def main():
     if len(sys.argv) < 3 :
         usage()
         sys.exit()
-    lexiconindexFileName = os.path.abspath(sys.argv[1])
+    lexiconindexFileName = path.abspath(sys.argv[1])
     terme = sys.argv[2].decode('utf-8').strip()
     
     #calcul des noms de fichiers (remplace l'extension)
@@ -41,23 +40,23 @@ def main():
     localindexFileName = '.'.join(nn[:-1])+'.localindex'
     
     #ouvre les classes
-    nindLexiconindex = NindLexiconindex.NindLexiconindex(lexiconindexFileName)
-    nindTermindex = NindTermindex.NindTermindex(termindexFileName)
-    nindLocalindex = NindLocalindex.NindLocalindex(localindexFileName)
+    nindLexiconindex = NindLexiconindex(lexiconindexFileName)
+    nindTermindex = NindTermindex(termindexFileName)
+    nindLocalindex = NindLocalindex(localindexFileName)
     
     #1) verifie l'identification des fichiers
-    (maxIdentifiant, dateHeure) = nindLexiconindex.getIdentification()
-    print "max=%d dateheure=%d (%s)"%(maxIdentifiant, dateHeure, time.ctime(int(dateHeure)))
-    (maxIdentifiant2, dateHeure2) = nindTermindex.getIdentification()
+    (maxIdentifiant, dateHeure, spejcifique) = nindLexiconindex.getIdentification()
+    print "max=%d dateheure=%d (%s)"%(maxIdentifiant, dateHeure, ctime(int(dateHeure)))
+    (maxIdentifiant2, dateHeure2, spejcifique) = nindTermindex.getIdentification()
     if maxIdentifiant2 != maxIdentifiant or dateHeure2 != dateHeure:
-        print "%s NON APAIRÉ : max=%d dateheure=%d (%s)"%(termindexFileName, maxIdentifiant, dateHeure, time.ctime(int(dateHeure)))
-    (maxIdentifiant2, dateHeure2) = nindLocalindex.getIdentification()
+        print "%s NON APAIRÉ : max=%d dateheure=%d (%s)"%(termindexFileName, maxIdentifiant, dateHeure, ctime(int(dateHeure)))
+    (maxIdentifiant2, dateHeure2, spejcifique) = nindLocalindex.getIdentification()
     if maxIdentifiant2 != maxIdentifiant or dateHeure2 != dateHeure:
-        print "%s NON APAIRÉ : max=%d dateheure=%d (%s)"%(localindexFileName, maxIdentifiant, dateHeure, time.ctime(int(dateHeure)))   
+        print "%s NON APAIRÉ : max=%d dateheure=%d (%s)"%(localindexFileName, maxIdentifiant, dateHeure, ctime(int(dateHeure)))   
     
     #2) trouve l'identifiant du terme
     #trouve la clef des termes simples
-    termesSimples = terme.split('#')
+    termesSimples = terme.split('_')
     sousMotId = 0
     for mot in termesSimples:
         sousMotId = nindLexiconindex.getIdent(mot, sousMotId)

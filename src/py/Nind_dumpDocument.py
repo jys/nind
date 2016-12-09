@@ -16,7 +16,7 @@ Les termes apparaissent dans l'ordre, les localisations ne sont pas affichées.
 Le système nind est expliqué dans le document LAT2014.JYS.440.
 
 usage   : %s <fichier lexiconindex> <n° doc>
-exemple : %s box/dumps/boxon/FRE.lexiconindex 9546
+exemple : %s FRE.lexiconindex 9546
 """%(script, script)
 
 def main():
@@ -34,8 +34,11 @@ def main():
     nindRetrolexiconindex = NindRetrolexiconindex(lexiconindexFileName)
     nindLocalindex = NindLocalindex(localindexFileName)
 
+    #trouve l'identifiant interne
+    identInterne = nindLocalindex.docIdTradExtInt[noDoc]
+    print '%d -> %d'%(noDoc, identInterne)
     #trouve les termes dans le fichier des index locaux et les affiche sans leurs localisations
-    (noDocExterne, termList) = nindLocalindex.getTermList(noDoc)
+    termList = nindLocalindex.getTermList(noDoc)
     resultat = []
     for (noTerme, categorie, localisationsList) in termList:
         terme = nindRetrolexiconindex.getWord(noTerme)

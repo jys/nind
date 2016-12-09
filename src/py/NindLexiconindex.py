@@ -14,10 +14,10 @@ Programme de test de la classe NindLexiconindex.
 Cette classe gère le lexique contenu dans le fichier lexique spécifié.
 Le format du fichier est défini dans le document LAT2014.JYS.440.
 Le programme de test affiche l'identifiant du mot spécifié,
-simple ou composé (avec notation dièsée).
+simple ou composé (avec notation blanc-souligné).
 
 usage   : %s <fichier lexiconindex> <mot cherché>
-exemple : %s box/dumps/boxon/FRE.lexiconindex syntagme#nominal
+exemple : %s FRE.lexiconindex syntagme_nominal
 """%(script, script)
 
 def main():
@@ -30,11 +30,11 @@ def main():
     #la classe
     nindLexiconindex = NindLexiconindex(lexiconindexFileName)
     #affiche l'identification du fichier
-    (maxIdentifiant, dateHeure) = nindLexiconindex.getIdentification()
+    (maxIdentifiant, dateHeure, spejcifique) = nindLexiconindex.getIdentification()
     print "max=%d dateheure=%d (%s)"%(maxIdentifiant, dateHeure, ctime(int(dateHeure)))
     #trouve l'identifiant du mot
     #trouve la clef des mots simples
-    motsSimples = motCherchej.split('#')
+    motsSimples = motCherchej.split('_')
     sousMotId = 0
     for mot in motsSimples:
         sousMotId = nindLexiconindex.getIdent(mot, sousMotId)

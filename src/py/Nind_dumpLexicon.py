@@ -12,14 +12,14 @@ def usage():
     else: script = sys.argv[0]
     print """© l'ATEJCON.
 Dumpe en clair le lexique d'une base nind (version fichier).
-Les termes, simples et composés, apparaissent dans l'ordre d'indexation.
+Les mots, simples et composés, apparaissent dans l'ordre d'indexation.
 (Ne pas confondre avec Nind_dumpLexiconIndexFile.py qui dumpe la structure
 interne du lexique.)
 Le système nind est expliqué dans le document LAT2014.JYS.440.
 Le fichier de sortie s'appelle <fichier lexiconindex>-dumpall.txt
 
 usage   : %s <fichier lexiconindex> 
-exemple : %s box/dumps/boxon/FRE.lexiconindex
+exemple : %s FRE.lexiconindex
 """%(script, script)
 
 def main():
@@ -32,15 +32,15 @@ def main():
     #ouvre les classes
     nindRetrolexiconindex = NindRetrolexiconindex(lexiconindexFileName)
 
-    (maxIdentifiant, dateHeure) = nindRetrolexiconindex.getIdentification()
+    (maxIdentifiant, dateHeure, spejcifique) = nindRetrolexiconindex.getIdentification()
     print "max=%d dateheure=%d (%s)"%(maxIdentifiant, dateHeure, time.ctime(int(dateHeure)))
     outFile = codecs.open(outFileName, 'w', 'utf-8')
-    noTerme = 1
-    for noTerme in range(1, maxIdentifiant+1):
-        terme = nindRetrolexiconindex.getTerme(noTerme)
-        outFile.write('%06d  %s\n'%(noTerme, terme))
+    noWord = 1
+    for noWord in range(1, maxIdentifiant+1):
+        word = nindRetrolexiconindex.getWord(noWord)
+        outFile.write('%06d  %s\n'%(noWord, word))
     outFile.close()
-    print '%d termes écrits sur %s'%(maxIdentifiant, outFileName)  
+    print '%d mots écrits sur %s'%(maxIdentifiant, outFileName)  
 
 if __name__ == '__main__':
         main()

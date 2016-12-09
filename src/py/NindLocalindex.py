@@ -17,7 +17,7 @@ Le programme de test affiche la liste des occurrences de termes
 dans un document spécifié. (attention aux documents longs)
 
 usage   : %s <fichier localindex> <identifiant doc>
-exemple : %s box/dumps/boxon/FRE.localindex 9546
+exemple : %s FRE.localindex 9546
 """%(script, script)
 
 
@@ -31,11 +31,12 @@ def main():
     #la classe
     nindLocalindex = NindLocalindex(localindexFileName)
     #affiche l'identification du fichier
-    (maxIdentifiant, dateHeure) = nindLocalindex.getIdentification()
+    (maxIdentifiant, dateHeure, spejcifique) = nindLocalindex.getIdentification()
     print "max=%d dateheure=%d (%s)"%(maxIdentifiant, dateHeure, ctime(int(dateHeure)))
+    print "maxIdInternes=%d"%(spejcifique)
     #trouve les termes dans le fichier des index locaux et les affiche avec leurs localisations
-    (noDocExterne, termList) = nindLocalindex.getTermList(noDoc)
-    print '%d -> %d'%(noDoc, noDocExterne)
+    termList = nindLocalindex.getTermList(noDoc)
+    print '%d -> %d'%(noDoc, nindLocalindex.docIdTradExtInt[noDoc])
     resultat = []
     for (noTerme, categorie, localisationsList) in termList:
         locListe = []
@@ -63,18 +64,36 @@ FLAG_DEFINITION = 19
 class NindLocalindex(NindIndex):
     def __init__(self, localindexFileName):
         NindIndex.__init__(self, localindexFileName)
+        #initialisation traduction identitiant externe -> identifiant interne
+        self.docIdTradExtInt = {}
+        (maxIdentifiant, dateHeure, maxIdentifiantDoc) = self.getIdentification()
+        for noDocInterne in range(1, maxIdentifiantDoc +1):
+            (offsetDefinition, longueurDefinition) = self.getDefinitionAddr(noDocInterne)
+            if offsetDefinition == 0: continue
+            self.seek(offsetDefinition, 0)
+            #<flagDefinition=19> <identifiantDoc> <identifiantExterne> 
+            if self.litNombre1() != FLAG_DEFINITION: 
+                raise Exception('%s : pas FLAG_DEFINITION à %08X'%(self.latFileName, offsetDefinition))
+            if self.litNombre3() != noDocInterne: 
+                raise Exception('%s : %d pas trouvé à %08X'%(self.latFileName, ident, offsetDefinition+1))
+            noDocExterne = self.litNombre4()
+            self.docIdTradExtInt[noDocExterne] = noDocInterne       
   
-    def getTermList(self, noDoc):
-        (offsetDefinition, longueurDefinition) = self.getDefinitionAddr(noDoc)
+    def getTermList(self, noDocExterne):
+        #trouve le numejro interne
+        noDocInterne = self.docIdTradExtInt[noDocExterne]
+        #cherche le doc
+        (offsetDefinition, longueurDefinition) = self.getDefinitionAddr(noDocInterne)
         if offsetDefinition == 0: return (0, [])          #doc inconnu
         #lit l'indirection
         self.seek(offsetDefinition, 0)
         #<flagDefinition=19> <identifiantDoc> <identifiantExterne> <longueurDonnees>
         if self.litNombre1() != FLAG_DEFINITION: 
             raise Exception('%s : pas FLAG_DEFINITION à %08X'%(self.latFileName, offsetDefinition))
-        if self.litNombre3() != noDoc: 
-            raise Exception('%s : %d pas trouvé à %08X'%(self.latFileName, ident, offsetDefinition+1))
-        noDocExterne = self.litNombre4()
+        if self.litNombre3() != noDocInterne: 
+            raise Exception('%s : %d pas trouvé à %08X'%(self.latFileName, noDocInterne, offsetDefinition+1))
+        if self.litNombre4() != noDocExterne: 
+            raise Exception('%s : %d pas trouvé à %08X'%(self.latFileName, noDocExterne, offsetDefinition+4))
         longueurDonnees = self.litNombre3()
         finDonnees = self.tell() + longueurDonnees
         #lit les donnes
@@ -93,7 +112,7 @@ class NindLocalindex(NindIndex):
                 longueur = self.litNombre1()
                 localisationsList.append((localisationAbsolue, longueur))
             resultat.append((noTerme, categorie, localisationsList))
-        return (noDocExterne, resultat)
+        return resultat
               
         
 if __name__ == '__main__':
