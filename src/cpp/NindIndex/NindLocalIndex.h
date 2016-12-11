@@ -92,10 +92,6 @@ public:
     unsigned int getDocCount() const; 
 
 private:
-    //Effacement d'un document dans le fichier
-    void deleteLocalIndex(const unsigned int ident,
-                          const Identification &identification);
-    
     //Rejcupehre l'identifiant interne 
     unsigned int getInternalIdent(const unsigned int ident);
     

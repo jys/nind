@@ -173,6 +173,7 @@ void NindIndex::setDefinition(const unsigned int ident,
         //EFFACEMENT
         //met a jour la liste des emplacements vides s'il y a des anciennes donnees
         if (oldLengthEntry != 0) vacateOldArea(oldOffsetEntry, oldLengthEntry);
+        m_file.setPos(indirection, SEEK_SET);       //se positionne sur l'indirection de la dejfinition
         //<offsetDefinition> <longueurDefinition> 
         m_file.createBuffer(TAILLE_INDIRECTION);
         m_file.putInt5(0);               // <offsetDefinition> 

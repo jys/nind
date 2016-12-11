@@ -154,7 +154,7 @@ def main():
     print
     print 'top 10 des fréquences de termes les plus élevées:'
     for (frequenceGlobale, noTerm) in maxFreq:
-        print u'% 6d de fréquence pour % 6d'%(frequenceGlobale, noTerm)
+        print '% 6d de fréquence pour % 6d'%(frequenceGlobale, noTerm)
     
     termindexFile.seek(0, 2)
     offsetFin = termindexFile.tell()

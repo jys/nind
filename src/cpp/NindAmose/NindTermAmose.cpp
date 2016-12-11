@@ -18,6 +18,7 @@
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
 #include "NindTermAmose.h"
+//#include <iostream>
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
@@ -126,15 +127,17 @@ void NindTermAmose::removeDocFromTerm(const unsigned int ident,
         //dejcrejmente la frejquence globale de ce terme
         termcg.frequency -= document.frequency;
         //enlehve le doc de la liste
-        documents.erase(itdoc);
+        itdoc = documents.erase(itdoc);
         //si c'ejtait le dernier, efface le terme
-        if (documents.size() == 0) {
+        if (itdoc == documents.end()) {
             //dejcrejmente le nombre de termes pour ce type
             m_uniqueTermCount[type] -=1;
             termDef.clear();        
         }
         //terminej, ejcrit la nouvelle dejfinition
         setTermDef(ident, termDef, lexiconIdentification);  
+        //ejcrit les novelles valeurs des compteurs
+        saveInternalCounts(lexiconIdentification);
         return;
     }
     //si document pas trouvej, rien n'est fait

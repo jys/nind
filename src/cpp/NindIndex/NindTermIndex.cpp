@@ -129,6 +129,13 @@ void NindTermIndex::setTermDef(const unsigned int ident,
         //il faut le faire maintenant parce que le buffer d'ecriture est unique
         checkExtendIndirection(ident, lexiconIdentification);
         
+        //effacement ?
+        if (termDef.size() == 0) {
+            //efface dans le fichier
+            m_file.createBuffer(0); 
+            setDefinition(ident, lexiconIdentification);
+            return;
+        }       
         //2) calcule la taille maximum du buffer d'ecriture
         //<flagDefinition=17> <identifiantTerme> <longueurDonnees> <donneesTerme>
         unsigned int tailleMaximum = TETE_DEFINITION;   

@@ -186,7 +186,10 @@ void NindLocalIndex::setLocalDef(const unsigned int ident,
         checkExtendIndirection(identInt, m_identification);
         //effacement ?
         if (localDef.size() == 0) {
-            deleteLocalIndex(ident, m_identification);
+            //efface dans le fichier
+            m_file.createBuffer(0); 
+            setDefinition(identInt, m_identification);
+            //n'efface pas dans la map de traduction des identifiants, le fichier sera trouvej vide
             return;
         }
         //2) calcule la taille maximum du buffer d'ecriture
@@ -241,20 +244,6 @@ void NindLocalIndex::setLocalDef(const unsigned int ident,
 unsigned int NindLocalIndex::getDocCount() const
 {
     return m_docIdTradExtInt.size();
-}
-////////////////////////////////////////////////////////////
-void NindLocalIndex::deleteLocalIndex(const unsigned int ident,
-                                      const Identification &identification)
-{
-    map<unsigned int, unsigned int>::const_iterator itident = m_docIdTradExtInt.find(ident);
-    //si effacement de pas connu, raf
-    if (itident == m_docIdTradExtInt.end()) return;
-    const unsigned int identInt = (*itident).second;
-    //efface dans le fichier
-    m_file.createBuffer(0); 
-    setDefinition(identInt, identification);
-    //n'efface pas dans la map de traduction des identifiants, le fichier sera trouvej vide
-    //m_docIdTradExtInt.erase(itident);
 }
 ////////////////////////////////////////////////////////////
 //Rejcupehre l'identifiant interne 
