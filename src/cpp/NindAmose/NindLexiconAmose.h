@@ -30,6 +30,7 @@ namespace latecon {
 ////////////////////////////////////////////////////////////
 /**\brief various types of Amose words */
 enum AmoseTypes { SIMPLE_TERM = 0, MULTI_TERM, NAMED_ENTITY }; 
+
 ////////////////////////////////////////////////////////////
 class DLLExportLexicon NindLexiconAmose : public NindLexiconIndex {
 public:
@@ -62,7 +63,7 @@ public:
     * \param lemma word to be searched. Compound word is structured with "_"
     * \param type type of the words (0: simple word, 1: multi-word, 2: named entity) 
     * \param namedEntity type of named entity, eventually
-    * \return ident of word */
+    * \return ident of word if word exists, 0 otherwise*/
     unsigned int getWordId(const std::string &lemma,
                            const AmoseTypes type,
                            const std::string &namedEntity = "");

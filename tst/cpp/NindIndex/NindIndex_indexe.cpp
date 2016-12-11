@@ -79,7 +79,7 @@ void NindIndex_indexe::newDoc(const unsigned int docIdent)
         NindIndex::Identification identification;
         if (m_timeControl < 3) m_nindLexicon.getIdentification(identification);
         //ecrit la definition sur le fichier des index locaux
-        if (m_timeControl < 1) m_nindLocalindex.setLocalIndex(m_docIdent, m_localindex, identification);
+        if (m_timeControl < 1) m_nindLocalindex.setLocalDef(m_docIdent, m_localindex, identification);
         //vide le lexique local
         m_localindex.clear();
         //incremente le compteur
@@ -131,7 +131,7 @@ void NindIndex_indexe::flush()
         const list<pair<unsigned int, unsigned int> > &cgdocsList = (*it2).second;
         //recupere l'index inverse pour ce terme
         list<NindTermIndex::TermCG> termIndex;
-        if (m_timeControl < 2) m_nindTermindex.getTermIndex(id2, termIndex);
+        if (m_timeControl < 2) m_nindTermindex.getTermDef(id2, termIndex);
         //si le terme n'existe pas encore, la liste reste vide
         for (list<pair<unsigned int, unsigned int> >::const_iterator it3 = cgdocsList.begin(); it3 != cgdocsList.end(); it3++) {
             const unsigned int cg3 = (*it3).first;
@@ -140,7 +140,7 @@ void NindIndex_indexe::flush()
             majInverse(cg3, docId, termIndex);
         }
         //ecrit sur le fichier inverse
-        if (m_timeControl < 2) m_nindTermindex.setTermIndex(id2, termIndex, identification);
+        if (m_timeControl < 2) m_nindTermindex.setTermDef(id2, termIndex, identification);
         //incremente le compteur
         m_termindexAccessNb++;
     }

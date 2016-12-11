@@ -123,10 +123,10 @@ int main(int argc, char *argv[]) {
             const unsigned int nbTerms = nindLocalAmose.getDocLength(noDoc);                    //3.4 getDocLength()
             cout<<nbTerms<<" termes indexés dans ce document"<<endl;
             //recupere l'index local du doc             
-            list<NindLocalIndex::Term> localIndex;
-            nindLocalAmose.getLocalIndex(noDoc, localIndex);
-            for (list<NindLocalIndex::Term>::const_iterator it3 = localIndex.begin();
-                    it3 != localIndex.end(); it3++) {
+            list<NindLocalIndex::Term> localDef;
+            nindLocalAmose.getLocalDef(noDoc, localDef);
+            for (list<NindLocalIndex::Term>::const_iterator it3 = localDef.begin();
+                    it3 != localDef.end(); it3++) {
                 const NindLocalIndex::Term &term = (*it3);
                 if (term.term == ident) {
                     cout<<"<";

@@ -64,20 +64,20 @@ public:
         ~TermCG() {}
     };
     
-    /**\brief Read a full termIndex as a list of structures
+    /**\brief Read a full term definition as a list of structures
     *\param ident ident of term
-    *\param termIndex structure to receive all datas of the specified term
+    *\param termDef structure to receive all datas of the specified term
     *\return true if term was found, false otherwise */
-    bool getTermIndex(const unsigned int ident,
-                      std::list<struct TermCG> &termIndex);
+    bool getTermDef(const unsigned int ident,
+                    std::list<struct TermCG> &termDef);
 
-    /**\brief Write a full termIndex as a list of structures
+    /**\brief Write a full term definition as a list of structures
     *\param ident ident of term
-    *\param termIndex structure containing all datas of the specified term 
+    *\param termDef structure containing all datas of the specified term 
     *\param lexiconIdentification unique identification of lexicon */
-    void setTermIndex(const unsigned int ident,
-                      const std::list<struct TermCG> &termIndex,
-                      const Identification &lexiconIdentification);
+    void setTermDef(const unsigned int ident,
+                    const std::list<struct TermCG> &termDef,
+                    const Identification &lexiconIdentification);
         
 private:
 };

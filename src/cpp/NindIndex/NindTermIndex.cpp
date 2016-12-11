@@ -74,12 +74,12 @@ NindTermIndex::~NindTermIndex()
 {
 }
 ////////////////////////////////////////////////////////////
-//brief Read a full termIndex as a list of structures
+//brief Read a full term definition as a list of structures
 //param ident ident of term
-//param termIndex structure to receive all datas of the specified term
+//param termDef structure to receive all datas of the specified term
 //return true if term was found, false otherwise */
-bool NindTermIndex::getTermIndex(const unsigned int ident,
-                                 list<struct TermCG> &termIndex)
+bool NindTermIndex::getTermDef(const unsigned int ident,
+                               list<struct TermCG> &termDef)
 {
     try {
         const bool existe = getDefinition(ident);
@@ -97,8 +97,8 @@ bool NindTermIndex::getTermIndex(const unsigned int ident,
             const unsigned char categorie = m_file.getInt1();
             const unsigned int frequenceTerme = m_file.getUIntLat();
             const unsigned int nbreDocs = m_file.getUIntLat();
-            termIndex.push_back(TermCG(categorie, frequenceTerme));
-            struct TermCG &termCG = termIndex.back();
+            termDef.push_back(TermCG(categorie, frequenceTerme));
+            struct TermCG &termCG = termDef.back();
             list<Document> &documents = termCG.documents;
             unsigned int identDocument = 0;         //pour calculer le no de doc absolu avec la numerotation relative
             for (unsigned int it = 0; it != nbreDocs; it++) {
@@ -116,13 +116,13 @@ bool NindTermIndex::getTermIndex(const unsigned int ident,
     }
 }
 ////////////////////////////////////////////////////////////
-//brief Write a full termIndex as as a list of structures
+//brief Write a full term definition as as a list of structures
 //param ident ident of term
-//param termIndex structure containing all datas of the specified term */
+//param termDef structure containing all datas of the specified term */
 //param lexiconIdentification unique identification of lexicon */
-void NindTermIndex::setTermIndex(const unsigned int ident,
-                                 const list<struct TermCG> &termIndex,
-                                 const Identification &lexiconIdentification)
+void NindTermIndex::setTermDef(const unsigned int ident,
+                               const list<struct TermCG> &termDef,
+                               const Identification &lexiconIdentification)
 {
     try {
         //1) verifie que le terme n'est pas en dehors du dernier bloc d'indirection
@@ -132,7 +132,7 @@ void NindTermIndex::setTermIndex(const unsigned int ident,
         //2) calcule la taille maximum du buffer d'ecriture
         //<flagDefinition=17> <identifiantTerme> <longueurDonnees> <donneesTerme>
         unsigned int tailleMaximum = TETE_DEFINITION;   
-        for (list<struct TermCG>::const_iterator it1 = termIndex.begin(); it1 != termIndex.end(); it1++) {
+        for (list<struct TermCG>::const_iterator it1 = termDef.begin(); it1 != termDef.end(); it1++) {
             //<flagCg> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
             //<identDocRelatif> <frequenceDoc>
             //le buffer est maximise pour écrire l'identification a la fin
@@ -146,7 +146,7 @@ void NindTermIndex::setTermIndex(const unsigned int ident,
         m_file.putInt1(FLAG_DEFINITION);
         m_file.putInt3(ident);
         m_file.putInt3(0);         //la taille des donnees sera ecrite plus tard, quand elle sera connue
-        for (list<struct TermCG>::const_iterator it1 = termIndex.begin(); it1 != termIndex.end(); it1++) {
+        for (list<struct TermCG>::const_iterator it1 = termDef.begin(); it1 != termDef.end(); it1++) {
             //<flagCg> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
             m_file.putInt1(FLAG_CG);
             m_file.putInt1((*it1).cg);

@@ -62,11 +62,10 @@ public:
      * else, return 0 (0 is not a valid ident !)
      * \param components list of components of a word 
      * (1 component = simple word, more components = compound word)
-     * \return ident of word */
+     * \return ident of word if word exists, 0 otherwise */
     unsigned int getWordId(const std::list<std::string> &components);
 
     /**\brief get identification of lexicon
-     * \param wordsNb where number of words contained in lexicon is returned
      * \param identification where unique identification of lexicon is returned */
     void getIdentification(Identification &identification);
     

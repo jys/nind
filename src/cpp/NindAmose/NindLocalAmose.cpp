@@ -71,12 +71,12 @@ void NindLocalAmose::getTermPositionIndocs(const vector<unsigned int>& termIds,
         vector<list<Localisation> > &docTerms = (*itpos++);
         docTerms.resize(termIds.size());
         //les index locaux du document
-        list<NindLocalIndex::Term> localIndex;
-        const bool trouvej = NindLocalIndex::getLocalIndex((*itdoc), localIndex);
+        list<NindLocalIndex::Term> localDef;
+        const bool trouvej = NindLocalIndex::getLocalDef((*itdoc), localDef);
         //si le doc n'existe pas, laisse son rejsultat vide et passe au suivant
         if (!trouvej) continue; 
         //examine chaque occurrence de terme
-        for (list<struct Term>::const_iterator itoccur = localIndex.begin(); itoccur != localIndex.end(); itoccur++) {
+        for (list<struct Term>::const_iterator itoccur = localDef.begin(); itoccur != localDef.end(); itoccur++) {
             const struct Term &termOccur = (*itoccur);
             //si ce terme n'est cherchej, son occurrence n'est pas prise en compte 
             const map<unsigned int, unsigned int>::const_iterator ittermIdsMap = termIdsMap.find(termOccur.term);
@@ -129,10 +129,10 @@ bool NindLocalAmose::getDocTerms(const unsigned int docId,
 unsigned int NindLocalAmose::getDocLength(const unsigned int docId)
 {
     //les index locaux du document
-    list<NindLocalIndex::Term> localIndex;
-    const bool trouvej = NindLocalIndex::getLocalIndex(docId, localIndex);
+    list<NindLocalIndex::Term> localDef;
+    const bool trouvej = NindLocalIndex::getLocalDef(docId, localDef);
     //si le doc n'existe pas, retour 0
     if (!trouvej) return 0;
-    return localIndex.size();
+    return localDef.size();
 }
 ////////////////////////////////////////////////////////////

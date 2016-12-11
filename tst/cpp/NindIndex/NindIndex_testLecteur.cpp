@@ -47,13 +47,13 @@ static void displayHelp(char* arg0) {
 ////////////////////////////////////////////////////////////
 static bool docTrouve(const unsigned int noDoc, 
                       const unsigned int cg, 
-                      const list<NindTermIndex::TermCG> &termIndex);
+                      const list<NindTermIndex::TermCG> &termDef);
 static bool termeTrouve(const unsigned int id, 
                         const unsigned int cg, 
                         const unsigned int pos, 
                         const unsigned int taille, 
                         const list<string> &componants,
-                        list<NindLocalIndex::Term>::const_iterator &localIndexIt);
+                        list<NindLocalIndex::Term>::const_iterator &localDefIt);
 ////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
     setlocale( LC_ALL, "French" );
@@ -103,9 +103,9 @@ int main(int argc, char *argv[]) {
             if (docsFile.fail()) throw FormatFileException(docsFileName);
             nindIndexTest.getWords(string(charBuff), noDoc, wordsList);
             //recupere l'index local du doc             
-            list<NindLocalIndex::Term> localIndex;
-            if (timeControl < 1) nindLocalIndex.getLocalIndex(noDoc, localIndex);
-            list<NindLocalIndex::Term>::const_iterator localIndexIt = localIndex.begin();
+            list<NindLocalIndex::Term> localDef;
+            if (timeControl < 1) nindLocalIndex.getLocalDef(noDoc, localDef);
+            list<NindLocalIndex::Term>::const_iterator localDefIt = localDef.begin();
             //prend tous les mots à la suite et dans l'ordre
             for (list<NindIndexTest::WordDesc>::const_iterator wordIt = wordsList.begin(); 
                  wordIt != wordsList.end(); wordIt++) {
@@ -124,19 +124,19 @@ int main(int argc, char *argv[]) {
                     continue;
                 }
                 //recupere l'index inverse pour ce terme
-                list<NindTermIndex::TermCG> termIndex;
-                if (timeControl < 2) nindTermIndex.getTermIndex(id, termIndex);
+                list<NindTermIndex::TermCG> termDef;
+                if (timeControl < 2) nindTermIndex.getTermDef(id, termDef);
                 //si le terme n'existe pas encore, la liste reste vide
-                if (docTrouve(noDoc, cg, termIndex)) nbTermOk +=1;
+                if (docTrouve(noDoc, cg, termDef)) nbTermOk +=1;
                 else nbTermNok +=1;
                 //verifie l'index local
                 const unsigned int pos = (*wordIt).pos;
                 const unsigned int taille = (*wordIt).word.size();
                 //calcul complexite
-                for (list<NindTermIndex::TermCG>::const_iterator it1 = termIndex.begin(); it1 != termIndex.end(); it1++) {
+                for (list<NindTermIndex::TermCG>::const_iterator it1 = termDef.begin(); it1 != termDef.end(); it1++) {
                         complexite += (*it1).documents.size();
                 }
-                if (termeTrouve(id, cg, pos, taille, componants, localIndexIt)) nbLocalOk +=1;
+                if (termeTrouve(id, cg, pos, taille, componants, localDefIt)) nbLocalOk +=1;
                 else nbLocalNok +=1;
             }
             cout<<docsNb<<"\r"<<flush;
@@ -160,10 +160,10 @@ int main(int argc, char *argv[]) {
 ////////////////////////////////////////////////////////////
 static bool docTrouve(const unsigned int noDoc, 
                       const unsigned int cg, 
-                      const list<NindTermIndex::TermCG> &termIndex)
+                      const list<NindTermIndex::TermCG> &termDef)
 {
-    list<NindTermIndex::TermCG>::const_iterator it1 = termIndex.begin(); 
-    while (it1 != termIndex.end()) {
+    list<NindTermIndex::TermCG>::const_iterator it1 = termDef.begin(); 
+    while (it1 != termDef.end()) {
         if ((*it1).cg == cg) {
             //c'est la meme cg, on va chercher le doc 
             const list<NindTermIndex::Document> &documents = (*it1).documents;
@@ -178,7 +178,7 @@ static bool docTrouve(const unsigned int noDoc,
         }
         it1++;
     }
-    if (it1 == termIndex.end()) return false;
+    if (it1 == termDef.end()) return false;
 }
 ////////////////////////////////////////////////////////////
 static bool termeTrouve(const unsigned int id, 
@@ -186,9 +186,9 @@ static bool termeTrouve(const unsigned int id,
                         const unsigned int pos, 
                         const unsigned int taille, 
                         const list<string> &componants,
-                        list<NindLocalIndex::Term>::const_iterator &localIndexIt)
+                        list<NindLocalIndex::Term>::const_iterator &localDefIt)
 {
-    const NindLocalIndex::Term &term = (*localIndexIt++);
+    const NindLocalIndex::Term &term = (*localDefIt++);
     if (term.term != id && term.cg != cg) return false;
     //simulation de cas reel de termes en plusieurs parties (c'est tout a fait arbitraire)
     //TAA#BB : (pos, len(TAA)), (pos+len(TAA), len(BB))

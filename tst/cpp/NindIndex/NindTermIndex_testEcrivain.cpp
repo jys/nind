@@ -118,11 +118,11 @@ int main(int argc, char *argv[]) {
                 //recupere l'id du terme dans le lexique, l'ajoute eventuellement
                 const unsigned int id = nindLexicon.addWord(componants);
                 //recupere l'index inverse pour ce terme
-                list<NindTermIndex::TermCG> termIndex;
-                nindTermIndex->getTermIndex(id, termIndex);
+                list<NindTermIndex::TermCG> termDef;
+                nindTermIndex->getTermDef(id, termDef);
                 //si le terme n'existe pas encore, la liste reste vide
-                list<NindTermIndex::TermCG>::iterator it1 = termIndex.begin(); 
-                while (it1 != termIndex.end()) {
+                list<NindTermIndex::TermCG>::iterator it1 = termDef.begin(); 
+                while (it1 != termDef.end()) {
                     if ((*it1).cg == cg) {
                         //c'est la meme cg, on ajoute le doc 
                         list<NindTermIndex::Document> &documents = (*it1).documents;
@@ -150,15 +150,15 @@ int main(int argc, char *argv[]) {
                     it1++;
                 }
                 //si c'est une nouvelle cg, insere en fin de liste
-                if (it1 == termIndex.end()) {
-                    termIndex.push_back(NindTermIndex::TermCG(cg, 1));
-                    NindTermIndex::TermCG &termCG = termIndex.back();
+                if (it1 == termDef.end()) {
+                    termDef.push_back(NindTermIndex::TermCG(cg, 1));
+                    NindTermIndex::TermCG &termCG = termDef.back();
                     list<NindTermIndex::Document> &documents = termCG.documents;
                     documents.push_back(NindTermIndex::Document(noDoc, 1));
                 }
                 //ecrit sur le fichier
                 nindLexicon.getIdentification(identification.lexiconWordsNb, identification.lexiconTime);
-                nindTermIndex->setTermIndex(id, termIndex, identification);
+                nindTermIndex->setTermDef(id, termDef, identification);
                 nbMaj +=1;
             }
             //ferme et rouvre

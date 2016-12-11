@@ -67,10 +67,10 @@ public:
     
     /**\brief Return a full document as a list of terms whith their localisations
     *\param ident ident of doc
-    *\param localIndex structure to receive all datas of the specified doc
+    *\param localDef structure to receive all datas of the specified doc
     *\return true if doc was found, false otherwise */
-    bool getLocalIndex(const unsigned int ident,
-                      std::list<struct Term> &localIndex);
+    bool getLocalDef(const unsigned int ident,
+                     std::list<struct Term> &localDef);
 
     /**\brief Return a full document as a list of unique terms ids
     *\param ident ident of doc
@@ -79,13 +79,13 @@ public:
     bool getTermIdents(const unsigned int ident,
                        std::set<unsigned int> &termIdents);
 
-    /**\brief Write a full termIndex as a list of structures
+    /**\brief Write a full document as a list of terms whith their localisations
     *\param ident ident of doc
-    *\param localIndex structure containing all datas of the specified doc . empty when deletion
+    *\param localDef structure containing all datas of the specified doc . empty when deletion
     *\param lexiconIdentification unique identification of lexicon */
-    void setLocalIndex(const unsigned int ident,
-                      const std::list<struct Term> &localIndex,
-                      const Identification &lexiconIdentification);
+    void setLocalDef(const unsigned int ident,
+                     const std::list<struct Term> &localDef,
+                     const Identification &lexiconIdentification);
     
     /**\brief number of documents in the collection 
      * \return number of documents in the collection */

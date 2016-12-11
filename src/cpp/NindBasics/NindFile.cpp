@@ -81,7 +81,6 @@ void NindFile::close()
 //brief Read a single byte from the file
 //return byte value */
 unsigned char NindFile::readInt1()
-    throw(EofException, ReadFileException)
 {
     unsigned char byte;
     readBytes(&byte, 1);
@@ -91,7 +90,6 @@ unsigned char NindFile::readInt1()
 //brief Read a 3-bytes integer from the file
 //return 4-bytes integer */
 unsigned int NindFile::readInt3()
-    throw(EofException, ReadFileException)
 {
     //petit boutiste
     unsigned char bytes[3];
@@ -102,7 +100,6 @@ unsigned int NindFile::readInt3()
 //brief Get an unsigned latecon integer from the file
 //return 4-bytes unsigned integer */
 unsigned int NindFile::readUIntLat()
-    throw(EofException, ReadFileException, FormatFileException)
 {
     unsigned char bytes[5];
     readBytes(bytes, 1);
@@ -126,7 +123,6 @@ unsigned int NindFile::readUIntLat()
 //brief Get a signed latecon integer from the file
 //return 4-bytes signed integer */
 signed int NindFile::readSIntLat()
-    throw(EofException, ReadFileException, FormatFileException)
 {
     unsigned char bytes[5];
     readBytes(bytes, 1);
@@ -150,7 +146,6 @@ signed int NindFile::readSIntLat()
 //brief Read a string from the file
 //return read string */
 string NindFile::readString()
-        throw(EofException, ReadFileException)
 {
     //lit la longueur de la chaine
     unsigned char len;
@@ -164,7 +159,6 @@ string NindFile::readString()
 //brief Read bytes from the file into an internal buffer
 //param bytesNb size of internal buffer to receive read datas */
 void NindFile::readBuffer(const unsigned int bytesNb)
-    throw(EofException, ReadFileException, BadAllocException)
 {
     //cree le buffer intermediaire de lecture
     if (m_rbuffer != 0) delete [] m_rbuffer;
@@ -179,7 +173,6 @@ void NindFile::readBuffer(const unsigned int bytesNb)
 //brief Reduce effective buffer data specifying amount of unread datas
 //param bytesNb size of effective unread datas */
 void NindFile::setEndInBuffer(const unsigned int bytesNb)
-    throw(OutReadBufferException)
 {
     if (m_rPtr + bytesNb > m_rbufferEnd) throw OutReadBufferException("in read buffer (A) " + m_fileName);
     m_rbufferEnd = m_rPtr + bytesNb;
@@ -188,7 +181,6 @@ void NindFile::setEndInBuffer(const unsigned int bytesNb)
 //brief Get a 1-bytes integer from internal buffer
 //return 4-bytes integer */
 unsigned int NindFile::getInt1()
-    throw(OutReadBufferException)
 {
     m_rPtr += 1;
     if (m_rPtr > m_rbufferEnd) throw OutReadBufferException("in read buffer (B) " + m_fileName);
@@ -198,7 +190,6 @@ unsigned int NindFile::getInt1()
 //brief Get a 2-bytes integer from internal buffer
 //return 4-bytes integer */
 unsigned int NindFile::getInt2()
-    throw(OutReadBufferException)
 {
     //gros-boutiste
     m_rPtr += 2;
@@ -209,7 +200,6 @@ unsigned int NindFile::getInt2()
 //brief Get a 3-bytes integer from internal buffer
 //return 4-bytes integer */
 unsigned int NindFile::getInt3()
-    throw(OutReadBufferException)
 {
     //petit boutiste
     m_rPtr += 3;
@@ -220,7 +210,6 @@ unsigned int NindFile::getInt3()
 //brief Get a 4-bytes integer from internal buffer
 //return 4-bytes integer */
 unsigned int NindFile::getInt4()
-    throw(OutReadBufferException)
 {
     //petit boutiste
     m_rPtr += 4;
@@ -231,7 +220,6 @@ unsigned int NindFile::getInt4()
 //brief Get a 5-bytes integer from internal buffer
 //return 8-bytes integer */
 unsigned long int NindFile::getInt5()
-    throw(OutReadBufferException)
 {
     //gros boutiste
     m_rPtr += 5;
@@ -242,7 +230,6 @@ unsigned long int NindFile::getInt5()
 //brief Get an unsigned latecon integer from internal buffer
 //return 4-bytes unsigned integer */
 unsigned int NindFile::getUIntLat()
-    throw(OutReadBufferException)
 {
     //il faut que ca aille vite pour les petits nombres
     m_rPtr += 1;
@@ -271,7 +258,6 @@ unsigned int NindFile::getUIntLat()
 //brief Get a signed latecon integer from internal buffer
 //return 4-bytes signed integer */
 signed int NindFile::getSIntLat()
-    throw(OutReadBufferException)
 {
     //il faut que ca aille vite pour les petits nombres
     m_rPtr += 1;
@@ -300,7 +286,6 @@ signed int NindFile::getSIntLat()
 //brief Get a string from internal buffer
 //return read string */
 string NindFile::getString()
-        throw(EofException, ReadFileException)
 {
     //lit la longueur de la chaine
     m_rPtr += 1;
@@ -315,7 +300,6 @@ string NindFile::getString()
 //brief Create an internal buffer for writing
 //param bytesNb size of buffer */
 void NindFile::createBuffer(const unsigned int bytesNb)
-    throw(BadAllocException)
 {
     if (m_wbuffer != 0) delete [] m_wbuffer;
     m_wbuffer = new (nothrow) unsigned char[bytesNb];
@@ -327,7 +311,6 @@ void NindFile::createBuffer(const unsigned int bytesNb)
 //brief Put padding into the internal buffer
 //param bytesNb number of padding bytes to write */
 void NindFile::putPad(const unsigned int bytesNb)
-    throw(OutWriteBufferException)
 {
     m_wPtr += bytesNb;
     if (m_wPtr > m_wbufferEnd) throw OutWriteBufferException("in write buffer (A) " + m_fileName);
@@ -336,7 +319,6 @@ void NindFile::putPad(const unsigned int bytesNb)
 //brief Put one byte into the internal buffer
 //param int1 byte value to write */
 void NindFile::putInt1(const unsigned char int1)
-    throw(OutWriteBufferException)
 {
     m_wPtr += 1;
     if (m_wPtr > m_wbufferEnd) throw OutWriteBufferException("in write buffer (B) " + m_fileName);
@@ -346,7 +328,6 @@ void NindFile::putInt1(const unsigned char int1)
 //brief Put a 2-bytes integer into the internal buffer
 //param int4 integer to write as 2-bytes*/
 void NindFile::putInt2(const unsigned int int4)
-    throw(OutWriteBufferException)
 {
     //gros-boutiste
     m_wPtr += 2;
@@ -359,7 +340,6 @@ void NindFile::putInt2(const unsigned int int4)
 //brief Put a 3-bytes integer into the internal buffer
 //param int4 integer to write as 3-bytes*/
 void NindFile::putInt3(const unsigned int int4)
-    throw(OutWriteBufferException)
 {
     //petit boutiste
     m_wPtr += 3;
@@ -375,7 +355,6 @@ void NindFile::putInt3(const unsigned int int4)
 //param offset where to write the 3 bytes into the buffer*/
 void NindFile::putInt3(const unsigned int int4,
                        const unsigned int offset)
-    throw(OutWriteBufferException)
 {
     //petit boutiste
     unsigned char *wPtr = m_wbuffer + offset + 3;
@@ -389,7 +368,6 @@ void NindFile::putInt3(const unsigned int int4,
 //brief Put a 4-bytes integer into the internal buffer
 //param int4 integer to write as 4-bytes*/
 void NindFile::putInt4(const unsigned int int4)
-    throw(OutWriteBufferException)
 {
     //petit boutiste
     m_wPtr += 4;
@@ -404,7 +382,6 @@ void NindFile::putInt4(const unsigned int int4)
 //brief Put a 5-bytes integer into the internal buffer
 //param int8 long integer to write as 5-bytes*/
 void NindFile::putInt5(const unsigned long int int8)
-    throw(OutWriteBufferException)
 {
     //gros boutiste
     m_wPtr += 5;
@@ -420,7 +397,6 @@ void NindFile::putInt5(const unsigned long int int8)
 //brief Put an unsigned latecon integer into the internal buffer
 //param int4 unsigned integer to write as latecon integer*/
 void NindFile::putUIntLat(const unsigned int int4)
-    throw(OutWriteBufferException)
 {
     //il faut que ca aille vite pour les petits nombres
     m_wPtr += 1;
@@ -470,7 +446,6 @@ void NindFile::putUIntLat(const unsigned int int4)
 //brief Put a signed latecon integer into the internal buffer
 //param int4 signed integer to write as latecon integer*/
 void NindFile::putSIntLat(const signed int int4)
-    throw(OutWriteBufferException)
 {
     //il faut que ca aille vite pour les petits nombres
     m_wPtr += 1;
@@ -520,7 +495,6 @@ void NindFile::putSIntLat(const signed int int4)
 //brief Put a string into the intermediate buffer
 //param str string to write  */
 void NindFile::putString(const std::string &str)
-    throw(OutWriteBufferException)
 {
     if (str.length() > 255) throw OutWriteBufferException("String length" + m_fileName);
     const unsigned char stringLen = str.length();
@@ -534,7 +508,6 @@ void NindFile::putString(const std::string &str)
 ////////////////////////////////////////////////////////////
 //brief Write intermediate buffer to the file */
 void NindFile::writeBuffer()
-    throw(WriteFileException)
 {
     const unsigned int size = m_wPtr - m_wbuffer;
     const unsigned int writeSize =  fwrite(m_wbuffer, 1, size, m_file);
@@ -550,7 +523,6 @@ void NindFile::writeBuffer()
 //param count number of bytes to write*/
 void NindFile::writeValue(const unsigned char value,
                           const unsigned int count)
-    throw(WriteFileException, BadAllocException)
 {
     unsigned char* buffer = new (nothrow) unsigned char[count];
     if (buffer == 0) throw BadAllocException("in write value buffer" + m_fileName);
@@ -566,7 +538,6 @@ void NindFile::writeValue(const unsigned char value,
 //Read bytes from file into specified buffer
 void NindFile::readBytes(unsigned char* bytes,
                          const unsigned int bytesNb)
-    throw(EofException, ReadFileException)
 {
     const unsigned int readSize = fread(bytes, 1, bytesNb, m_file);
     if (readSize != bytesNb) {

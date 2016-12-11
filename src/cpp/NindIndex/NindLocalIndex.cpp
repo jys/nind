@@ -91,14 +91,14 @@ NindLocalIndex::~NindLocalIndex()
 ////////////////////////////////////////////////////////////
 //brief Return a full document as a list of terms whith their localisations
 //param ident ident of doc
-//param localIndex structure to receive all datas of the specified doc
+//param localDef structure to receive all datas of the specified doc
 //return true if doc was found, false otherwise */
-bool NindLocalIndex::getLocalIndex(const unsigned int ident,
-                                   list<struct Term> &localIndex)
+bool NindLocalIndex::getLocalDef(const unsigned int ident,
+                                 list<struct Term> &localDef)
 {
     try {
         //raz rejsultat
-        localIndex.clear();
+        localDef.clear();
         //trouve l'identifiant interne du doc 
         const unsigned int identInt = getInternalIdent(ident);
         //si pas trouvej retourne faux
@@ -122,8 +122,8 @@ bool NindLocalIndex::getLocalIndex(const unsigned int ident,
             identTerme += m_file.getSIntLat();
             const unsigned char categorie = m_file.getInt1();
             const unsigned int nbreLocalisations = m_file.getInt1();
-            localIndex.push_back(Term(identTerme, categorie));
-            struct Term &term = localIndex.back();
+            localDef.push_back(Term(identTerme, categorie));
+            struct Term &term = localDef.back();
             list<Localisation> &localisation = term.localisation;
             for (unsigned int it = 0; it != nbreLocalisations; it++) {
                 //<localisationRelatif> <longueur>
@@ -150,24 +150,24 @@ bool NindLocalIndex::getTermIdents(const unsigned int ident,
     //raz rejsultat
     termIdents.clear();
     //rejcupehre la structure du document
-    list<struct Term> localIndex;
-    const bool existe = getLocalIndex(ident, localIndex);
+    list<struct Term> localDef;
+    const bool existe = getLocalDef(ident, localDef);
     if (!existe) return false;
     //trouve tous les identifiants de termes de ce document
-    for (list<struct Term>::const_iterator it = localIndex.begin(); it != localIndex.end(); it++) {
+    for (list<struct Term>::const_iterator it = localDef.begin(); it != localDef.end(); it++) {
         const NindLocalIndex::Term &term = (*it);
         termIdents.insert(term.term);
     } 
     return true;
 }
 ////////////////////////////////////////////////////////////
-//brief Write a full termIndex as a list of structures
+//brief Write a full document as a list of terms whith their localisations
 //param ident ident of doc
-//param localIndex structure containing all datas of the specified doc. empty when deletion
+//param localDef structure containing all datas of the specified doc. empty when deletion
 //param lexiconIdentification unique identification of lexicon */
-void NindLocalIndex::setLocalIndex(const unsigned int ident,
-                                   const std::list<struct Term> &localIndex,
-                                   const Identification &lexiconIdentification)
+void NindLocalIndex::setLocalDef(const unsigned int ident,
+                                 const std::list<struct Term> &localDef,
+                                 const Identification &lexiconIdentification)
 {
     try {
         //est-ce que ce document est dejah connu ?
@@ -185,14 +185,14 @@ void NindLocalIndex::setLocalIndex(const unsigned int ident,
         //il faut le faire maintenant parce que le buffer d'ecriture est unique
         checkExtendIndirection(identInt, m_identification);
         //effacement ?
-        if (localIndex.size() == 0) {
+        if (localDef.size() == 0) {
             deleteLocalIndex(ident, m_identification);
             return;
         }
         //2) calcule la taille maximum du buffer d'ecriture
         //<flagDefinition=19> <identifiantDoc> <identifiantExterne> <longueurDonnees> <donneesDoc>
         unsigned int tailleMaximum = TETE_DEFINITION;   
-        for (list<struct Term>::const_iterator it1 = localIndex.begin(); it1 != localIndex.end(); it1++) {
+        for (list<struct Term>::const_iterator it1 = localDef.begin(); it1 != localDef.end(); it1++) {
             //<identTermeRelatif> <categorie> <nbreLocalisations> <localisations>
             //<localisationRelatif> <longueur>
             //le buffer est maximise pour écrire l'identification a la fin
@@ -210,7 +210,7 @@ void NindLocalIndex::setLocalIndex(const unsigned int ident,
         m_file.putInt3(0);         //la taille des donnees sera ecrite plus tard, quand elle sera connue
         unsigned int identTermePrec = 0;      //l'ident du terme precedent
         unsigned int positionPrec = 0;        //la position de localisation precedente    
-        for (list<struct Term>::const_iterator it1 = localIndex.begin(); it1 != localIndex.end(); it1++) {
+        for (list<struct Term>::const_iterator it1 = localDef.begin(); it1 != localDef.end(); it1++) {
             //<identTermeRelatif> <categorie> <nbreLocalisations> <localisations>
             m_file.putSIntLat((*it1).term - identTermePrec);
             identTermePrec = (*it1).term;

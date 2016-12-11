@@ -63,38 +63,31 @@ public:
 
     /**\brief Read a single byte from the file
     *\return byte value */
-    unsigned char readInt1()
-        throw(EofException, ReadFileException);
+    unsigned char readInt1();
 
     /**\brief Read a 3-bytes integer from the file
     *\return 4-bytes integer */
-    unsigned int readInt3()
-        throw(EofException, ReadFileException);
+    unsigned int readInt3();
 
     /**\brief Get an unsigned latecon integer from the file
     *\return 4-bytes unsigned integer */
-    unsigned int readUIntLat()
-        throw(EofException, ReadFileException, FormatFileException);
+    unsigned int readUIntLat();
         
     /**\brief Get a signed latecon integer from the file
     *\return 4-bytes signed integer */
-    signed int readSIntLat()
-        throw(EofException, ReadFileException, FormatFileException);
+    signed int readSIntLat();
         
     /**\brief Read a string from the file
     *\return read string */
-    std::string readString()
-        throw(EofException, ReadFileException);
+    std::string readString();
         
     /**\brief Read bytes from the file into an internal buffer
     *\param bytesNb size of internal buffer to receive read datas */
-    void readBuffer(const unsigned int bytesNb)
-        throw(EofException, ReadFileException, BadAllocException);
+    void readBuffer(const unsigned int bytesNb);
         
     /**\brief Reduce effective buffer data specifying amount of unread datas
     *\param bytesNb size of effective unread datas */
-    void setEndInBuffer(const unsigned int bytesNb)
-        throw(OutReadBufferException);
+    void setEndInBuffer(const unsigned int bytesNb);
 
     /**\brief Test if effective buffer was entirely read
     *\return true if effective buffer was entirely read */
@@ -102,48 +95,39 @@ public:
         
     /**\brief Get a 1-bytes integer from internal buffer
     *\return 4-bytes integer */
-    unsigned int getInt1()
-        throw(OutReadBufferException);
+    unsigned int getInt1();
 
     /**\brief Get a 2-bytes integer from internal buffer
     *\return 4-bytes integer */
-    unsigned int getInt2()
-        throw(OutReadBufferException);
+    unsigned int getInt2();
 
     /**\brief Get a 3-bytes integer from internal buffer
     *\return 4-bytes integer */
-    unsigned int getInt3()
-        throw(OutReadBufferException);
+    unsigned int getInt3();
 
     /**\brief Get a 4-bytes integer from internal buffer
     *\return 4-bytes integer */
-    unsigned int getInt4()
-        throw(OutReadBufferException);
+    unsigned int getInt4();
 
     /**\brief Get a 5-bytes integer from internal buffer
     *\return 8-bytes integer */
-    unsigned long int getInt5()
-        throw(OutReadBufferException);
+    unsigned long int getInt5();
         
     /**\brief Get an unsigned latecon integer from internal buffer
     *\return 4-bytes unsigned integer */
-    unsigned int getUIntLat()
-        throw(OutReadBufferException);
+    unsigned int getUIntLat();
         
     /**\brief Get a signed latecon integer from internal buffer
     *\return 4-bytes signed integer */
-    signed int getSIntLat()
-        throw(OutReadBufferException);
+    signed int getSIntLat();
 
     /**\brief Get a string from internal buffer
     *\return read string */
-    std::string getString()
-        throw(EofException, ReadFileException);
+    std::string getString();
         
     /**\brief Create an internal buffer for writing
     *\param bytesNb size of buffer */
-    void createBuffer(const unsigned int bytesNb)
-        throw(BadAllocException);
+    void createBuffer(const unsigned int bytesNb);
         
     /**\brief Return the effective size of buffer for writing
      * \return the effective actual size */
@@ -151,72 +135,59 @@ public:
 
     /**\brief Put padding into the internal buffer
     *\param bytesNb number of padding bytes to write */
-    void putPad(const unsigned int bytesNb)
-        throw(OutWriteBufferException);
+    void putPad(const unsigned int bytesNb);
 
     /**\brief Put one byte into the internal buffer
     *\param int1 byte value to write */
-    void putInt1(const unsigned char int1)
-        throw(OutWriteBufferException);
+    void putInt1(const unsigned char int1);
 
     /**\brief Put a 2-bytes integer into the internal buffer
     *\param int4 integer to write as 2-bytes*/
-    void putInt2(const unsigned int int4)
-        throw(OutWriteBufferException);
+    void putInt2(const unsigned int int4);
 
     /**\brief Put a 3-bytes integer into the internal buffer
     *\param int4 integer to write as 3-bytes*/
-    void putInt3(const unsigned int int4)
-        throw(OutWriteBufferException);
+    void putInt3(const unsigned int int4);
 
     /**\brief Put a 3-bytes integer into the internal buffer at the specified offset
     *\param int4 integer to write as 3-bytes
     *\param offset where to write the 3 bytes into the buffer*/
     void putInt3(const unsigned int int4,
-                 const unsigned int offset)
-        throw(OutWriteBufferException);
+                 const unsigned int offset);
 
     /**\brief Put a 4-bytes integer into the internal buffer
     *\param int4 integer to write as 4-bytes*/
-    void putInt4(const unsigned int int4)
-        throw(OutWriteBufferException);
+    void putInt4(const unsigned int int4);
 
     /**\brief Put a 5-bytes integer into the internal buffer
     *\param int8 long integer to write as 5-bytes*/
-    void putInt5(const unsigned long int int8)
-        throw(OutWriteBufferException);
+    void putInt5(const unsigned long int int8);
 
     /**\brief Put an unsigned latecon integer into the internal buffer
     *\param int4 unsigned integer to write as latecon integer*/
-    void putUIntLat(const unsigned int int4)
-        throw(OutWriteBufferException);
+    void putUIntLat(const unsigned int int4);
 
     /**\brief Put a signed latecon integer into the internal buffer
     *\param int4 signed integer to write as latecon integer*/
-    void putSIntLat(const signed int int4)
-        throw(OutWriteBufferException);
+    void putSIntLat(const signed int int4);
 
     /**\brief Put a string into the intermediate buffer
     *\param str string to write  */
-    void putString(const std::string &str)
-        throw(OutWriteBufferException);
+    void putString(const std::string &str);
 
     /**\brief Write intermediate buffer to the file */
-    void writeBuffer()
-        throw(WriteFileException);
+    void writeBuffer();
         
     /**\brief Write byte value to the file
     *\param value value to write
     *\param count number of bytes to write */
     void writeValue(const unsigned char value,
-                    const unsigned int count)
-        throw(WriteFileException, BadAllocException);
+                    const unsigned int count);
        
 private:
     //Read bytes from file into specified buffer
     void readBytes(unsigned char* bytes,
-                   const unsigned int bytesNb)
-        throw(EofException, ReadFileException);
+                   const unsigned int bytesNb);
 
     std::string m_fileName;
     FILE *m_file;

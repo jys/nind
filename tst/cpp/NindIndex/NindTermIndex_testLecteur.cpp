@@ -90,9 +90,9 @@ int main(int argc, char *argv[]) {
             if (timeControl < 3) id = nindLexicon.getWordId(componants);
             if (id == 0) throw IntegrityException(word);
             //recupere l'index inverse pour ce terme
-            list<NindTermIndex::TermCG> termIndex;
-            if (timeControl < 2) nindTermIndex.getTermIndex(id, termIndex);
-            for (list<NindTermIndex::TermCG>::const_iterator it1 = termIndex.begin(); it1 != termIndex.end(); it1++) {
+            list<NindTermIndex::TermCG> termDef;
+            if (timeControl < 2) nindTermIndex.getTermDef(id, termDef);
+            for (list<NindTermIndex::TermCG>::const_iterator it1 = termDef.begin(); it1 != termDef.end(); it1++) {
                 totalOccurences += (*it1).frequency;
             }
         }        

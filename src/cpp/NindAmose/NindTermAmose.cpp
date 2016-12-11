@@ -38,7 +38,7 @@ NindTermAmose::NindTermAmose(const string &fileName,
     m_termOccurrences({{SIMPLE_TERM, 0},{MULTI_TERM, 0},{NAMED_ENTITY, 0}})
 {
     //commence par restaurer les compteurs s'ils existent sur le fichier termindex
-    restoreInternalCounts();
+    synchronizeInternalCounts();
 }
 ////////////////////////////////////////////////////////////
 NindTermAmose::~NindTermAmose()
@@ -56,17 +56,17 @@ void NindTermAmose::addDocsToTerm(const unsigned int ident,
                                   const Identification &lexiconIdentification)
 {
     //rejcupehre la dejfinition de ce terme
-    list<TermCG> termIndex;
-    getTermIndex(ident, termIndex);
+    list<TermCG> termDef;
+    getTermDef(ident, termDef);
     //si le terme n'existe pas encore, la liste est crejeje avec un ejlejment
-    if (termIndex.size() == 0) {
+    if (termDef.size() == 0) {
         //increjmente le nombre de termes pour ce type
         m_uniqueTermCount[type] +=1;
         //creje un ejlejment vide
-        termIndex.push_back(TermCG());
+        termDef.push_back(TermCG());
     }
     //travaille sur l'unique ejlejment
-    TermCG &termcg = termIndex.front();
+    TermCG &termcg = termDef.front();
     list<Document> &documents = termcg.documents;
     //ajoute tous les documents
     for (list<Document>::const_iterator itdoc = newDocuments.begin(); itdoc != newDocuments.end(); itdoc++) {
@@ -94,7 +94,7 @@ void NindTermAmose::addDocsToTerm(const unsigned int ident,
         if (it2 == documents.end()) documents.push_back(document);
     }
     //ejcrit le rejsultat sur le fichier
-    setTermIndex(ident, termIndex, lexiconIdentification);  
+    setTermDef(ident, termDef, lexiconIdentification);  
     //ejcrit les novelles valeurs des compteurs
     saveInternalCounts(lexiconIdentification);
 }
@@ -110,12 +110,12 @@ void NindTermAmose::removeDocFromTerm(const unsigned int ident,
                                       const Identification &lexiconIdentification)
 {
     //rejcupehre la dejfinition de ce terme
-    list<TermCG> termIndex;
-    getTermIndex(ident, termIndex);
+    list<TermCG> termDef;
+    getTermDef(ident, termDef);
     //si le terme n'existe pas, on ne fait rien
-    if (termIndex.size() == 0) return;
+    if (termDef.size() == 0) return;
     //travaille sur l'unique ejlejment
-    TermCG &termcg = termIndex.front();
+    TermCG &termcg = termDef.front();
     list<Document> &documents = termcg.documents;
     //vire le document de la liste des documents
     for (list<Document>::iterator itdoc = documents.begin(); itdoc != documents.end(); itdoc++) {
@@ -131,26 +131,26 @@ void NindTermAmose::removeDocFromTerm(const unsigned int ident,
         if (documents.size() == 0) {
             //dejcrejmente le nombre de termes pour ce type
             m_uniqueTermCount[type] -=1;
-            termIndex.clear();        
+            termDef.clear();        
         }
         //terminej, ejcrit la nouvelle dejfinition
-        setTermIndex(ident, termIndex, lexiconIdentification);  
+        setTermDef(ident, termDef, lexiconIdentification);  
         return;
     }
     //si document pas trouvej, rien n'est fait
 }   
 ////////////////////////////////////////////////////////////
-//brief read specific counts from termindex file
-//synchronization between writer and readers is up to application */
-    void NindTermAmose::restoreInternalCounts()
+//brief read specific counts from termindex file. 
+//Synchronization between writer and readers is up to application */
+    void NindTermAmose::synchronizeInternalCounts()
 {
     //rejcupehre la dejfinition de ce terme
-    list<TermCG> termIndex;
-    getTermIndex(0, termIndex);
+    list<TermCG> termDef;
+    getTermDef(0, termDef);
     //si le terme n'existe pas, on ne fait rien
-    if (termIndex.size() == 0) return;
+    if (termDef.size() == 0) return;
     //travaille sur l'unique ejlejment
-    CountsStruct &countsStruct = termIndex.front();
+    CountsStruct &countsStruct = termDef.front();
     list<Counts> &counts = countsStruct.documents;
     //remplit les compteurs avec la structure
     list<Counts>::const_iterator itcount = counts.begin();
@@ -172,11 +172,11 @@ bool NindTermAmose::getDocList(const unsigned int termId,
 {
     //raz resultat
     documentIds.clear();
-    list<struct TermCG> termIndex;
-    const bool trouvej = getTermIndex(termId, termIndex);
+    list<struct TermCG> termDef;
+    const bool trouvej = getTermDef(termId, termDef);
     //si terme inconnu, retourne false
     if (!trouvej) return false;
-    const TermCG &termCG = termIndex.front();
+    const TermCG &termCG = termDef.front();
     const list<Document> &documents = termCG.documents;
     for (list<Document>::const_iterator it = documents.begin(); it != documents.end(); it++) { 
         documentIds.push_back((*it).ident);
@@ -189,11 +189,11 @@ bool NindTermAmose::getDocList(const unsigned int termId,
 //return number  of documents in index that contain the given term
 unsigned int NindTermAmose::getDocFreq(const unsigned int termId)
 {
-    list<struct TermCG> termIndex;
-    const bool trouvej = getTermIndex(termId, termIndex);
+    list<struct TermCG> termDef;
+    const bool trouvej = getTermDef(termId, termDef);
     //si terme inconnu, retourne 0
     if (!trouvej) return 0;
-    const TermCG &termCG = termIndex.front();
+    const TermCG &termCG = termDef.front();
     return termCG.documents.size();
 }
 ////////////////////////////////////////////////////////////
@@ -222,17 +222,17 @@ unsigned int NindTermAmose::getTermOccurrences(const AmoseTypes type)
     void NindTermAmose::saveInternalCounts(const Identification &lexiconIdentification)
 {
     //les compteurs sont sauvegardejs sur le fichier termindex comme des termes
-    list<CountsStruct> termIndex;
+    list<CountsStruct> termDef;
     //creje un ejlejment vide
-    termIndex.push_back(CountsStruct());
+    termDef.push_back(CountsStruct());
     //travaille sur l'unique ejlejment
-    CountsStruct &countsStruct = termIndex.front();
+    CountsStruct &countsStruct = termDef.front();
     list<Counts> &counts = countsStruct.documents;
     //remplit la structure avec les compteurs
     counts.push_back(Counts(m_uniqueTermCount[SIMPLE_TERM], m_termOccurrences[SIMPLE_TERM]));
     counts.push_back(Counts(m_uniqueTermCount[MULTI_TERM], m_termOccurrences[MULTI_TERM]));
     counts.push_back(Counts(m_uniqueTermCount[NAMED_ENTITY], m_termOccurrences[NAMED_ENTITY]));
     //ejcrit comme term 0
-    setTermIndex(0, termIndex, lexiconIdentification);
+    setTermDef(0, termDef, lexiconIdentification);
 }
 ////////////////////////////////////////////////////////////

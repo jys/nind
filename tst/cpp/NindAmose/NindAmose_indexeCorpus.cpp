@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
             char comma;
             sdumpLine >> noDoc;
             //la structure d'index locaux se fabrique pour un document complet
-            list<NindLocalIndex::Term> localIndex;
+            list<NindLocalIndex::Term> localDef;
             //bufferisation des termes pour un mesme document
             map<unsigned int, pair<AmoseTypes, unsigned int> > bufferTermesParDoc;
             //lit tous les termes et leur localisation/taille
@@ -139,14 +139,14 @@ int main(int argc, char *argv[]) {
                 //sinon increjmente le compteur
                 else (*itterm).second.second +=1;             
                 //augmente l'index local 
-                localIndex.push_back(NindLocalIndex::Term(id, NO_CG));
-                NindLocalIndex::Term &term = localIndex.back();
+                localDef.push_back(NindLocalIndex::Term(id, NO_CG));
+                NindLocalIndex::Term &term = localDef.back();
                 term.localisation.push_back(NindLocalIndex::Localisation(position, taille));               
             }
             //recupere l'identification du lexique
             nindLexicon.getIdentification(identification);
             //ecrit la definition sur le fichier des index locaux
-            nindLocalAmose.setLocalIndex(noDoc, localIndex, identification);
+            nindLocalAmose.setLocalDef(noDoc, localDef, identification);
             //bufferise termes + docs 
             for (map<unsigned int, pair<AmoseTypes, unsigned int> >::const_iterator itterm = bufferTermesParDoc.begin();
                  itterm != bufferTermesParDoc.end(); itterm++) {

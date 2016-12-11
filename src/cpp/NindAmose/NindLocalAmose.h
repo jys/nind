@@ -46,20 +46,9 @@ public:
                    const unsigned int indirectionBlocSize = 0);
 
     virtual ~NindLocalAmose();
+    
+    typedef std::vector<std::vector<std::list<Localisation> > > Positions;
 
-// /** 
-// * @brief Fill the data structure positions with position of occurrences 
-// *        of terms (from @ref termIds) in documents (from @ref documents) 
-// * @param termIds: vector of identifier of terms 
-// * @param documents: vector of documents where to search for position of terms. The vector must be sorted by content id. 
-// * @param positions: position of occurrences of terms in documents. One element foreach content  id in @ref documents. 
-// * Each element is a vector containing one element for each term in termIds.
-// * And each of these elements is the list of positions and lengths of the occurrences of this term in this document. 
-// */ 
-// virtual void getTermPositionIndocs(
-//     const std::vector<TermId>& termIds, 
-//     const std::vector<Lima::CONTENT_ID>& documents, 
-//     std::vector<std::vector<Lima::Common::Misc::PositionLengthList> >& positions ) const = 0; 
     /** \brief Fill the data structure positions with position of occurrences 
     * of terms (from @ref termIds) in documents (from @ref documents)
     * \param termIds vector of identifier of terms
@@ -67,25 +56,10 @@ public:
     * \param positions position of occurrences of terms in documents. One element foreach content  id in @ref documents. 
     * Each element is a vector containing one element for each term in termIds.
     * And each of these elements is the list of positions and lengths of the occurrences of this term in this document.  */
-    void getTermPositionIndocs(const std::vector<unsigned int>& termIds, 
-                               const std::vector<unsigned int>& documents, 
-                               std::vector<std::vector<std::list<Localisation> > >& positions ); 
+    void getTermPositionIndocs(const std::vector<unsigned int> &termIds, 
+                               const std::vector<unsigned int> &documents, 
+                               Positions &positions ); 
     
-// /** 
-// * @brief get the set of unique term in a document 
-// * @param cid: identifier of the document 
-// * @param type: type of terms (simple term, multi-term, named entity) 
-// * @return a pair of iterators pointing to 1) the first element of a set 
-// * of terms and to 2) past the end of this set. 
-// */ 
-// virtual std::pair<DocTermsIterator, DocTermsIterator> getDocTerms(
-//     Lima::CONTENT_ID cid, 
-//     Lima::Common::BagOfWords::BoWType type) const = 0;*/ 
-// 
-// La bufferisation de la liste des termes par la classe NindLocalAmose serait possible 
-// o si getDocTerms n'est pas réentrant (pas rappellej jusqu'ah ce que son rejsultat soit complehtement utilisej)
-// o s'il existait une méthode pour libérer l'espace utilisé pour la liste de termes     
-
     /** \brief get the set of unique term in a document 
     * \param docId identifier of the document
     * \param termType type of terms (0: simple term, 1: multi-term, 2: named entity) 
@@ -94,12 +68,6 @@ public:
                      const AmoseTypes termType,
                      std::set<std::string> &termsSet);
  
-// /** 
-// * @brief get length of a document 
-// * @return  an integer, the number of occurrences of terms 
-// */ 
-// virtual uint32_t getDocLength(
-//     Lima::CONTENT_ID cid) const = 0; 
     /** \brief get length of a document
     *\return  an integer, the number of occurrences of terms    */
     unsigned int getDocLength(const unsigned int docId);

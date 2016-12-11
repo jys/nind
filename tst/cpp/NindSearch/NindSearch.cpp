@@ -89,11 +89,11 @@ int main(int argc, char *argv[]) {
                 continue;
             }
             //recupere l'index inverse pour ce terme
-            list<NindTermIndex::TermCG> termIndex;
-            nindTermIndex.getTermIndex(ident, termIndex);
+            list<NindTermIndex::TermCG> termDef;
+            nindTermIndex.getTermDef(ident, termDef);
             //affiche les documents dans lesquels est indexe ce terme
-            for (list<NindTermIndex::TermCG>::const_iterator it1 = termIndex.begin(); 
-                 it1 != termIndex.end(); it1++) {
+            for (list<NindTermIndex::TermCG>::const_iterator it1 = termDef.begin(); 
+                 it1 != termDef.end(); it1++) {
                 const NindTermIndex::TermCG &termCG = (*it1);
                 cout<<BOLD<<"["<<ident<<"] "<<nindIndexTest.getCgStr(termCG.cg)<<OFF,
                 cout<<" "<<termCG.frequency<<" fois dans ";
@@ -109,11 +109,11 @@ int main(int argc, char *argv[]) {
             cin.getline(str, 80, '\n');
             const unsigned int noDoc = atoi(str);
             //recupere l'index local du doc             
-            list<NindLocalIndex::Term> localIndex;
-            nindLocalIndex.getLocalIndex(noDoc, localIndex);
-            cerr<<"localIndex.size()="<<localIndex.size()<<endl;
-            for (list<NindLocalIndex::Term>::const_iterator it3 = localIndex.begin();
-                    it3 != localIndex.end(); it3++) {
+            list<NindLocalIndex::Term> localDef;
+            nindLocalIndex.getLocalDef(noDoc, localDef);
+            cerr<<"localDef.size()="<<localDef.size()<<endl;
+            for (list<NindLocalIndex::Term>::const_iterator it3 = localDef.begin();
+                    it3 != localDef.end(); it3++) {
                 const NindLocalIndex::Term &term = (*it3);
                 if (term.term == ident) {
                     cout<<nindIndexTest.getCgStr(term.cg)<<"<";
