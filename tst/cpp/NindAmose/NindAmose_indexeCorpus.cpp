@@ -95,7 +95,10 @@ int main(int argc, char *argv[]) {
         //le fichier des index locaux
         NindLocalAmose nindLocalAmose(localindexFileName, true, identification, localindexEntryNb);
         //lit le fichier dump de documents
-        unsigned int docsNb, termsNb, nbMajTerm, nbMajLex = 0;
+        unsigned int docsNb =0;
+        unsigned int termsNb =0;
+        unsigned int nbMajTerm =0;
+        unsigned int nbMajLex = 0;
         string dumpLine;
         //buferisation des termes
         map<unsigned int, pair<AmoseTypes, list<NindTermIndex::Document> > > bufferTermes;
@@ -127,10 +130,12 @@ int main(int argc, char *argv[]) {
                 analyzeWord(word, lemma, type, entitejNommeje);
                 //si le lemme est vide, raf
                 if (lemma.empty()) continue;
-                termsNb++;
                 //recupere l'id du terme dans le lexique, l'ajoute eventuellement
                 const unsigned int id = nindLexicon.addWord(lemma, type, entitejNommeje);
                 nbMajLex++;
+                //si 0, le lemme n'ejtait pas valide
+                if (id == 0) continue;
+                termsNb++;
                 //bufferise le terme
                 //cherche s'il existe dejjah dans le buffer
                 map<unsigned int, pair<AmoseTypes, unsigned int> >::iterator itterm = bufferTermesParDoc.find(id);
@@ -187,7 +192,7 @@ int main(int argc, char *argv[]) {
         docsFile.close();
         end = clock();
         cout<<setw(8)<<setfill(' ')<<nbMajLex<<" accès / mises à jour sur "<<lexiconFileName<<endl;
-        cout<<setw(8)<<setfill(' ')<<termsNb<<" occurences de termes ajoutés sur "<<termindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<termsNb<<" occurrences de termes ajoutés sur "<<termindexFileName<<endl;
         cout<<setw(8)<<setfill(' ')<<nbMajTerm<<" mises à jour sur "<<termindexFileName<<endl;
         cout<<setw(8)<<setfill(' ')<<docsNb<<" mises à jour sur "<<localindexFileName<<endl;
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;

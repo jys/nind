@@ -25,3 +25,15 @@ target_link_libraries(NindAmose_effaceDocument NindIndex NindBasics NindAmose)
 install(TARGETS NindAmose_effaceDocument DESTINATION bin)
 
 ########### next target ###############
+
+SET(NindAmose_testLecteur_SRCS
+   NindAmose_testLecteur.cpp
+)
+
+add_executable(NindAmose_testLecteur ${NindAmose_testLecteur_SRCS})
+
+target_link_libraries(NindAmose_testLecteur NindIndex NindBasics NindAmose)
+
+install(TARGETS NindAmose_testLecteur DESTINATION bin)
+
+########### next target ###############
