@@ -26,8 +26,7 @@
 #include "NindExceptions.h"
 #include <string>
 #include <list>
-#include <map>
-#include <set>
+#include <vector>
 ////////////////////////////////////////////////////////////
 namespace latecon {
     namespace nindex {
@@ -49,7 +48,7 @@ public:
     
     /**\brief Add doc references to the specified term
     *\param ident ident of term
-    *\param type type of term (0: simple term, 1: multi-term, 2: named entity) 
+    *\param type type of term (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY)
     *\param newDocuments list of documents ids + frequencies where term is in 
     *\param lexiconIdentification unique identification of lexicon */
     void addDocsToTerm(const unsigned int ident,
@@ -59,7 +58,7 @@ public:
     
     /**\brief remove doc reference from the specified term
     *\param ident ident of term
-    *\param type type of term (0: simple term, 1: multi-term, 2: named entity) 
+    *\param type type of term (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY)
     *\param documentId id of document to remove
     *\param lexiconIdentification unique identification of lexicon */
     void removeDocFromTerm(const unsigned int ident,
@@ -86,13 +85,13 @@ public:
     unsigned int getDocFreq(const unsigned int termId);
     
     /** \brief number of unique terms  
-    *\param type: type of the terms (0: simple term, 1: multi-term, 2: named entity) 
+    *\param type: type of the terms (ALL, SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY)
     *\return number of unique terms of specified type into the base */
     unsigned int getUniqueTermCount(const AmoseTypes type);
     
     
     /** \brief number of terms occurrences 
-    *\param type: type of the terms (0: simple term, 1: multi-term, 2: named entity) 
+    *\param type: type of the terms (ALL, SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY)
     *\return number  of terms occurrences of specified type into the base */
     unsigned int getTermOccurrences(const AmoseTypes type);
     
@@ -102,8 +101,8 @@ private:
     *\param lexiconIdentification unique identification of lexicon */
     void saveInternalCounts(const Identification &lexiconIdentification);
     
-    std::map<unsigned int, unsigned int> m_uniqueTermCount;
-    std::map<unsigned int, unsigned int> m_termOccurrences;
+    std::vector<unsigned int> m_uniqueTermCount;
+    std::vector<unsigned int> m_termOccurrences;
     
     //pour utiliser la structure commune pour sauvegarder les compteurs sur le fichier termindex
     typedef Document Counts;

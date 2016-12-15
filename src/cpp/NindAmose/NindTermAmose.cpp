@@ -35,8 +35,8 @@ NindTermAmose::NindTermAmose(const string &fileName,
                   isTermIndexWriter, 
                   lexiconIdentification,
                   indirectionBlocSize),
-    m_uniqueTermCount({{SIMPLE_TERM, 0},{MULTI_TERM, 0},{NAMED_ENTITY, 0}}),
-    m_termOccurrences({{SIMPLE_TERM, 0},{MULTI_TERM, 0},{NAMED_ENTITY, 0}})
+    m_uniqueTermCount({0, 0, 0, 0}),
+    m_termOccurrences({0, 0, 0, 0})
 {
     //commence par restaurer les compteurs s'ils existent sur le fichier termindex
     synchronizeInternalCounts();
@@ -48,7 +48,7 @@ NindTermAmose::~NindTermAmose()
 ////////////////////////////////////////////////////////////
 //brief Add doc references to the specified term
 //param ident ident of term
-//param type type of term (0: simple term, 1: multi-term, 2: named entity) 
+//param type type of term (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY) 
 //param newDocuments list of documents ids + frequencies where term is in 
 //param lexiconIdentification unique identification of lexicon */
 void NindTermAmose::addDocsToTerm(const unsigned int ident,
@@ -63,6 +63,7 @@ void NindTermAmose::addDocsToTerm(const unsigned int ident,
     if (termDef.size() == 0) {
         //increjmente le nombre de termes pour ce type
         m_uniqueTermCount[type] +=1;
+        m_uniqueTermCount[ALL] +=1;
         //creje un ejlejment vide
         termDef.push_back(TermCG());
     }
@@ -74,6 +75,7 @@ void NindTermAmose::addDocsToTerm(const unsigned int ident,
         const Document &document = (*itdoc);
         //increjmente les occurrences pour ce type
         m_termOccurrences[type] += document.frequency;
+        m_termOccurrences[ALL] += document.frequency;
         //increjmente la frejquence globale de ce terme
         termcg.frequency += document.frequency;
         //trouve la place dans la liste ordonnee
@@ -102,7 +104,7 @@ void NindTermAmose::addDocsToTerm(const unsigned int ident,
 ////////////////////////////////////////////////////////////
 //brief remove doc reference from the specified term
 //param ident ident of term
-//param type type of term (0: simple term, 1: multi-term, 2: named entity) 
+//param type type of term (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY) 
 //param documentId id of document to remove
 //param lexiconIdentification unique identification of lexicon */
 void NindTermAmose::removeDocFromTerm(const unsigned int ident,
@@ -124,6 +126,7 @@ void NindTermAmose::removeDocFromTerm(const unsigned int ident,
         if (document.ident != documentId) continue;
         //dejcrejmente les occurrences pour ce type
         m_termOccurrences[type] -= document.frequency;
+        m_termOccurrences[ALL] -= document.frequency;
         //dejcrejmente la frejquence globale de ce terme
         termcg.frequency -= document.frequency;
         //enlehve le doc de la liste
@@ -132,6 +135,7 @@ void NindTermAmose::removeDocFromTerm(const unsigned int ident,
         if (itdoc == documents.end()) {
             //dejcrejmente le nombre de termes pour ce type
             m_uniqueTermCount[type] -=1;
+            m_uniqueTermCount[ALL] -=1;
             termDef.clear();        
         }
         //terminej, ejcrit la nouvelle dejfinition
@@ -157,6 +161,8 @@ void NindTermAmose::removeDocFromTerm(const unsigned int ident,
     list<Counts> &counts = countsStruct.documents;
     //remplit les compteurs avec la structure
     list<Counts>::const_iterator itcount = counts.begin();
+    m_uniqueTermCount[ALL] = (*itcount).ident;
+    m_termOccurrences[ALL] = (*itcount++).frequency;
     m_uniqueTermCount[SIMPLE_TERM] = (*itcount).ident;
     m_termOccurrences[SIMPLE_TERM] = (*itcount++).frequency;
     m_uniqueTermCount[MULTI_TERM] = (*itcount).ident;
@@ -201,23 +207,19 @@ unsigned int NindTermAmose::getDocFreq(const unsigned int termId)
 }
 ////////////////////////////////////////////////////////////
 //brief number of unique terms  
-//param type: type of the terms (0: simple term, 1: multi-term, 2: named entity) 
+//param type: type of the terms (ALL, SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY) 
 //return number of unique terms of specified type into the base */
 unsigned int NindTermAmose::getUniqueTermCount(const AmoseTypes type)
 {
-    map<unsigned int, unsigned int>::const_iterator itcount = m_uniqueTermCount.find(type);
-    if (itcount == m_uniqueTermCount.end()) return 0;
-    return ((*itcount).second); 
+    return m_uniqueTermCount[type];
 }
 ////////////////////////////////////////////////////////////
 //brief number of terms occurrences 
-//param type: type of the terms (0: simple term, 1: multi-term, 2: named entity) 
+//param type: type of the terms (ALL, SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY) 
 //return number  of terms of specified type into the base */
 unsigned int NindTermAmose::getTermOccurrences(const AmoseTypes type)
 {
-    map<unsigned int, unsigned int>::const_iterator itcount = m_termOccurrences.find(type);
-    if (itcount == m_termOccurrences.end()) return 0;
-    return ((*itcount).second); 
+    return m_termOccurrences[type];
 }
 ////////////////////////////////////////////////////////////
 //brief write specific counts on termindex file
@@ -232,6 +234,7 @@ unsigned int NindTermAmose::getTermOccurrences(const AmoseTypes type)
     CountsStruct &countsStruct = termDef.front();
     list<Counts> &counts = countsStruct.documents;
     //remplit la structure avec les compteurs
+    counts.push_back(Counts(m_uniqueTermCount[ALL], m_termOccurrences[ALL]));
     counts.push_back(Counts(m_uniqueTermCount[SIMPLE_TERM], m_termOccurrences[SIMPLE_TERM]));
     counts.push_back(Counts(m_uniqueTermCount[MULTI_TERM], m_termOccurrences[MULTI_TERM]));
     counts.push_back(Counts(m_uniqueTermCount[NAMED_ENTITY], m_termOccurrences[NAMED_ENTITY]));

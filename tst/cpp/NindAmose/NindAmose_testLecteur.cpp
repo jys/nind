@@ -121,7 +121,6 @@ int main(int argc, char *argv[]) {
                 const unsigned int id = nindLexicon.getWordId(lemma, type, entitejNommeje);
                 if (id == 0) {
                     cerr<<word<<" INCONNU dans "<<lexiconindexFileName<<endl;
-                    localDefIt++;
                     continue;
                 }
                 //rejcupehre la liste des documents ouh est indexej ce terme
@@ -130,7 +129,6 @@ int main(int argc, char *argv[]) {
                 const bool trouvej = nindTermIndex.getDocList(id, documentIds);
                 if (!trouvej) {
                     cerr<<word<<" INCONNU dans "<<termindexFileName<<endl;
-                    localDefIt++;
                     continue;
                 }
                 //le doc doit estre dans la liste
@@ -141,7 +139,6 @@ int main(int argc, char *argv[]) {
                 }
                 if (itdoc == documentIds.end()) {
                     cerr<<word<<" INCONNU dans document n° "<<noDoc<<endl;
-                    localDefIt++;
                     continue;
                 }
                 //vejrifie la validitej de la position
@@ -150,6 +147,7 @@ int main(int argc, char *argv[]) {
                 const NindLocalIndex::Localisation &localisation =localisations.front();
                 if (term.term != id || localisation.position != position || localisation.length != taille) { 
                     cerr<<word<<" ("<<position<<", "<<taille<<") INCONNU dans document n° "<<noDoc<<endl;
+                    throw FormatFileException(docsFileName);
                     continue;
                 }                
             }

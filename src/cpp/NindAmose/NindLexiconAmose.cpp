@@ -51,13 +51,14 @@ NindLexiconAmose::~NindLexiconAmose()
 //brief add specified word in lexicon if it doesn't still exist in,
 //In all cases, word ident is returned.
 //param lemma word to be lexiced. Compound word is structured with "_"
-//param type type of the words (0: simple word, 1: multi-word, 2: named entity) 
+//param type type of the words (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY) 
 //param namedEntity type of named entity, eventually
 //return ident of word */
 unsigned int NindLexiconAmose::addWord(const string &lemma,
                                        const AmoseTypes type,
                                        const std::string &namedEntity)
 {
+    if (type == ALL) return 0;
     list<string> simpleWords;
     splitWord(lemma, type, namedEntity, simpleWords);
     return NindLexiconIndex::addWord(simpleWords);
@@ -67,13 +68,14 @@ unsigned int NindLexiconAmose::addWord(const string &lemma,
 //if word exists in lexicon, its ident is returned
 //else, return 0 (0 is not a valid ident !)
 //param lemma word to be searched. Compound word is structured with "_"
-//param type type of the words (0: simple word, 1: multi-word, 2: named entity) 
+//param type type of the words (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY) 
 //param namedEntity type of named entity, eventually
 //return ident of word */
 unsigned int NindLexiconAmose::getWordId(const string &lemma,
                                          const AmoseTypes type,
                                          const string &namedEntity)
 {
+    if (type == ALL) return 0;
     list<string> simpleWords;
     splitWord(lemma, type, namedEntity, simpleWords);
     return NindLexiconIndex::getWordId(simpleWords);
@@ -81,7 +83,7 @@ unsigned int NindLexiconAmose::getWordId(const string &lemma,
 ////////////////////////////////////////////////////////////
 //brief get word components from a specified word id 
 //param lemma word corresponding to word id. Compound word is structured with "_"
-//param type type of the words (0: simple word, 1: multi-word, 2: named entity) 
+//param type type of the words (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY) 
 //param namedEntity type of named entity, eventually
 //return true if word exists, false otherwise */
 bool NindLexiconAmose::getWord(const unsigned int wordId,
