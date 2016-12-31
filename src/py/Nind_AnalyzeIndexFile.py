@@ -91,8 +91,6 @@ def main():
                 if offsetDefinition != 0: 
                     indirectionsUtilisees +=1
                     nonVidesList.append((offsetDefinition, longueurDefinition))
-                #else:
-                    #if blocIndirection < 7: print '%d : %d'%(blocIndirection, i)
             print "%08X: Bloc indirections n° %d : %d / %d indirections"%(addrIndirection, blocIndirection, indirectionsUtilisees, nombreIndirection)
             if indirectionSuivante == 0: break
             termindexFile.seek(indirectionSuivante, 0)
@@ -120,6 +118,7 @@ def main():
             longueurVide = addresse - addressePrec - longueurPrec
             if longueurVide < 0: raise Exception('chevauchement %08X-%d et %08X-%d'%(addressePrec, longueurPrec, addresse, longueur))
             if longueurVide > 0:
+                #print 'addresse=%d, addressePrec=%d, longueurPrec=%d'%(addresse, addressePrec, longueurPrec)
                 nbreVides +=1
                 tailleVides += longueurVide
                 if longueurVide not in typesVides: typesVides[longueurVide] = 0
@@ -131,6 +130,7 @@ def main():
     #affiche(typesNonVides)
     print "%d zones vides de taille totale %d octets"%(nbreVides, tailleVides)  
     #affiche(typesVides)
+    #print typesVides
     print
     
     print "3) vérifie les zones d'index et les zones d'extension"

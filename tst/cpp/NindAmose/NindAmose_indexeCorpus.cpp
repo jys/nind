@@ -35,8 +35,8 @@ static void displayHelp(char* arg0) {
     cout<<"Programme d'indexation d'un corpus déjà syntaxiquement analysé par Amose."<<endl;
     cout<<"Le corpus est un fichier texte avec une ligne par document :"<<endl;
     cout<<"<n° document>  { <terme> <localisation>,<taille> }"<<endl;
-    cout<<"Le lexique et les fichiers inverse et d'index locaux sont créés."<<endl;
-    cout<<"Les fichiers lexique, inverse et d'index locaux doivent être absents."<<endl;
+    cout<<"Si aucun fichier n'existe, les fichiers sont créés."<<endl;
+    cout<<"Si les fichiers existent et sont cohérents, ils sont mis à jour"<<endl;
     cout<<"Le nombre d'entrées des blocs d'indirection est spécifiée pour le lexique,"<<endl;
     cout<<"le fichier inversé et le fichier des index locaux."<<endl;
 
@@ -78,12 +78,12 @@ int main(int argc, char *argv[]) {
         clock_t start, end;
         double cpuTimeUsed;
         /////////////////////////////////////
-        if (oldFiles(list<string>({ lexiconFileName, retrolexiconFileName, termindexFileName, localindexFileName }))) {
-            cout<<"Des anciens fichiers lexiques existent !"<<endl;
-            cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".*index"<<endl;
-            return false;
-        }
-        /////////////////////////////////////
+//         if (oldFiles(list<string>({ lexiconFileName, retrolexiconFileName, termindexFileName, localindexFileName }))) {
+//             cout<<"Des anciens fichiers lexiques existent !"<<endl;
+//             cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".*index"<<endl;
+//             return false;
+//         }
+//         /////////////////////////////////////
         cout<<"Forme le lexique, le fichier inversé et le fichier des index locaux avec "<<docsFileName<<endl;
         start = clock();
         //le lexique ecrivain avec retro lexique (meme taille d'indirection que le fichier inverse)
@@ -181,6 +181,7 @@ int main(int argc, char *argv[]) {
             //raz buffer
             bufferTermes.clear();
         }
+        //ejcrit le buffer sur disque
         for (map<unsigned int, pair<AmoseTypes, list<NindTermIndex::Document> > >::const_iterator itterm2 = bufferTermes.begin();
                 itterm2 != bufferTermes.end(); itterm2++) {
             const unsigned int &termid = (*itterm2).first;
@@ -189,7 +190,6 @@ int main(int argc, char *argv[]) {
             nindTermAmose.addDocsToTerm(termid, type, documents, identification);                   
             nbMajTerm++;
         }
-        //ejcrit le buffer sur disque
         docsFile.close();
         end = clock();
         cout<<setw(8)<<setfill(' ')<<nbMajLex<<" accès / mises à jour sur "<<lexiconFileName<<endl;

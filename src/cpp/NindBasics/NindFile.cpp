@@ -511,11 +511,12 @@ void NindFile::writeBuffer()
 {
     const unsigned int size = m_wPtr - m_wbuffer;
     const unsigned int writeSize =  fwrite(m_wbuffer, 1, size, m_file);
+    fflush(m_file);
     if (writeSize != size) throw WriteFileException(m_fileName);
     m_wPtr = m_wbuffer;
     //memorise la taille du fichier
-    fseek(m_file, 0, SEEK_END);
-    m_fileSize = ftell(m_file);
+    const long int current = ftell(m_file);
+    if (current > m_fileSize) m_fileSize = current;
 }
 ////////////////////////////////////////////////////////////
 //brief Write byte value to the file
@@ -528,11 +529,12 @@ void NindFile::writeValue(const unsigned char value,
     if (buffer == 0) throw BadAllocException("in write value buffer" + m_fileName);
     for (unsigned int it = 0; it != count; it++) buffer[it] = value;
     const unsigned int writeSize =  fwrite(buffer, 1, count, m_file);
+    fflush(m_file);
     delete [] buffer;
     if (writeSize != count) throw WriteFileException(m_fileName);
     //memorise la taille du fichier
-    fseek(m_file, 0, SEEK_END);
-    m_fileSize = ftell(m_file);    
+    const long int current = ftell(m_file);
+    if (current > m_fileSize) m_fileSize = current;
 }
 ////////////////////////////////////////////////////////////
 //Read bytes from file into specified buffer

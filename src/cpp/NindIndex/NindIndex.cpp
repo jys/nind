@@ -224,7 +224,6 @@ void NindIndex::setDefinition(const unsigned int ident,
         m_file.putInt4(lexiconIdentification.lexiconTime);
         m_file.putInt4(lexiconIdentification.specificFileIdent);
         m_file.writeBuffer();                       //ecriture effective sur le fichier  
-        m_file.flush();
     }
 }
 ////////////////////////////////////////////////////////////
@@ -333,8 +332,8 @@ unsigned long int NindIndex::getIndirection(const unsigned int ident)
 void NindIndex::addIndirection(const Identification &lexiconIdentification)
 {
     //le fichier est deja positionne au bon endroit
-    //l'identification (12)  est plus volumineuse que l'indirection (9)
-    m_file.createBuffer(TAILLE_IDENTIFICATION);
+    m_file.createBuffer(TETE_INDIRECTION);
+    //<flagIndirection=47> <addrBlocSuivant> <nombreIndirection>
     m_file.putInt1(FLAG_INDIRECTION);
     m_file.putInt5(0);
     m_file.putInt3(m_indirectionBlocSize);
@@ -342,7 +341,7 @@ void NindIndex::addIndirection(const Identification &lexiconIdentification)
     //remplit la zone d'indirection avec des 0
     m_file.writeValue(0, m_indirectionBlocSize*TAILLE_INDIRECTION);
     //lui colle l'identification du lexique a suivre
-    //utilise le meme buffer
+    m_file.createBuffer(TAILLE_IDENTIFICATION);
     //<flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
     m_file.putInt1(FLAG_IDENTIFICATION);
     m_file.putInt3(lexiconIdentification.lexiconWordsNb);
@@ -415,10 +414,7 @@ void NindIndex::mapEmptySpaces()
     for (list<pair<unsigned long int, unsigned int> >::const_iterator it = nonVidesList.begin();
         it != nonVidesList.end(); it++) {
         const unsigned int longueurVide = (*it).first - addressePrec - longueurPrec;
-        if (longueurVide < 0) 
-        {
-            throw InvalidFileException("NindIndex : " + m_fileName);
-        }
+        if (longueurVide < 0) throw InvalidFileException("NindIndex : " + m_fileName);
         if (longueurVide > 0) {
             const pair<unsigned long int, unsigned int> emptyArea(addressePrec + longueurPrec, longueurVide);
             m_emptyAreas.push_back(emptyArea); 

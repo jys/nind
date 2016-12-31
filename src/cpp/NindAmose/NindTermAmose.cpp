@@ -73,17 +73,15 @@ void NindTermAmose::addDocsToTerm(const unsigned int ident,
     //ajoute tous les documents
     for (list<Document>::const_iterator itdoc = newDocuments.begin(); itdoc != newDocuments.end(); itdoc++) {
         const Document &document = (*itdoc);
-        //increjmente les occurrences pour ce type
-        m_termOccurrences[type] += document.frequency;
-        m_termOccurrences[ALL] += document.frequency;
-        //increjmente la frejquence globale de ce terme
-        termcg.frequency += document.frequency;
+        //la frejquence
+        unsigned int frequency = document.frequency;
         //trouve la place dans la liste ordonnee
         list<NindTermIndex::Document>::iterator it2 = documents.begin(); 
         while (it2 != documents.end()) {
-            //deja dans la liste, incremente la frequence
+            //deja dans la liste, met ah jour la frejquence
             if ((*it2).ident == document.ident) {
-                (*it2).frequency += document.frequency;
+                frequency -= (*it2).frequency;
+                (*it2).frequency = document.frequency;
                 break;
             }
             //insere a l'interieur de la liste
@@ -95,6 +93,11 @@ void NindTermAmose::addDocsToTerm(const unsigned int ident,
         }
         //si fin de liste, insere en fin
         if (it2 == documents.end()) documents.push_back(document);
+        //increjmente les occurrences pour ce type
+        m_termOccurrences[type] += frequency;
+        m_termOccurrences[ALL] += frequency;
+        //increjmente la frejquence globale de ce terme
+        termcg.frequency += frequency;
     }
     //ejcrit le rejsultat sur le fichier
     setTermDef(ident, termDef, lexiconIdentification);  
