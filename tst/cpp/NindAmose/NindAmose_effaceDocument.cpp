@@ -50,8 +50,7 @@ int main(int argc, char *argv[]) {
         const string localindexFileName = incompleteFileName + ".localindex";
         //le lexique pour son identification
         NindLexiconAmose nindLexicon(lexiconFileName);
-        NindIndex::Identification identification;
-        nindLexicon.getIdentification(identification);
+        const NindIndex::Identification identification = nindLexicon.getIdentification();
         //le fichier inverse ecrivain
         NindTermAmose nindTermAmose(termindexFileName, true, identification);
         //le fichier des index locaux

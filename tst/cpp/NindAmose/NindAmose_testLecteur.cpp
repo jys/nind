@@ -71,8 +71,7 @@ int main(int argc, char *argv[]) {
         /////////////////////////////////////
         //le lexique lecteur
         NindLexiconAmose nindLexicon(lexiconindexFileName, false);
-        NindIndex::Identification identification;
-        nindLexicon.getIdentification(identification);
+        const NindIndex::Identification identification = nindLexicon.getIdentification();
         //affiche les identifiants du lexique
         cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;
         cout<<" ("<<date(identification.lexiconTime)<<")"<<endl;

@@ -68,8 +68,7 @@ int main(int argc, char *argv[]) {
         const string localindexFileName = incompleteFileName + ".localindex";
         //le lexique lecteur
         NindLexiconAmose nindLexicon(lexiconFileName, false);
-        NindIndex::Identification identification;
-        nindLexicon.getIdentification(identification);
+        const NindIndex::Identification identification = nindLexicon.getIdentification();
         //le fichier inverse lecteur
         NindTermAmose nindTermAmose(termindexFileName, false, identification);
         //le fichier des index locaux

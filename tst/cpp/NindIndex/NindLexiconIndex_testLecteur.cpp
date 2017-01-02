@@ -60,8 +60,7 @@ int main(int argc, char *argv[]) {
         //la classe d'utilitaires
         NindIndexTest nindIndexTest;
         //affiche les identifiants du lexique
-        NindIndex::Identification identification;
-        nindLexicon.getIdentification(identification);
+        const NindIndex::Identification identification = nindLexicon.getIdentification();
         cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;
         cout<<" ("<<NindDate::date(identification.lexiconTime)<<")"<<endl;
         /////////////////////////////////////

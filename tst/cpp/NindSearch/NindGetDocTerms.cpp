@@ -64,8 +64,7 @@ int main(int argc, char *argv[]) {
         const string localindexFileName = incompleteFileName + ".localindex";
         //le lexique lecteur
         NindLexiconAmose nindLexicon(lexiconFileName, false);
-        NindIndex::Identification identification;
-        nindLexicon.getIdentification(identification);
+        const NindIndex::Identification identification = nindLexicon.getIdentification();
         //le fichier des index locaux
         NindLocalAmose nindLocalAmose(localindexFileName, false, identification);
         cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;

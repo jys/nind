@@ -62,8 +62,7 @@ int main(int argc, char *argv[]) {
         const string localindexFileName = lexiconFileName.substr(0, pos) + ".localindex";
         //le lexique lecteur
         NindLexiconIndex nindLexicon(lexiconFileName, false);
-        NindIndex::Identification identification;
-        nindLexicon.getIdentification(identification);
+        const NindIndex::Identification identification = nindLexicon.getIdentification();
         //le fichier inverse lecteur
         NindTermIndex nindTermIndex(termindexFileName, false, identification);
         //le fichier des index locaux

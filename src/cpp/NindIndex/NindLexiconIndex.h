@@ -66,8 +66,8 @@ public:
     unsigned int getWordId(const std::list<std::string> &components);
 
     /**\brief get identification of lexicon
-     * \param identification where unique identification of lexicon is returned */
-    void getIdentification(Identification &identification);
+     * \return unique identification of lexicon */
+    Identification getIdentification();
     
     /**\brief get word components from the specified ident
     * if retro lexicon is not implanted, an exception is raised

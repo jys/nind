@@ -45,11 +45,12 @@ static void displayHelp(char* arg0) {
     cout<<"ex :   "<<arg0<<" sample_fre.xml.mult.xml.txt 100003 100000 5000"<<endl;
 }
 ////////////////////////////////////////////////////////////
-static bool oldFiles(const list<string> filesNames);
 static void analyzeWord(const string &word, 
                         string &lemma, 
                         AmoseTypes &type, 
                         string &entitejNommeje);
+static string date(const unsigned int identification);
+static bool fileSystemIsCoherent(const list<string> &fileNames);
 ////////////////////////////////////////////////////////////
 #define NO_CG 0
 #define TERMS_BUFFER_SIZE 200000
@@ -74,22 +75,23 @@ int main(int argc, char *argv[]) {
         const string retrolexiconFileName = incompleteFileName + ".retrolexiconindex";
         const string termindexFileName = incompleteFileName + ".termindex";
         const string localindexFileName = incompleteFileName + ".localindex";
+        //vejrifie que le systehme de fichiers est cohejrent
+        if (!fileSystemIsCoherent(list<string>({ lexiconFileName, retrolexiconFileName, termindexFileName, localindexFileName }))) {
+            cout<<"Des anciens fichiers existent et sont incohérents!"<<endl;
+            cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".*index"<<endl;
+            return false;
+        }
         //pour calculer le temps consomme
         clock_t start, end;
         double cpuTimeUsed;
         /////////////////////////////////////
-//         if (oldFiles(list<string>({ lexiconFileName, retrolexiconFileName, termindexFileName, localindexFileName }))) {
-//             cout<<"Des anciens fichiers lexiques existent !"<<endl;
-//             cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".*index"<<endl;
-//             return false;
-//         }
-//         /////////////////////////////////////
         cout<<"Forme le lexique, le fichier inversé et le fichier des index locaux avec "<<docsFileName<<endl;
         start = clock();
         //le lexique ecrivain avec retro lexique (meme taille d'indirection que le fichier inverse)
         NindLexiconAmose nindLexicon(lexiconFileName, true, lexiconEntryNb, termindexEntryNb);
-        NindIndex::Identification identification;
-        nindLexicon.getIdentification(identification);
+        NindIndex::Identification identification = nindLexicon.getIdentification();
+        cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;
+        cout<<" ("<<date(identification.lexiconTime)<<")"<<endl;
         //le fichier inverse ecrivain
         NindTermAmose nindTermAmose(termindexFileName, true, identification, termindexEntryNb);
         //le fichier des index locaux
@@ -150,7 +152,7 @@ int main(int argc, char *argv[]) {
                 term.localisation.push_back(NindLocalIndex::Localisation(position, taille));               
             }
             //recupere l'identification du lexique
-            nindLexicon.getIdentification(identification);
+            identification = nindLexicon.getIdentification();
             //ecrit la definition sur le fichier des index locaux
             nindLocalAmose.setLocalDef(noDoc, localDef, identification);
             //bufferise termes + docs 
@@ -214,18 +216,6 @@ int main(int argc, char *argv[]) {
     catch (...) {cerr<<"EXCEPTION unknown"<< endl; throw; return false; }
 }
 ////////////////////////////////////////////////////////////
-static bool oldFiles(const list<string> filesNames) 
-{
-    for (list<string>::const_iterator itname = filesNames.begin(); itname != filesNames.end(); itname++) {
-        FILE *file =  fopen((*itname).c_str(), "rb");
-        if (file) {
-            fclose(file);
-            return true;
-        }
-    }
-    return false;
-}
-////////////////////////////////////////////////////////////
 static void analyzeWord(const string &word, 
                         string &lemma, 
                         AmoseTypes &type, 
@@ -248,3 +238,29 @@ static void analyzeWord(const string &word,
     }
 }
 ////////////////////////////////////////////////////////////
+static string date(const unsigned int identification)
+{
+    const time_t time = (time_t) identification;
+    struct tm * timeinfo = localtime (&time);
+    char buffer [80];
+    strftime (buffer,80,"%Y-%m-%d %X",timeinfo);
+    return string(buffer);
+}
+////////////////////////////////////////////////////////////
+static bool fileSystemIsCoherent(const list<string> &fileNames)
+{
+    bool allFiles = true;
+    bool noneFile = true;
+    for (list<string>::const_iterator itname = fileNames.begin(); itname != fileNames.end(); itname++) {
+        FILE *file =  fopen((*itname).c_str(), "rb");
+        if (file) {
+            fclose(file);
+            noneFile = false;
+        }
+        else allFiles = false;
+    }
+    //les fichiers doivent tous exister ou tous ne pas exister
+    return (allFiles || noneFile);
+}
+////////////////////////////////////////////////////////////
+

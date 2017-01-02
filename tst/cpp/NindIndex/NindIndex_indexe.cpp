@@ -77,7 +77,7 @@ void NindIndex_indexe::newDoc(const unsigned int docIdent)
     if (m_docIdent != 0) {
         //recupere l'identification du lexique
         NindIndex::Identification identification;
-        if (m_timeControl < 3) m_nindLexicon.getIdentification(identification);
+        if (m_timeControl < 3) identification = m_nindLexicon.getIdentification();
         //ecrit la definition sur le fichier des index locaux
         if (m_timeControl < 1) m_nindLocalindex.setLocalDef(m_docIdent, m_localindex, identification);
         //vide le lexique local
@@ -124,7 +124,7 @@ void NindIndex_indexe::flush()
 {
     //recupere l'identification du lexique
     NindIndex::Identification identification;
-    if (m_timeControl < 3) m_nindLexicon.getIdentification(identification);
+    if (m_timeControl < 3) identification = m_nindLexicon.getIdentification();
     for (map<unsigned int, list<pair<unsigned int, unsigned int> > >::const_iterator it2 = m_termBuffer.begin();
          it2 != m_termBuffer.end(); it2++) {
         const unsigned int id2 = (*it2).first;

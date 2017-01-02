@@ -86,8 +86,8 @@ NindIndex::NindIndex(const std::string &fileName,
                 mapEmptySpaces();
             }
             else {
-                //si le fichier n'existe pas, le cree vide en ecriture + lecture
-                //la taille du bloc d'indirection doit etre specifiee differente de 0
+                //si le fichier n'existe pas, le creje vide en ejcriture + lecture
+                //la taille du bloc d'indirection doit estre spejcifieje diffejrente de 0
                 if (m_indirectionBlocSize == 0) 
                 {
                   string errorString = 

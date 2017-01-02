@@ -87,8 +87,7 @@ int main(int argc, char *argv[]) {
         
         cout<<"2) forme le lexique pour de vrai dans "<<lexiconFileName<<endl;
         //affiche les identifiants du lexique
-        NindIndex::Identification identification;
-        nindLexicon.getIdentification(identification);
+        NindIndex::Identification identification = nindLexicon.getIdentification();
         cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;
         cout<<" ("<<NindDate::date(identification.lexiconTime)<<")"<<endl;
         
@@ -101,7 +100,7 @@ int main(int argc, char *argv[]) {
         cout<<cpuTimeUsed<<" secondes"<<endl;
         /////////////////////////////////////
         //affiche les identifiants du lexique
-        nindLexicon.getIdentification(identification);
+        identification = nindLexicon.getIdentification();
         cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;
         cout<<" ("<<NindDate::date(identification.lexiconTime)<<")"<<endl;
 

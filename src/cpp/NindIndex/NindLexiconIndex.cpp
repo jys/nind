@@ -169,10 +169,10 @@ unsigned int NindLexiconIndex::getWordId(const list<string> &components)
 }
 ////////////////////////////////////////////////////////////
 //brief get identification of lexicon
-//param identification where unique identification of lexicon is returned */
-void NindLexiconIndex::getIdentification(Identification &identification)
+//return unique identification of lexicon */
+NindIndex::Identification NindLexiconIndex::getIdentification()
 {
-    identification = m_identification;
+    return m_identification;
 }
 ////////////////////////////////////////////////////////////
 //Recupere l'identifiant d'un mot sur le fichier lexique
