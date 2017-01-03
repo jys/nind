@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
         clock_t start, end;
         double cpuTimeUsed;
         /////////////////////////////////////
-        cout<<"Forme le lexique, le fichier inversé et le fichier des index locaux avec "<<docsFileName<<endl;
+        cout<<"Forme le sytème de fichiers nind avec "<<docsFileName<<endl;
         start = clock();
         //le lexique ecrivain avec retro lexique (meme taille d'indirection que le fichier inverse)
         NindLexiconAmose nindLexicon(lexiconFileName, true, lexiconEntryNb, termindexEntryNb);
@@ -107,6 +107,7 @@ int main(int argc, char *argv[]) {
         ifstream docsFile(docsFileName.c_str(), ifstream::in);
         if (docsFile.fail()) throw OpenFileException(docsFileName);
         while (getline(docsFile, dumpLine)) {
+            //if (docsNb == 5380) break;
             //lit 1 ligne = 1 document
             if (docsFile.fail()) throw FormatFileException(docsFileName);
             if (dumpLine.empty()) continue;   //evacue ainsi les lignes vides
@@ -145,7 +146,11 @@ int main(int argc, char *argv[]) {
                 //s'il n'existe pas, le creje 
                 if (itterm == bufferTermesParDoc.end()) bufferTermesParDoc[id] = pair<AmoseTypes, unsigned int>(type, 1);
                 //sinon increjmente le compteur
-                else (*itterm).second.second +=1;             
+                else { 
+                    if ((*itterm).second.first != type)
+                        cerr<<id<<" lemma="<<lemma<<" type="<<type<<" / "<<(*itterm).second.first<<" ds doc n°:"<<noDoc<<endl;
+                    (*itterm).second.second +=1;   
+                }
                 //augmente l'index local 
                 localDef.push_back(NindLocalIndex::Term(id, NO_CG));
                 NindLocalIndex::Term &term = localDef.back();
@@ -221,19 +226,24 @@ static void analyzeWord(const string &word,
                         AmoseTypes &type, 
                         string &entitejNommeje)
 {
+    //vire les '_' de teste et de fin 
+    string cleanWord = word;
+    while (cleanWord.find('_') == 0) cleanWord = cleanWord.substr(1);
+    while (cleanWord.size() != 0 && cleanWord.rfind('_') == cleanWord.size()-1) 
+        cleanWord = cleanWord.substr(0, cleanWord.size()-1);  
     //si c'est une entitej nommeje, la sejpare en 2
-    const size_t pos = word.find(':');
+    const size_t pos = cleanWord.find(':');
     if (pos != string::npos) {
-        entitejNommeje = word.substr(0, pos);
-        lemma = word.substr(pos +1);
+        entitejNommeje = cleanWord.substr(0, pos);
+        lemma = cleanWord.substr(pos +1);
         type = NAMED_ENTITY;
     }
-    else if (word.find('_') != string::npos) {
-        lemma = word;
+    else if (cleanWord.find('_') != string::npos) {
+        lemma = cleanWord;
         type = MULTI_TERM;
     }
     else {
-        lemma = word;
+        lemma = cleanWord;
         type = SIMPLE_TERM;
     }
 }
