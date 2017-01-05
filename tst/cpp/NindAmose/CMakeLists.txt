@@ -8,7 +8,7 @@ SET(NindAmose_indexeCorpus_SRCS
 
 add_executable(NindAmose_indexeCorpus ${NindAmose_indexeCorpus_SRCS})
 
-target_link_libraries(NindAmose_indexeCorpus NindIndex NindBasics NindAmose)
+target_link_libraries(NindAmose_indexeCorpus NindIndex NindRetrolexicon NindBasics NindAmose)
 
 install(TARGETS NindAmose_indexeCorpus DESTINATION bin)
 
@@ -20,7 +20,7 @@ SET(NindAmose_effaceDocument_SRCS
 
 add_executable(NindAmose_effaceDocument ${NindAmose_effaceDocument_SRCS})
 
-target_link_libraries(NindAmose_effaceDocument NindIndex NindBasics NindAmose)
+target_link_libraries(NindAmose_effaceDocument NindIndex NindRetrolexicon NindBasics NindAmose)
 
 install(TARGETS NindAmose_effaceDocument DESTINATION bin)
 
@@ -32,7 +32,7 @@ SET(NindAmose_testLecteur_SRCS
 
 add_executable(NindAmose_testLecteur ${NindAmose_testLecteur_SRCS})
 
-target_link_libraries(NindAmose_testLecteur NindIndex NindBasics NindAmose)
+target_link_libraries(NindAmose_testLecteur NindIndex NindRetrolexicon NindBasics NindAmose)
 
 install(TARGETS NindAmose_testLecteur DESTINATION bin)
 

@@ -42,7 +42,7 @@ def main():
     if sousMotId == 0: print 'INCONNU'
     else: print 'identifiant=',sousMotId
 
-#// <fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 
+#// <fichier>               ::= { <blocIndirection> <blocDefinition> } <blocIdentification> 
 #//
 #// <blocIndirection>       ::= <flagIndirection=47> <addrBlocSuivant> <nombreIndirection> { indirection }
 #// <flagIndirection=47>    ::= <Integer1>

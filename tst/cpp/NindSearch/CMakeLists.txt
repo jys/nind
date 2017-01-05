@@ -8,7 +8,7 @@ SET(NindSearch_SRCS
 
 add_executable(NindSearch ${NindSearch_SRCS})
 
-target_link_libraries(NindSearch NindIndexTest NindIndex NindBasics)
+target_link_libraries(NindSearch NindIndexTest NindIndex NindRetrolexicon NindBasics)
 
 install(TARGETS NindSearch DESTINATION bin)
 
@@ -19,7 +19,7 @@ SET(NindSearchAmose_SRCS
 
 add_executable(NindSearchAmose ${NindSearchAmose_SRCS})
 
-target_link_libraries(NindSearchAmose NindIndexTest NindAmose NindIndex NindBasics)
+target_link_libraries(NindSearchAmose NindIndexTest NindAmose NindIndex NindRetrolexicon NindBasics)
 
 install(TARGETS NindSearchAmose DESTINATION bin)
 
@@ -30,7 +30,7 @@ SET(NindGetDocTerms_SRCS
 
 add_executable(NindGetDocTerms ${NindGetDocTerms_SRCS})
 
-target_link_libraries(NindGetDocTerms NindIndexTest NindAmose NindIndex NindBasics)
+target_link_libraries(NindGetDocTerms NindIndexTest NindAmose NindIndex NindRetrolexicon NindBasics)
 
 install(TARGETS NindGetDocTerms DESTINATION bin)
 

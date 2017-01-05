@@ -5,7 +5,7 @@ from os import path, getenv
 import codecs
 import datetime
 import time
-from NindRetrolexiconindex import NindRetrolexiconindex
+from NindRetrolexicon import NindRetrolexicon
 
 def usage():
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
@@ -30,14 +30,14 @@ def main():
     outFileName = '%s-dumpall.txt'%(lexiconindexFileName)
     
     #ouvre les classes
-    nindRetrolexiconindex = NindRetrolexiconindex(lexiconindexFileName)
+    nindRetrolexicon = NindRetrolexicon(lexiconindexFileName)
 
-    (maxIdentifiant, dateHeure, spejcifique) = nindRetrolexiconindex.getIdentification()
+    (maxIdentifiant, dateHeure, spejcifique) = nindRetrolexicon.getIdentification()
     print "max=%d dateheure=%d (%s)"%(maxIdentifiant, dateHeure, time.ctime(int(dateHeure)))
     outFile = codecs.open(outFileName, 'w', 'utf-8')
     noWord = 1
     for noWord in range(1, maxIdentifiant+1):
-        word = nindRetrolexiconindex.getWord(noWord)
+        word = nindRetrolexicon.getWord(noWord)
         outFile.write('%06d  %s\n'%(noWord, word))
     outFile.close()
     print '%d mots écrits sur %s'%(maxIdentifiant, outFileName)  

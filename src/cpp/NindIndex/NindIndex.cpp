@@ -24,7 +24,7 @@
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
-// <fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 
+// <fichier>               ::= { <blocIndirection> <blocDefinition> } <blocIdentification> 
 //
 // <blocIndirection>       ::= <flagIndirection=47> <addrBlocSuivant> <nombreIndirection> { indirection }
 // <flagIndirection=47>    ::= <Integer1>
@@ -74,7 +74,7 @@ NindIndex::NindIndex(const std::string &fileName,
 {
     try {
         if (m_isWriter) {
-            //si fichier inverse ecrivain, ouvre en ecriture + lecture
+            //si fichier ecrivain, ouvre en ecriture + lecture
             bool isOpened = m_file.open("r+b");
             if (isOpened) {
                 //si le fichier existe, l'analyse pour trouver les indirections, l'identification et les vides

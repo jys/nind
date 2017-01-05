@@ -37,7 +37,7 @@ SET(NindTermIndex_testEcrivain_SRCS
 
 add_executable(NindTermIndex_testEcrivain ${NindTermIndex_testEcrivain_SRCS})
 
-target_link_libraries(NindTermIndex_testEcrivain NindIndexTest NindIndex NindLexicon NindBasics)
+target_link_libraries(NindTermIndex_testEcrivain NindIndexTest NindIndex NindRetrolexicon NindLexicon NindBasics)
 
 install(TARGETS NindTermIndex_testEcrivain DESTINATION bin)
 
@@ -48,7 +48,7 @@ SET(NindIndex_testEcrivain_SRCS
 
 add_executable(NindIndex_testEcrivain ${NindIndex_testEcrivain_SRCS})
 
-target_link_libraries(NindIndex_testEcrivain NindIndex_indexe NindIndexTest NindIndex NindLexicon NindBasics)
+target_link_libraries(NindIndex_testEcrivain NindIndex_indexe NindIndexTest NindIndex NindRetrolexicon NindLexicon NindBasics)
 
 install(TARGETS NindIndex_testEcrivain DESTINATION bin)
 
@@ -59,7 +59,7 @@ SET(NindTermIndex_testLecteur_SRCS
 
 add_executable(NindTermIndex_testLecteur ${NindTermIndex_testLecteur_SRCS})
 
-target_link_libraries(NindTermIndex_testLecteur NindIndexTest NindIndex NindLexicon NindBasics)
+target_link_libraries(NindTermIndex_testLecteur NindIndexTest NindIndex NindRetrolexicon NindLexicon NindBasics)
 
 install(TARGETS NindTermIndex_testLecteur DESTINATION bin)
 
@@ -70,7 +70,7 @@ SET(NindIndex_testLecteur_SRCS
 
 add_executable(NindIndex_testLecteur ${NindIndex_testLecteur_SRCS})
 
-target_link_libraries(NindIndex_testLecteur NindIndexTest NindIndex NindLexicon NindBasics)
+target_link_libraries(NindIndex_testLecteur NindIndexTest NindIndex NindRetrolexicon NindLexicon NindBasics)
 
 install(TARGETS NindIndex_testLecteur DESTINATION bin)
 
@@ -103,7 +103,7 @@ SET(NindLexiconIndex_testEcrivain_SRCS
 
 add_executable(NindLexiconIndex_testEcrivain ${NindLexiconIndex_testEcrivain_SRCS})
 
-target_link_libraries(NindLexiconIndex_testEcrivain NindIndexTest NindIndex NindBasics)
+target_link_libraries(NindLexiconIndex_testEcrivain NindIndexTest NindIndex NindRetrolexicon NindBasics)
 
 install(TARGETS NindLexiconIndex_testEcrivain DESTINATION bin)
 
@@ -114,7 +114,7 @@ SET(NindLexiconIndex_testLecteur_SRCS
 
 add_executable(NindLexiconIndex_testLecteur ${NindLexiconIndex_testLecteur_SRCS})
 
-target_link_libraries(NindLexiconIndex_testLecteur NindIndexTest NindIndex NindBasics)
+target_link_libraries(NindLexiconIndex_testLecteur NindIndexTest NindIndex NindRetrolexicon NindBasics)
 
 install(TARGETS NindLexiconIndex_testLecteur DESTINATION bin)
 

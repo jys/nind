@@ -3,7 +3,7 @@
 import sys
 from os import getenv, path
 import NindLateconFile
-from NindRetrolexiconindex import NindRetrolexiconindex
+from NindRetrolexicon import NindRetrolexicon
 from NindLocalindex import NindLocalindex
 import NindLateconFile
 
@@ -31,7 +31,7 @@ def main():
     localindexFileName = '.'.join(nn[:-1])+'.localindex'
     
     #ouvre les classes
-    nindRetrolexiconindex = NindRetrolexiconindex(lexiconindexFileName)
+    nindRetrolexiconindex = NindRetrolexicon(lexiconindexFileName)
     nindLocalindex = NindLocalindex(localindexFileName)
 
     #trouve l'identifiant interne

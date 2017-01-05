@@ -53,7 +53,7 @@ def main():
 
 
 #utilitaires communs aux classes NindLexiconindex, NindLexiconindexInverse, NindLocalindex, NindTermindex
-# <fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 
+# <fichier>               ::= { <blocIndirection> <blocDefinition> } <blocIdentification> 
 #
 # <blocIndirection>       ::= <flagIndirection=47> <addrBlocSuivant> <nombreIndirection> { indirection }
 # <flagIndirection=47>    ::= <Integer1>

@@ -105,6 +105,10 @@ public:
     *\return 4-bytes integer */
     unsigned int getInt3();
 
+    /**\brief Get a 3-bytes signed integer from internal buffer
+    *\return 4-bytes signed integer */
+    signed int getSInt3();
+
     /**\brief Get a 4-bytes integer from internal buffer
     *\return 4-bytes integer */
     unsigned int getInt4();
@@ -124,6 +128,12 @@ public:
     /**\brief Get a string from internal buffer
     *\return read string */
     std::string getString();
+    
+    /**\brief Get a string from internal buffer
+    *\param length number of bytes to read (bytes, not chars)
+    *\return read string */
+    std::string getStringAsBytes(const unsigned char length);
+
         
     /**\brief Create an internal buffer for writing
     *\param bytesNb size of buffer */
@@ -174,6 +184,10 @@ public:
     /**\brief Put a string into the intermediate buffer
     *\param str string to write  */
     void putString(const std::string &str);
+
+    /**\brief Put a string as bytes into the intermediate buffer
+    *\param str string to write  */
+    void putStringAsBytes(const std::string &str);
 
     /**\brief Write intermediate buffer to the file */
     void writeBuffer();

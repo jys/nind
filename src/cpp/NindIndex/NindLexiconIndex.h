@@ -30,7 +30,7 @@
 namespace latecon {
     namespace nindex {
 ////////////////////////////////////////////////////////////
-class NindRetrolexiconIndex;
+class NindRetrolexicon;
 ////////////////////////////////////////////////////////////
 /**\brief This class maintains correspondance between words and their indentifiant
 */
@@ -118,7 +118,7 @@ private:
     unsigned int m_modulo;              //pour trouver l'identifiant dans le fichier
     Identification m_identification;      //identification unique de ce lexique
     bool m_withRetrolexicon;            //avec ou sans retro lexique
-    NindRetrolexiconIndex *m_nindRetrolexiconIndex;       //l'eventuel retro lexique
+    NindRetrolexicon *m_nindRetrolexicon;       //l'eventuel retro lexique
 };
     } // end namespace
 } // end namespace

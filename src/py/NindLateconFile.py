@@ -103,6 +103,13 @@ class NindLateconFile:
         oc = self.latFile.read(3)
         return (ord(oc[2])*256 + ord(oc[1]))*256 + ord(oc[0])
 
+    def litNombreS3(self):
+        #petit-boutiste
+        oc = self.latFile.read(3)
+        res = (ord(oc[2])*256 + ord(oc[1]))*256 + ord(oc[0])
+        if res < 0x800000: return res 
+        return res - 0x1000000
+
     def litNombre4(self):
         #petit-boutiste
         oc = self.latFile.read(4)

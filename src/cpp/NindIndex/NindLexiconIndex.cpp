@@ -19,7 +19,7 @@
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
 #include "NindLexiconIndex.h"
-#include "NindRetrolexiconIndex.h"
+#include "NindRetrolexicon/NindRetrolexicon.h"
 #include <iostream>
 using namespace latecon::nindex;
 using namespace std;
@@ -80,12 +80,12 @@ NindLexiconIndex::NindLexiconIndex(const string &fileName,
     //initialisation du retro lexique, eventuellement
     if (m_withRetrolexicon) {
         const size_t pos = fileName.find('.');
-        m_nindRetrolexiconIndex = new NindRetrolexiconIndex(fileName.substr(0, pos) + ".retrolexiconindex",
+        m_nindRetrolexicon = new NindRetrolexicon(fileName.substr(0, pos) + ".retrolexiconindex",
                                                             isLexiconWriter,
                                                             m_identification,
                                                             retroIndirectionBlocSize);
     }
-    else m_nindRetrolexiconIndex = 0;
+    else m_nindRetrolexicon = 0;
 }
 ////////////////////////////////////////////////////////////
 NindLexiconIndex::~NindLexiconIndex()
@@ -118,18 +118,18 @@ unsigned int NindLexiconIndex::addWord(const list<string> &components)
         }
         //pas trouve
         //structure pour eventuellement mettre a jour le retro lexique
-        list<struct NindRetrolexiconIndex::RetroWord> retroWords;
+        list<struct NindRetrolexicon::RetroWord> retroWords;
         //si mot simple inconnu, on le cree
         if ((*motIt).identifiantS == 0) {
             (*motIt).identifiantS = ++currentId;
             //pour le lexique inverse : currentId -> motSimple
-            retroWords.push_back(NindRetrolexiconIndex::RetroWord(currentId, motSimple));
+            retroWords.push_back(NindRetrolexicon::RetroWord(currentId, motSimple));
         }
         //si mot compose, on le cree
         if (sousMotId != 0) {
             (*motIt).composes.push_back(Compose(sousMotId, ++currentId));
             //pour le lexique inverse : currentId -> sousMotId, (*motIt).identifiantS
-            retroWords.push_back(NindRetrolexiconIndex::RetroWord(currentId, sousMotId, (*motIt).identifiantS));
+            retroWords.push_back(NindRetrolexicon::RetroWord(currentId, sousMotId, (*motIt).identifiantS));
        }
         sousMotId = currentId;
         //et on ecrit sur le fichier
@@ -137,7 +137,7 @@ unsigned int NindLexiconIndex::addWord(const list<string> &components)
         setDefinitionWords(definition, m_identification);
         //met eventuellement a jour le lexique inverse
         if (m_withRetrolexicon and retroWords.size() != 0) 
-            m_nindRetrolexiconIndex->addRetroWords(retroWords, m_identification);
+            m_nindRetrolexicon->addRetroWords(retroWords, m_identification);
     }
     //retourne l'id du mot specifie
     return sousMotId;
@@ -350,7 +350,7 @@ bool NindLexiconIndex::getComponents(const unsigned int ident,
                                      list<string> &components)
 {
     if (!m_withRetrolexicon) throw BadUseException("there is no retro lexicon");
-    return m_nindRetrolexiconIndex->getComponents(ident, components);
+    return m_nindRetrolexicon->getComponents(ident, components);
 }
 ////////////////////////////////////////////////////////////
 

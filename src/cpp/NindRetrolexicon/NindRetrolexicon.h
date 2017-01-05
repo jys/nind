@@ -1,13 +1,13 @@
 //
-// C++ Interface: NindRetrolexiconIndex
+// C++ Interface: NindRetrolexicon
 //
-// Description: La gestion du lexique et du lexique inverse sous forme de fichiers index
+// Description: La gestion du lexique inverse sous forme de fichier plat
 // voir "nind, indexation post-S2", LAT2014.JYS.440
 //
-// Cette classe gere la complexite du lexique qui doit rester coherent pour ses lecteurs
-// pendant que son ecrivain l'enrichit en fonction des nouvelles indexations.
+// Cette classe gehre le lexique inverse qui permet de retrouver un mot ah partir de son
+// identifiant gejnejrej par le lexique.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2016
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
 // Copyright: 2014-2016 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
@@ -18,10 +18,11 @@
 // even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
-#ifndef NindRetrolexiconIndex_H
-#define NindRetrolexiconIndex_H
+#ifndef NindRetrolexicon_H
+#define NindRetrolexicon_H
 ////////////////////////////////////////////////////////////
-#include "NindIndex.h"
+#include "NindIndex/NindIndex.h"
+#include "NindBasics/NindFile.h"
 #include "NindCommonExport.h"
 #include "NindExceptions.h"
 #include <string>
@@ -32,20 +33,19 @@ namespace latecon {
 ////////////////////////////////////////////////////////////
 /**\brief This class maintains correspondance between indentifiants and words
 */
-class DLLExportLexicon NindRetrolexiconIndex : public NindIndex {
+class DLLExportLexicon NindRetrolexicon {
 public:
-    /**\brief Creates NindRetrolexiconIndex.
+    /**\brief Creates NindRetrolexicon.
     *\param fileName absolute path file name. Lexicon is identified by its file name
     *\param isLexiconWriter true if lexicon writer, false if lexicon reader  
-    *\param lexiconWordsNb number of words contained in lexicon 
     *\param lexiconIdentification unique identification of lexicon 
     *\param indirectionBlocSize number of entries in a single indirection block */
-    NindRetrolexiconIndex(const std::string &fileName,
+    NindRetrolexicon(const std::string &fileName,
                           const bool isLexiconWriter,
-                          const Identification &lexiconIdentification,
+                          const NindIndex::Identification &lexiconIdentification,
                           const unsigned int indirectionBlocSize = 0);
 
-    virtual ~NindRetrolexiconIndex();
+    virtual ~NindRetrolexicon();
 
 // <donneesMot>          ::= <motCompose> | <motSimple>
 // <motCompose>          ::= <flagCompose> <identifiantA> <identifiantRelS>
@@ -68,7 +68,7 @@ public:
     * \param lexiconWordsNb number of words contained in lexicon 
     * \param lexiconIdentification unique identification of lexicon */
     void addRetroWords(const std::list<struct RetroWord> &retroWords,
-                  const Identification &lexiconIdentification);
+                  const NindIndex::Identification &lexiconIdentification);
     
     /**\brief get word components from the specified ident
     * \param ident ident of word
@@ -86,6 +86,33 @@ private:
     //retourne true si le mot existe, sinon false
     bool getRetroWord(const unsigned int ident,
                     struct RetroWord &retroWord);
+    
+    //ejtablit la carte des dejfinitions  
+    void mapDejfinition();
+    
+    //return l'offset de l'indirection de la dejfinition specifiej, 0 si hors limite
+    unsigned long int getDejfinitionPos(const unsigned int ident);
+
+    //brief Read from file datas of a specified definition and leave result into read buffer 
+    //param ident ident of definition
+    //return true if ident was found, false otherwise 
+    bool getDejfinition(const unsigned int ident);
+    
+    //ajoute un bloc de dejfinitions vides suivi d'une identification ah la position courante du fichier
+    void addBlocDejfinition(const NindIndex::Identification &lexiconIdentification);
+
+    //ejcrit l'identification du fichier ah l'adresse courente du fichier
+    void addIdentification(const NindIndex::Identification &lexiconIdentification);
+    
+    //vejrifie l'apairage avec le lexique
+    void checkIdentification(const NindIndex::Identification &lexiconIdentification);
+
+    
+    NindFile m_file;                //pour l'ecrivain ou le lecteur
+    std::string m_fileName;
+    bool m_isWriter;
+    unsigned int m_dejfinitionBlocSize;         //nbre d'entrees d'un bloc d'indirection
+    std::list<std::pair<unsigned long int, unsigned int> > m_dejfinitionMapping;  //gestion des indirections
 };
     } // end namespace
 } // end namespace

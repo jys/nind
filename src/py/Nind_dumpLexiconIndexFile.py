@@ -28,7 +28,7 @@ def main():
     inFileName = path.abspath(sys.argv[1])
     outFileName = '%s-dump.txt'%(inFileName)
         
-    #<fichier>               ::= <blocIndirection> { <blocIndirection> <blocDefinition> } <blocIdentification> 
+    #<fichier>               ::= { <blocIndirection> <blocDefinition> } <blocIdentification> 
 
     #<blocIndirection>       ::= <flagIndirection=47> <addrBlocSuivant> <nombreIndirection> { indirection }
     #<flagIndirection=47>    ::= <Integer1>

@@ -207,6 +207,16 @@ unsigned int NindFile::getInt3()
     return (m_rPtr[-1]*256 + m_rPtr[-2])*256 + m_rPtr[-3];
 }
 ////////////////////////////////////////////////////////////
+//brief Get a 3-bytes signed integer from internal buffer
+//return 4-bytes signed integer */
+signed int NindFile::getSInt3()
+{
+    //petit boutiste
+    m_rPtr += 3;
+    if (m_rPtr > m_rbufferEnd) throw OutReadBufferException("in read buffer (D2) " + m_fileName);
+    return (int((m_rPtr[-1]*256 + m_rPtr[-2])*256 + m_rPtr[-3])<<8)>>8;
+}
+////////////////////////////////////////////////////////////
 //brief Get a 4-bytes integer from internal buffer
 //return 4-bytes integer */
 unsigned int NindFile::getInt4()
@@ -290,11 +300,22 @@ string NindFile::getString()
     //lit la longueur de la chaine
     m_rPtr += 1;
     if (m_rPtr > m_rbufferEnd) throw OutReadBufferException("in read buffer (S) " + m_fileName);
-    const unsigned char len = m_rPtr[-1];
+    const unsigned char length = m_rPtr[-1];
     //lit la chaine
-    m_rPtr += len;
+    m_rPtr += length;
     if (m_rPtr > m_rbufferEnd) throw OutReadBufferException("in read buffer (T) " + m_fileName);
-    return string((char*)(m_rPtr-len), len);
+    return string((char*)(m_rPtr-length), length);
+}   
+////////////////////////////////////////////////////////////
+//brief Get a string from internal buffer
+//param length number of bytes to read (bytes, not chars)
+//return read string */
+string NindFile::getStringAsBytes(const unsigned char length)
+{
+    //lit la chaine
+    m_rPtr += length;
+    if (m_rPtr > m_rbufferEnd) throw OutReadBufferException("in read buffer (U) " + m_fileName);
+    return string((char*)(m_rPtr-length), length);
 }   
 ////////////////////////////////////////////////////////////
 //brief Create an internal buffer for writing
@@ -494,13 +515,25 @@ void NindFile::putSIntLat(const signed int int4)
 ////////////////////////////////////////////////////////////
 //brief Put a string into the intermediate buffer
 //param str string to write  */
-void NindFile::putString(const std::string &str)
+void NindFile::putString(const string &str)
 {
-    if (str.length() > 255) throw OutWriteBufferException("String length" + m_fileName);
+    if (str.length() > 254) throw OutWriteBufferException("String length" + m_fileName);
     const unsigned char stringLen = str.length();
     if (m_wPtr + stringLen + 1 > m_wbufferEnd) throw OutWriteBufferException("in write buffer (R) " + m_fileName);
     //ecrit la taille de la chaine
     (*m_wPtr++) = stringLen;
+    //ecrit la chaine
+    memcpy(m_wPtr, (unsigned char*)str.c_str(), stringLen);
+    m_wPtr += stringLen;
+}
+////////////////////////////////////////////////////////////
+//brief Put a string as bytes into the intermediate buffer
+//param str string to write  */
+void NindFile::putStringAsBytes(const string &str)
+{
+    if (str.length() > 255) throw OutWriteBufferException("String length" + m_fileName);
+    const unsigned char stringLen = str.length();
+    if (m_wPtr + stringLen > m_wbufferEnd) throw OutWriteBufferException("in write buffer (S) " + m_fileName);
     //ecrit la chaine
     memcpy(m_wPtr, (unsigned char*)str.c_str(), stringLen);
     m_wPtr += stringLen;
