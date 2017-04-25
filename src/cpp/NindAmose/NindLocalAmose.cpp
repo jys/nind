@@ -116,10 +116,12 @@ bool NindLocalAmose::getDocTerms(const unsigned int docId,
         string namedEntity;
         const bool trouvej = m_nindLexicon.getWord((*itterm), lemma, type, namedEntity);
         if (!trouvej) throw IncompatibleFileException("Unknown term into lexicon");
-        if (type == termType) 
+        if (type == termType)
+        {
             if (type == NAMED_ENTITY)
                 termsSet.insert(namedEntity + ":" + lemma);
             else termsSet.insert(lemma);
+        }
     }
     return true;
 }

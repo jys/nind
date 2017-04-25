@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
         const string termindexFileName = incompleteFileName + ".termindex";
         const string localindexFileName = incompleteFileName + ".localindex";
         //pour calculer le temps consomme
-        clock_t start, end;
+        clock_t start = clock(), end;
         double cpuTimeUsed;
         /////////////////////////////////////
         //le lexique lecteur

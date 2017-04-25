@@ -258,6 +258,7 @@ bool NindRetrolexicon::getRetroWord(const unsigned int ident,
         cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
         throw NindRetrolexiconException(m_fileName);
     }
+    return true;
 }
 ////////////////////////////////////////////////////////////
 //ejtablit la carte des dejfinitions  

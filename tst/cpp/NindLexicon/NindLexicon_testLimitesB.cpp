@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
             wordsNb++;
             list<string> componants;
             componants.push_back(string(charBuff));
-            const unsigned int id = nindLexicon.addWord(componants);
+            /*const unsigned int id = */nindLexicon.addWord(componants);
             //memorise
             last10.push_back(string(charBuff));
             //tous les 10 mots simples, fabrique 1000 mots composes
@@ -83,17 +83,17 @@ int main(int argc, char *argv[]) {
                 last10.push_back(string(charBuff) + "jys");
                 list<string> comps;
                 comps.push_back(string(charBuff) + "jys");
-                const unsigned int id = nindLexicon.addWord(comps);
+                /*const unsigned int id = */nindLexicon.addWord(comps);
                 
                 for (list<string>::const_iterator it1 = last10.begin(); it1 != last10.end(); it1++) {
                     list<string> comps;
                     comps.push_back(*it1);
                     for (list<string>::const_iterator it2 = last10.begin(); it2 != last10.end(); it2++) {
                         comps.push_back(*it2);
-                        const unsigned int id = nindLexicon.addWord(comps); //100 mots de 2
+                        /*const unsigned int id = */nindLexicon.addWord(comps); //100 mots de 2
                         for (list<string>::const_iterator it3 = last10.begin(); it3 != last10.end(); it3++) {
                             comps.push_back(*it3);
-                            const unsigned int id = nindLexicon.addWord(comps); //1000 mots de 3
+                            /*const unsigned int id = */nindLexicon.addWord(comps); //1000 mots de 3
                         }
                     }
                 }
@@ -103,20 +103,20 @@ int main(int argc, char *argv[]) {
             if (wordsNb%10000 == 0) {
                 bool isOk = nindLexicon.integrityAndCounts(lexiconChar);
                 displayChar(lexiconChar, "VIDE ");
-                //return true;
+                if (!isOk) return false;
             }
         }
         isOk = nindLexicon.integrityAndCounts(lexiconChar);
         displayChar(lexiconChar, "PLEIN");
         
-        return true;
+        return isOk;
     }
     catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; return false;}
     catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; return false;}
     catch (...) {cerr<<"EXCEPTION unknown"<< endl; return false; }
 }
 ////////////////////////////////////////////////////////////
-static void displayChar(const struct NindLexicon::LexiconChar &lexiconChar, const string &title)
+static void displayChar(const struct NindLexicon::LexiconChar &lexiconChar, const string &)
 {
     cout<<lexiconChar.isOk<<" <"<<lexiconChar.swNb<<", "<<lexiconChar.cwNb;
     cout<<"> mots, <"<<lexiconChar.wordsNb<<", "<<lexiconChar.identification;
