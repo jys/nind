@@ -8,7 +8,7 @@ SET(Nind_test1_SRCS
 
 add_executable(Nind_test1 ${Nind_test1_SRCS})
 
-target_link_libraries(Nind_test1)
+target_link_libraries(Nind_test1 NindLexicon)
 
 install(TARGETS Nind_test1 DESTINATION bin)
 
