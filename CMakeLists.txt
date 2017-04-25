@@ -5,3 +5,6 @@ ADD_DEFINITIONS(
 PROJECT(nind)
 add_subdirectory(src)
 add_subdirectory(tst)
+
+install(FILES NindConfig.cmake DESTINATION share/apps/nind/cmake/Modules)
+
