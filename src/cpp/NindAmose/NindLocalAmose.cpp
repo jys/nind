@@ -131,10 +131,10 @@ bool NindLocalAmose::getDocTerms(const unsigned int docId,
 unsigned int NindLocalAmose::getDocLength(const unsigned int docId)
 {
     //les index locaux du document
-    list<NindLocalIndex::Term> localDef;
-    const bool trouvej = NindLocalIndex::getLocalDef(docId, localDef);
+    unsigned int localLength;
+    const bool trouvej = NindLocalIndex::getLocalLength(docId, localLength);
     //si le doc n'existe pas, retour 0
     if (!trouvej) return 0;
-    return localDef.size();
+    return localLength;
 }
 ////////////////////////////////////////////////////////////

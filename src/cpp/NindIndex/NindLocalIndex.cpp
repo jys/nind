@@ -140,6 +140,50 @@ bool NindLocalIndex::getLocalDef(const unsigned int ident,
     }
 }
 ////////////////////////////////////////////////////////////
+bool NindLocalIndex::getLocalLength(const unsigned int ident,
+                                 unsigned int &localLength)
+{
+    try {
+        //raz rejsultat
+        localLength = 0;
+        //trouve l'identifiant interne du doc 
+        const unsigned int identInt = getInternalIdent(ident);
+        //si pas trouvej retourne faux
+        if (identInt == 0) return false;
+        //rejcupehre la dejfinition
+        const bool existe = getDefinition(identInt);
+        if (!existe) return false;
+        //<flagDefinition=19> <identifiantDoc> <identifiantExterne> <longueurDonnees> <donneesDoc>
+        if (m_file.getInt1() != FLAG_DEFINITION) throw InvalidFileException("NindLocalIndex::getLocalIndex A : " + m_fileName);
+        const unsigned int identDoc = m_file.getInt3();
+        if (identDoc != identInt) throw InvalidFileException("NindLocalIndex::getLocalIndex B : " + m_fileName);
+        const unsigned int identExt = m_file.getInt4();
+        if (identExt != ident) throw InvalidFileException("NindLocalIndex::getLocalIndex C : " + m_fileName);
+        const unsigned int longueurDonnees = m_file.getInt3();
+        //positionne la fin de buffer en fonction de la longueur effective des donnees
+        m_file.setEndInBuffer(longueurDonnees);
+        //<identTermeRelatif> <categorie> <nbreLocalisations> <localisations>
+//         unsigned int identTerme = 0;      //l'ident du terme precedent
+//         unsigned int position = 0;        //la position de localisation precedente
+        while (!m_file.endOfInBuffer()) {
+            /*identTerme +=*/ m_file.getSIntLat();
+            /*const unsigned char categorie =*/ m_file.getInt1();
+            const unsigned int nbreLocalisations = m_file.getInt1();
+            localLength++;
+            for (unsigned int it = 0; it != nbreLocalisations; it++) {
+                //<localisationRelatif> <longueur>
+                /*position +=*/ m_file.getSIntLat();
+                /*const unsigned int longueur =*/ m_file.getInt1();
+            }
+        }
+        return true;
+    }
+    catch (FileException &exc) {
+        cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
+        throw NindLocalIndexException(m_fileName);
+    }
+}
+////////////////////////////////////////////////////////////
 //brief Return a full document as a list of unique terms ids
 //param ident ident of doc
 //param termIdents structure to receive all datas of the specified doc

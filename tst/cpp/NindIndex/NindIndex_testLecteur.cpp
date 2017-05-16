@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
         const string termindexFileName = docsFileName.substr(0, pos) + ".termindex";
         const string localindexFileName = docsFileName.substr(0, pos) + ".localindex";
         //pour calculer le temps consomme
-        clock_t start, end;
+        clock_t start = clock(), end;
         double cpuTimeUsed;
         
         //le lexique lecteur
@@ -88,7 +88,8 @@ int main(int argc, char *argv[]) {
         NindIndexTest nindIndexTest;
         //lit le fichier dump de documents
         unsigned int docsNb = 0;
-        unsigned int nbInconnus, nbTermNok, nbTermOk, nbLocalNok, nbLocalOk = 0;
+        unsigned int nbInconnus = 0;
+        unsigned int nbTermNok = 0, nbTermOk = 0, nbLocalNok = 0, nbLocalOk = 0;
         unsigned int complexite = 0;
         char charBuff[LINE_SIZE];
         ifstream docsFile(docsFileName.c_str(), ifstream::in);
@@ -178,6 +179,7 @@ static bool docTrouve(const unsigned int noDoc,
         it1++;
     }
     if (it1 == termDef.end()) return false;
+    return false;
 }
 ////////////////////////////////////////////////////////////
 static bool termeTrouve(const unsigned int id, 
