@@ -152,7 +152,7 @@ void NindTermAmose::removeDocFromTerm(const unsigned int ident,
 ////////////////////////////////////////////////////////////
 //brief read specific counts from termindex file. 
 //Synchronization between writer and readers is up to application */
-    void NindTermAmose::synchronizeInternalCounts()
+void NindTermAmose::synchronizeInternalCounts()
 {
     //rejcupehre la dejfinition de ce terme
     list<TermCG> termDef;
@@ -222,6 +222,7 @@ unsigned int NindTermAmose::getUniqueTermCount(const AmoseTypes type)
 //return number  of terms of specified type into the base */
 unsigned int NindTermAmose::getTermOccurrences(const AmoseTypes type)
 {
+    synchronizeInternalCounts();
     return m_termOccurrences[type];
 }
 ////////////////////////////////////////////////////////////

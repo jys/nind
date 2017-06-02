@@ -283,10 +283,11 @@ void NindLocalIndex::setLocalDef(const unsigned int ident,
     }
 }
 ////////////////////////////////////////////////////////////
-//brief number of documents in the collection 
+//brief number of documents in the collection
 //return number of documents in the collection */
-unsigned int NindLocalIndex::getDocCount() const
+unsigned int NindLocalIndex::getDocCount()
 {
+    synchronizeInternalCounts();
     return m_docIdTradExtInt.size();
 }
 ////////////////////////////////////////////////////////////
@@ -333,3 +334,20 @@ void NindLocalIndex::fillDocIdTradExtInt(const unsigned int intIdMin,
     }
 }
 ////////////////////////////////////////////////////////////
+//brief read specific counts from localindex file.
+//Synchronization between writer and readers is up to application
+//param none */
+void NindLocalIndex::synchronizeInternalCounts()
+{
+    //regarde si le fichier a changej depuis le dernier calcul de
+    //traduction des identifiants
+    Identification identification;
+    getFileIdentification(identification);
+    //si pas de changement, raf
+    if (identification == m_identification) return;
+    //met ah jour l'identification
+    m_identification = identification;
+    //met ah jour la map
+    //initialise la map de traduction des id externes -> id internes
+    fillDocIdTradExtInt(m_currIdent +1, m_identification.specificFileIdent +1);
+}

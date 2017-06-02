@@ -96,9 +96,13 @@ public:
     
     /**\brief number of documents in the collection 
      * \return number of documents in the collection */
-    unsigned int getDocCount() const; 
+    unsigned int getDocCount(); 
 
 private:
+    /**\brief read specific counts from termindex file. 
+     * Synchronization between writer and readers is up to application */
+    void synchronizeInternalCounts();
+    
     //Rejcupehre l'identifiant interne 
     unsigned int getInternalIdent(const unsigned int ident);
     
