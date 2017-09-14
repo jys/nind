@@ -82,16 +82,21 @@ public:
     /**\brief Write a full document as a list of terms whith their localisations
     *\param ident ident of doc
     *\param localDef structure containing all datas of the specified doc . empty when deletion
-    *\param lexiconIdentification unique identification of lexicon */
+    *\param fileIdentification unique identification of lexicon */
     void setLocalDef(const unsigned int ident,
                      const std::list<struct Term> &localDef,
-                     const Identification &lexiconIdentification);
+                     const Identification &fileIdentification);
     
     /**\brief number of documents in the collection 
      * \return number of documents in the collection */
-    unsigned int getDocCount() const; 
+    unsigned int getDocCount() ; 
+    
 
 private:
+    //brief read specific counts from localindex file. 
+    //param none */
+    void synchronizeInternalCounts();
+    
     //Rejcupehre l'identifiant interne 
     unsigned int getInternalIdent(const unsigned int ident);
     

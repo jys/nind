@@ -1,12 +1,12 @@
 //
-// C++ Implementation: NindIndex_testEcrivain
+// C++ Implantation: NindIndex_testEcrivain
 //
 // Description: un test pour remplir le lexique, le fichier inverse et le fichier des index locaux
 // et faire differentes mesures.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2014
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2015 LATECON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -15,9 +15,10 @@
 // even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
-//#include "NindLexicon/NindLexicon.h"
 #include "NindIndex_indexe.h"
-#include "NindIndexTest.h"
+#include "NindIndex_litDumpS2.h"
+#include "NindDate.h"
+#include "NindFichiers.h"
 #include "NindExceptions.h"
 #include <time.h>
 #include <string>
@@ -28,7 +29,7 @@ using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
 static void displayHelp(char* arg0) {
-    cout<<"© l'ATÉCON"<<endl;
+    cout<<"© l'ATEJCON"<<endl;
     cout<<"Programme de test de NindIndex en mode écrivain (pour l'indexation)."<<endl;
     cout<<"Le lexique et les fichiers inverse et d'index locaux sont créés à partir"<<endl;
     cout<<"du dump de documents spécifié."<<endl;
@@ -47,8 +48,6 @@ static void displayHelp(char* arg0) {
     cout<<"       "<<arg0<<" <dump documents> <taille buffer termes> <taille lexique> <taille inverse> <taille locaux> [<timeControl>]"<<endl;
     cout<<"ex :   "<<arg0<<" FRE.FDB-DumpByDocuments.txt 0 100003 100000 5000"<<endl;
 }
-////////////////////////////////////////////////////////////
-#define LINE_SIZE 65536*100
 ////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
     setlocale( LC_ALL, "French" );
@@ -70,39 +69,21 @@ int main(int argc, char *argv[]) {
     
     try {
         //calcule les noms des fichiers lexique et inverse et index locaux
-        const size_t pos = docsFileName.find('.');
-//        const string lexiconFileName = docsFileName.substr(0, pos) + ".lexicon";
-        const string lexiconFileName = docsFileName.substr(0, pos) + ".lexiconindex";
-        const string termindexFileName = docsFileName.substr(0, pos) + ".termindex";
-        const string localindexFileName = docsFileName.substr(0, pos) + ".localindex";
+        const string incompleteFileName = docsFileName.substr(0, docsFileName.find('.'));
+        const string lexiconFileName = incompleteFileName + ".lexiconindex";
+        const string termindexFileName = incompleteFileName + ".termindex";
+        const string localindexFileName = incompleteFileName + ".localindex";
+        //vejrifie que le systehme de fichiers est cohejrent
+        if (!NindFichiers::fichiersCohejrents(list<string>({ lexiconFileName, termindexFileName, localindexFileName }), true)) {
+            cout<<"Des anciens fichiers existent !"<<endl;
+            cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".*index"<<endl;
+            return false;
+        }
         //pour calculer le temps consomme
         clock_t start, end;
         double cpuTimeUsed;
-
         /////////////////////////////////////
-        FILE *file =  fopen(lexiconFileName.c_str(), "rb");
-        if (file) {
-            fclose(file);
-            cout<<lexiconFileName<<" existe !"<<endl;
-            cout<<"Veuillez l'effacer par la commande : rm "<<lexiconFileName<<endl;
-            return false;
-        }
-        file =  fopen(termindexFileName.c_str(), "rb");
-        if (file) {
-            fclose(file);
-            cout<<termindexFileName<<" existe !"<<endl;
-            cout<<"Veuillez l'effacer par la commande : rm "<<termindexFileName<<endl;
-            return false;
-        }
-        file =  fopen(localindexFileName.c_str(), "rb");
-        if (file) {
-            fclose(file);
-            cout<<localindexFileName<<" existe !"<<endl;
-            cout<<"Veuillez l'effacer par la commande : rm "<<localindexFileName<<endl;
-            return false;
-        }
-        /////////////////////////////////////
-        cout<<"Forme le lexique, le fichier inversé et le fichier des index locaux avec "<<docsFileName<<endl;
+        cout<<"Forme le lexique, le fichier des termes et le fichier des index locaux avec "<<docsFileName<<endl;
         start = clock();
         //l'acces aux index
         NindIndex_indexe nindIndex_indexe(lexiconFileName, 
@@ -113,43 +94,25 @@ int main(int argc, char *argv[]) {
                                           localindexEntryNb,
                                           bufferSize,
                                           timeControl);
-        //la classe d'utilitaires
-        NindIndexTest nindIndexTest;
         //lit le fichier dump de documents
+        NindIndex_litDumpS2 nindIndex_litDumpS2(docsFileName);
         unsigned int docsNb = 0;
-        char charBuff[LINE_SIZE];
-        ifstream docsFile(docsFileName.c_str(), ifstream::in);
-        if (docsFile.fail()) throw OpenFileException(docsFileName);
-        while (docsFile.good()) {
-            unsigned int noDoc;
-            list<NindIndexTest::WordDesc> wordsList;
-            docsFile.getline(charBuff, LINE_SIZE);
-            if (string(charBuff).empty()) continue;   //evacue ainsi les lignes vides
+        unsigned int noDocAnt, noDocFb;
+        while (nindIndex_litDumpS2.documentSuivant(noDocAnt, noDocFb)) {
             docsNb++;
-            if (docsFile.fail()) throw FormatFileException(docsFileName);
-            nindIndexTest.getWords(string(charBuff), noDoc, wordsList);
-            //la structure d'index locaux se fabrique pour un document complet
-            nindIndex_indexe.newDoc(noDoc);
-            //la position absolue dans le fichier source du terme precedent
-            //(le dump est considere comme fichier source parce que nous n'avons pas les vrais fichiers sources)
-            //prend tous les mots à la suite et dans l'ordre
-            for (list<NindIndexTest::WordDesc>::const_iterator wordIt = wordsList.begin(); 
-                 wordIt != wordsList.end(); wordIt++) {
-                //le mot 
-                const string word = (*wordIt).word;
-                //le terme
-                list<string> componants;
-                nindIndexTest.split(word, componants);
-                //la cg, position et taille
-                const unsigned char cg = nindIndexTest.getCgIdent((*wordIt).cg);
-                const unsigned int pos = (*wordIt).pos;
-                const unsigned int size = word.size();
-                //indexe le terme
-                nindIndex_indexe.indexe(componants, cg, pos, size);
-            }
-            //ecrit la definition sur le fichier des index locaux
-            nindIndex_indexe.newDoc(0);
             cout<<docsNb<<"\r"<<flush;
+            //la structure d'index locaux se fabrique pour un document complet
+            nindIndex_indexe.newDoc(noDocFb);
+            //lit tous les termes et leur localisation/taille
+            list<string> composants;
+            unsigned char cg;
+            list<pair<unsigned int, unsigned int> > localisation;
+            while (nindIndex_litDumpS2.motSuivant(composants, cg, localisation)) {
+                //indexe le terme
+                nindIndex_indexe.indexe(composants, cg, localisation);
+            }
+            //ejcrit la definition sur le fichier des index locaux
+            nindIndex_indexe.newDoc(0);
         }
         nindIndex_indexe.flush();
         end = clock();
@@ -158,7 +121,6 @@ int main(int argc, char *argv[]) {
         cout<<nindIndex_indexe.localindexAccessNb()<<" mises à jour sur "<<localindexFileName<<endl;
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
         cout<<cpuTimeUsed<<" secondes"<<endl;
-        docsFile.close();
     }
     catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; return false;}
     catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; return false;}

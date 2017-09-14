@@ -20,7 +20,7 @@
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
 #include "NindIndex.h"
-#include <iostream>
+//#include <iostream>
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
@@ -93,7 +93,6 @@ NindIndex::NindIndex(const std::string &fileName,
                   string errorString = 
                     string("NindIndex. In write mode, indirectionBlocSize "
                                 "must be non null. ") + m_fileName;
-                  cerr << errorString << endl;
                   throw BadUseException(errorString);
                 }
                 isOpened = m_file.open("w+b");
@@ -116,7 +115,6 @@ NindIndex::NindIndex(const std::string &fileName,
         }
     }
     catch (FileException &exc) {
-        cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
         throw NindIndexException(m_fileName);
     }
 }
@@ -133,8 +131,16 @@ NindIndex::~NindIndex()
 bool NindIndex::getDefinition(const unsigned int ident,
                               const unsigned int bytesNb)
 {
-    const unsigned long int indirection = getIndirection(ident);
-    if (indirection == 0) return false;
+    unsigned long int indirection = getIndirection(ident);
+    if (indirection == 0) {
+        //le processus ejcrivain se dejmerde par ailleurs
+        if (m_isWriter) return false;   
+        //le processus lecteur met ainsi ah jour sa table d'indirection
+        //ejtablit la carte des indirections  
+        mapIndirection();
+        indirection = getIndirection(ident);
+        if (indirection == 0) return false;
+    }
     m_file.flush();
     m_file.setPos(indirection, SEEK_SET);    //se positionne sur l'indirection de la definition
     m_file.readBuffer(TAILLE_INDIRECTION);
@@ -151,10 +157,9 @@ bool NindIndex::getDefinition(const unsigned int ident,
 ////////////////////////////////////////////////////////////
 //brief Write on file datas of a specified definition yet constructed into write buffer
 //param ident ident of definition
-//param lexiconWordsNb number of words contained in lexicon 
-//param lexiconIdentification unique identification of lexicon 
+//param fileIdentification unique identification of file 
 void NindIndex::setDefinition(const unsigned int ident,
-                              const Identification &lexiconIdentification)
+                              const Identification &fileIdentification)
 {
     //indicateur que l'identification a dejjah ejtej ejcrite
     bool identOk = false;
@@ -199,7 +204,7 @@ void NindIndex::setDefinition(const unsigned int ident,
             unsigned int longueurDefinition = 0;
             //2) trouve une place libre
             //cherche d'abord une place compatible (>= tailleDefinition et < tailleDefinition + m_definitionMinimumSize)
-            identOk = findNewArea(definitionSize, dataSize, lexiconIdentification, offsetDefinition, longueurDefinition);
+            identOk = findNewArea(definitionSize, dataSize, fileIdentification, offsetDefinition, longueurDefinition);
             //3b) ecrit les nouvelles donnees
             m_file.setPos(offsetDefinition, SEEK_SET);    //se positionne sur la dejfinition
             m_file.writeBuffer();                     //ecrit le nouveau buffer
@@ -220,18 +225,22 @@ void NindIndex::setDefinition(const unsigned int ident,
         //<flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
         m_file.createBuffer(TAILLE_IDENTIFICATION);
         m_file.putInt1(FLAG_IDENTIFICATION);
-        m_file.putInt3(lexiconIdentification.lexiconWordsNb);
-        m_file.putInt4(lexiconIdentification.lexiconTime);
-        m_file.putInt4(lexiconIdentification.specificFileIdent);
+        m_file.putInt3(fileIdentification.lexiconWordsNb);
+        m_file.putInt4(fileIdentification.lexiconTime);
+        m_file.putInt4(fileIdentification.specificFileIdent);
         m_file.writeBuffer();                       //ecriture effective sur le fichier  
     }
+//     cerr<<"NindIndex::setDefinition size="<<m_file.getFileSize()<<" ident="<<ident<<" lexiconWordsNb="<<fileIdentification.lexiconWordsNb;
+//     cerr<<" specificFileIdent="<<fileIdentification.specificFileIdent<<endl;
+    Identification identification;
+    getFileIdentification(identification);
 }
 ////////////////////////////////////////////////////////////
 //brief verifie que l'indirection existe et cree un bloc supplementaire si c'est pertinent
 //param ident ident of definition
-//param lexiconIdentification unique identification of lexicon 
+//param fileIdentification unique identification of file 
 void NindIndex::checkExtendIndirection(const unsigned int ident,
-                                       const Identification &lexiconIdentification)
+                                       const Identification &fileIdentification)
 {
     //si la dejfinition n'a pas d'indirection, ajoute un bloc d'indirection
     unsigned long int indirection = getIndirection(ident);
@@ -239,7 +248,7 @@ void NindIndex::checkExtendIndirection(const unsigned int ident,
         //la dejfinition est hors des blocs d'indexation actuels, cree un nouveau bloc d'indirection
         m_file.setPos(-TAILLE_IDENTIFICATION, SEEK_END);       //se positionne sur l'identification
         const unsigned long int blocIndirection = m_file.getPos();
-        addIndirection(lexiconIdentification);  //bloc d'indirection = identification a la fin 
+        addIndirection(fileIdentification);  //bloc d'indirection = identification a la fin 
         pair<unsigned long int, unsigned int> &indirectionBlocPrec = m_indirectionMapping.back();
         //se positionne sur le <addrBlocSuivant> du dernier bloc
         //<flagIndirection=47> <addrBlocSuivant> <nombreIndirection> { indirection }
@@ -272,6 +281,7 @@ unsigned int NindIndex::getFirstIndirectionBlockSize()
 //param identification where unique identification of lexicon is returned */
 void NindIndex::getFileIdentification(Identification &identification)
 {
+    m_file.flush();      //pour faire une lecture sur le fichier physique
     m_file.setPos(-TAILLE_IDENTIFICATION, SEEK_END);       //se positionne sur l'identification
     //<flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
     m_file.readBuffer(TAILLE_IDENTIFICATION);
@@ -296,6 +306,7 @@ unsigned int NindIndex::getMaxIdent() const
 //ejtablit la carte des indirections  
 void NindIndex::mapIndirection()
 {
+    m_indirectionMapping.clear();
     m_file.setPos(0, SEEK_SET);  //positionne en tete du fichier
     while (true) {
         //<flagIndirection=47> <addrBlocSuivant> <nombreIndirection>
@@ -329,7 +340,7 @@ unsigned long int NindIndex::getIndirection(const unsigned int ident)
 }
 ////////////////////////////////////////////////////////////
 //ajoute un bloc d'indirection vide suivi d'une identification a la position courante du fichier
-void NindIndex::addIndirection(const Identification &lexiconIdentification)
+void NindIndex::addIndirection(const Identification &fileIdentification)
 {
     //le fichier est deja positionne au bon endroit
     m_file.createBuffer(TETE_INDIRECTION);
@@ -344,9 +355,9 @@ void NindIndex::addIndirection(const Identification &lexiconIdentification)
     m_file.createBuffer(TAILLE_IDENTIFICATION);
     //<flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
     m_file.putInt1(FLAG_IDENTIFICATION);
-    m_file.putInt3(lexiconIdentification.lexiconWordsNb);
-    m_file.putInt4(lexiconIdentification.lexiconTime);
-    m_file.putInt4(lexiconIdentification.specificFileIdent);
+    m_file.putInt3(fileIdentification.lexiconWordsNb);
+    m_file.putInt4(fileIdentification.lexiconTime);
+    m_file.putInt4(fileIdentification.specificFileIdent);
     m_file.writeBuffer();                               //ecriture effective sur le fichier
 }
 ////////////////////////////////////////////////////////////
@@ -364,11 +375,6 @@ void NindIndex::checkIdentification(const Identification &lexiconIdentification)
     if (lexiconIdentification == Identification(0, 0, 0)) return;
     //si ce n'est pas le fichier lexique qui est verifiej, comparaison de valeurs non spejcifiques
     if (Identification(maxIdent, identification, 0) != lexiconIdentification) {
-        std::cerr << "NindIndex::checkIdentification failed "
-                  << m_fileName << " : "
-                  << maxIdent << "/" << lexiconIdentification.lexiconWordsNb
-                  << " ; " << identification << "/" << lexiconIdentification.lexiconTime
-                  << std::endl;
         throw IncompatibleFileException(m_fileName); 
     }
 }
@@ -428,7 +434,7 @@ void NindIndex::mapEmptySpaces()
 //trouve une nouvelle zone pour les nouvelles donnejs
 bool NindIndex::findNewArea(const unsigned int definitionSize,
                             const unsigned int dataSize,
-                            const Identification &lexiconIdentification,
+                            const Identification &fileIdentification,
                             unsigned long int &offsetDefinition,
                             unsigned int &longueurDefinition)
 {
@@ -470,9 +476,9 @@ bool NindIndex::findNewArea(const unsigned int definitionSize,
             //et l'identification au bout
             //<flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
             m_file.putInt1(FLAG_IDENTIFICATION);  
-            m_file.putInt3(lexiconIdentification.lexiconWordsNb);  
-            m_file.putInt4(lexiconIdentification.lexiconTime); 
-            m_file.putInt4(lexiconIdentification.specificFileIdent); 
+            m_file.putInt3(fileIdentification.lexiconWordsNb);  
+            m_file.putInt4(fileIdentification.lexiconTime); 
+            m_file.putInt4(fileIdentification.specificFileIdent); 
             return true;
         }
     }
@@ -516,12 +522,12 @@ void NindIndex::vacateOldArea(const unsigned long int oldOffsetEntry,
     }
 }
 ////////////////////////////////////////////////////////////
-void NindIndex::dumpEmptyAreas()
-{
-    cout<<"VIDES: "<<m_emptyAreas.size()<<" (";
-//      for (list<pair<unsigned int, unsigned long int> >::iterator it = m_emptyAreas.begin(); it != m_emptyAreas.end(); it++) 
-//          cout<<(*it).first<<" - "<<(*it).second<<", ";
-    cout<<")"<<endl;
-}
+// void NindIndex::dumpEmptyAreas()
+// {
+//     cout<<"VIDES: "<<m_emptyAreas.size()<<" (";
+// //      for (list<pair<unsigned int, unsigned long int> >::iterator it = m_emptyAreas.begin(); it != m_emptyAreas.end(); it++) 
+// //          cout<<(*it).first<<" - "<<(*it).second<<", ";
+//     cout<<")"<<endl;
+// }
 ////////////////////////////////////////////////////////////
 

@@ -50,27 +50,22 @@ public:
     *\param ident ident of term
     *\param type type of term (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY)
     *\param newDocuments list of documents ids + frequencies where term is in 
-    *\param lexiconIdentification unique identification of lexicon */
+    *\param fileIdentification unique identification of file */
     void addDocsToTerm(const unsigned int ident,
                        const AmoseTypes type,
                        const std::list<Document> &newDocuments,
-                       const Identification &lexiconIdentification);
+                       const Identification &fileIdentification);
     
     /**\brief remove doc reference from the specified term
     *\param ident ident of term
     *\param type type of term (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY)
     *\param documentId id of document to remove
-    *\param lexiconIdentification unique identification of lexicon */
+    *\param fileIdentification unique identification of file */
     void removeDocFromTerm(const unsigned int ident,
                            const AmoseTypes type,
                            const unsigned int documentId,
-                           const Identification &lexiconIdentification);
+                           const Identification &fileIdentification);
 
-    /**\brief read specific counts from termindex file. 
-     * Synchronization between writer and readers is up to application 
-     *\param none */
-    void synchronizeInternalCounts();
-    
     /** \brief Read the list of documents where term is indexed
     * frequencies are not returned
     *\param termId ident of term
@@ -96,11 +91,21 @@ public:
     unsigned int getTermOccurrences(const AmoseTypes type);
     
 private:
-    /**\brief write specific counts on termindex file
-     * synchronization between writer and readers is up to application 
-    *\param lexiconIdentification unique identification of lexicon */
-    void saveInternalCounts(const Identification &lexiconIdentification);
+    /**\brief read specific counts from termindex file if needed. 
+     *\param none */
+    void synchronizeInternalCounts();
     
+    /**\brief read specific counts from termindex file. 
+     *\param none */
+    void readInternalCounts();
+    
+    /**\brief write specific counts on termindex file
+    *\param fileIdentification unique identification of file */
+    void saveInternalCounts(const Identification &fileIdentification);
+    
+    //mejmorisation identification fichier
+    Identification m_identification;
+
     std::vector<unsigned int> m_uniqueTermCount;
     std::vector<unsigned int> m_termOccurrences;
     

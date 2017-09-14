@@ -19,7 +19,7 @@
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
 #include "NindRetrolexicon.h"
-#include <iostream>
+//#include <iostream>
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
@@ -96,7 +96,6 @@ NindRetrolexicon::NindRetrolexicon(const string &fileName,
                   string errorString = 
                     string("NindRetrolexicon. In write mode, definitionBlocSize "
                                 "must be non null. ") + m_fileName;
-                  cerr << errorString << endl;
                   throw BadUseException(errorString);
                 }
                 isOpened = m_file.open("w+b");
@@ -118,7 +117,6 @@ NindRetrolexicon::NindRetrolexicon(const string &fileName,
         }
     }
     catch (FileException &exc) {
-        cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
         throw NindIndexException(m_fileName);
     }
 }
@@ -182,7 +180,6 @@ void NindRetrolexicon::addRetroWords(const list<struct RetroWord> &retroWords,
         addIdentification(lexiconIdentification);
     }
     catch (FileException &exc) {
-        cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
         throw NindRetrolexiconException(m_fileName);
     }
 }
@@ -245,17 +242,18 @@ bool NindRetrolexicon::getRetroWord(const unsigned int ident,
             m_file.readBuffer(longueurMotUtf8);
             const string motUtf8 = m_file.getStringAsBytes(longueurMotUtf8);
             retroWord = RetroWord(ident, motUtf8);
+            return true;
         }
         //<flagComposej=31> <identifiantA> <identifiantS>
         else if (flag == FLAG_COMPOSEJ) {
             const unsigned int identifiantA = m_file.getInt3();
             const unsigned int identifiantS = ident + m_file.getSInt3();
             retroWord = RetroWord(ident, identifiantA, identifiantS);
+            return true;
         }
         else throw InvalidFileException("NindRetrolexicon::getRetroWord : " + m_fileName);
     }
     catch (FileException &exc) {
-        cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
         throw NindRetrolexiconException(m_fileName);
     }
 }
@@ -263,6 +261,7 @@ bool NindRetrolexicon::getRetroWord(const unsigned int ident,
 //ejtablit la carte des dejfinitions  
 void NindRetrolexicon::mapDejfinition()
 {
+    m_dejfinitionMapping.clear();
     m_file.setPos(0, SEEK_SET);  //positionne en tete du fichier
     while (true) {
         //<flagDejfinition=43> <addrBlocSuivant> <nombreDejfinitions>
@@ -300,7 +299,15 @@ unsigned long int NindRetrolexicon::getDejfinitionPos(const unsigned int ident)
 //return true if ident was found, false otherwise */
 bool NindRetrolexicon::getDejfinition(const unsigned int ident)
 {
-    const unsigned long int dejfinitionPos = getDejfinitionPos(ident);
+    unsigned long int dejfinitionPos = getDejfinitionPos(ident);
+    if (dejfinitionPos == 0) {
+        //le processus ejcrivain se dejmerde par ailleurs
+        if (m_isWriter) return false;   
+        //le processus lecteur met ainsi ah jour sa table d'indirection
+        //ejtablit la carte des indirections  
+        mapDejfinition();
+        dejfinitionPos = getDejfinitionPos(ident);
+    }
     if (dejfinitionPos == 0) return false;
     m_file.flush();
     //se positionne sur la definition
@@ -367,11 +374,6 @@ void NindRetrolexicon::checkIdentification(const NindIndex::Identification &lexi
     if (lexiconIdentification == NindIndex::Identification(0, 0, 0)) return;
     //si ce n'est pas le fichier lexique qui est verifiej, comparaison de valeurs non spejcifiques
     if (NindIndex::Identification(maxIdent, identification, 0) != lexiconIdentification) {
-        std::cerr << "NindRetrolexicon::checkIdentification failed "
-                  << m_fileName << " : "
-                  << maxIdent << "/" << lexiconIdentification.lexiconWordsNb
-                  << " ; " << identification << "/" << lexiconIdentification.lexiconTime
-                  << std::endl;
         throw IncompatibleFileException(m_fileName); 
     }
 }

@@ -19,7 +19,7 @@
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
 #include "NindTermIndex.h"
-#include <iostream>
+//#include <iostream>
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
@@ -111,7 +111,6 @@ bool NindTermIndex::getTermDef(const unsigned int ident,
         return true;
     }
     catch (FileException &exc) {
-        cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
         throw NindTermIndexException(m_fileName);
     }
 }
@@ -119,21 +118,21 @@ bool NindTermIndex::getTermDef(const unsigned int ident,
 //brief Write a full term definition as as a list of structures
 //param ident ident of term
 //param termDef structure containing all datas of the specified term */
-//param lexiconIdentification unique identification of lexicon */
+//param fileIdentification unique identification of lexicon */
 void NindTermIndex::setTermDef(const unsigned int ident,
                                const list<struct TermCG> &termDef,
-                               const Identification &lexiconIdentification)
+                               const Identification &fileIdentification)
 {
     try {
         //1) verifie que le terme n'est pas en dehors du dernier bloc d'indirection
         //il faut le faire maintenant parce que le buffer d'ecriture est unique
-        checkExtendIndirection(ident, lexiconIdentification);
+        checkExtendIndirection(ident, fileIdentification);
         
         //effacement ?
         if (termDef.size() == 0) {
             //efface dans le fichier
             m_file.createBuffer(0); 
-            setDefinition(ident, lexiconIdentification);
+            setDefinition(ident, fileIdentification);
             return;
         }       
         //2) calcule la taille maximum du buffer d'ecriture
@@ -172,10 +171,9 @@ void NindTermIndex::setTermDef(const unsigned int ident,
         const unsigned int longueurDonnees = m_file.getOutBufferSize() - TETE_DEFINITION;
         m_file.putInt3(longueurDonnees, OFFSET_LONGUEUR);  //la taille dans la trame
         //4) ecrit la definition du terme et gere le fichier
-        setDefinition(ident, lexiconIdentification);
+        setDefinition(ident, fileIdentification);
     }
     catch (FileException &exc) {
-        cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
         throw NindTermIndexException(m_fileName);
     }
 }

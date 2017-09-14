@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////
 #include "NindFile.h"
 #include <string.h>
-#include <iostream>
+//#include <iostream>
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
@@ -574,6 +574,7 @@ void NindFile::writeValue(const unsigned char value,
 void NindFile::readBytes(unsigned char* bytes,
                          const unsigned int bytesNb)
 {
+    //fflush(m_file);
     const unsigned int readSize = fread(bytes, 1, bytesNb, m_file);
     if (readSize != bytesNb) {
         if (feof(m_file)) throw EofException(m_fileName);

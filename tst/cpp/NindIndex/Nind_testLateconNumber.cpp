@@ -2,9 +2,9 @@
 //
 // Description: un test valider l'encodage et le decodage des nombres latecon.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2014
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2014
 //
-// Copyright: 2014-2015 LATECON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2015 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -23,7 +23,7 @@ using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
 static void displayHelp(char* arg0) {
-    cout<<"© l'ATÉCON"<<endl;
+    cout<<"© l'ATEJCON"<<endl;
     cout<<"Programme de test des nombres latecon de NindFile."<<endl;
     cout<<"Crée /tmp/Nind_testLateconNumber.lat."<<endl;
     cout<<"Écrit la taille en tête puis écrit le nombre saisi (N) sous 4 formes :"<<endl;

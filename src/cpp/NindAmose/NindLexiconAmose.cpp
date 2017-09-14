@@ -101,6 +101,7 @@ bool NindLexiconAmose::getWord(const unsigned int wordId,
     else type = MULTI_TERM;
     list<string>::const_iterator itcomp = components.begin();
     string component = (*itcomp++);
+    namedEntity = "";
     if (component == "§") {
         if (components.size() < 3) throw NindLexiconException("named entity error");
         type = NAMED_ENTITY;

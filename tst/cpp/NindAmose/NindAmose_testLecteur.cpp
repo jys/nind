@@ -18,15 +18,13 @@
 #include "NindAmose/NindTermAmose.h"
 #include "NindAmose/NindLocalAmose.h"
 #include "NindAmose/NindLexiconAmose.h"
+#include "NindAmose_litTexteAnalysej.h"
+#include "NindIndex/NindDate.h"
 #include "NindExceptions.h"
-#include <time.h>
 #include <string>
 #include <list>
-#include <set>
 #include <iostream>
 #include <iomanip> 
-#include <fstream>
-#include <sstream>
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
@@ -46,12 +44,6 @@ static void displayHelp(char* arg0) {
     cout<<"ex :   "<<arg0<<" sample_fre.xml.mult.xml.txt"<<endl;
 }
 ////////////////////////////////////////////////////////////
-static string date(const unsigned int identification);
-static void analyzeWord(const string &word, 
-                        string &lemma, 
-                        AmoseTypes &type, 
-                        string &entitejNommeje);
-////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
     setlocale( LC_ALL, "French" );
     if (argc<2) {displayHelp(argv[0]); return false;}
@@ -62,7 +54,6 @@ int main(int argc, char *argv[]) {
         //calcule les noms des fichiers lexique et inverse et index locaux
         const string incompleteFileName = docsFileName.substr(0, docsFileName.find('.'));
         const string lexiconindexFileName = incompleteFileName + ".lexiconindex";
-        const string retrolexiconindexFileName = incompleteFileName + ".retrolexiconindex";
         const string termindexFileName = incompleteFileName + ".termindex";
         const string localindexFileName = incompleteFileName + ".localindex";
         //pour calculer le temps consomme
@@ -70,64 +61,47 @@ int main(int argc, char *argv[]) {
         double cpuTimeUsed;
         /////////////////////////////////////
         //le lexique lecteur
-        NindLexiconAmose nindLexicon(lexiconindexFileName, false);
-        const NindIndex::Identification identification = nindLexicon.getIdentification();
+        NindLexiconAmose nindLexiconAmose(lexiconindexFileName, false);
+        const NindIndex::Identification identification = nindLexiconAmose.getIdentification();
         //affiche les identifiants du lexique
         cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;
-        cout<<" ("<<date(identification.lexiconTime)<<")"<<endl;
+        cout<<" ("<<NindDate::date(identification.lexiconTime)<<")"<<endl;
         //le fichier inverse lecteur
-        NindTermAmose nindTermIndex(termindexFileName, false, identification);
+        NindTermAmose nindTermAmose(termindexFileName, false, identification);
         //le fichier des index locaux
-        NindLocalAmose nindLocalIndex(localindexFileName, false, identification);
+        NindLocalAmose nindLocalAmose(localindexFileName, false, identification);
         unsigned int nbGetLocal = 0;
         unsigned int nbGetTerm = 0;
         unsigned int nbGetLex = 0;
-        string dumpLine;
-        //ouvre le fichier dump qui sert de rejfejrence
-        ifstream docsFile(docsFileName.c_str(), ifstream::in);
-        if (docsFile.fail()) throw OpenFileException(docsFileName);
-        while (getline(docsFile, dumpLine)) {
-            //lit 1 ligne = 1 document
-            if (docsFile.fail()) throw FormatFileException(docsFileName);
-            if (dumpLine.empty()) continue;   //evacue ainsi les lignes vides
-            stringstream sdumpLine(dumpLine);
-            //10170346  Location.LOCATION:Italie 280,6 création 288,8 création_parti 288,19
-            unsigned int noDoc;
-            string word;
-            unsigned int position, taille;
-            char comma;
-            sdumpLine >> noDoc;
+        //lit le fichier dump de documents
+        NindAmose_litTexteAnalysej nindAmose_litTexteAnalysej(docsFileName);
+        unsigned int noDoc;
+        while (nindAmose_litTexteAnalysej.documentSuivant(noDoc)) {
+            cout<<noDoc<<"\r"<<flush;
             //recupere l'index local du doc             
             list<NindLocalIndex::Term> localDef;
-            const bool trouvej = nindLocalIndex.getLocalDef(noDoc, localDef);
-            nbGetLocal++;
-            if (!trouvej) {
-                cerr<<"document n° "<<noDoc<<" INCONNU dans "<<localindexFileName<<endl;
-                continue;
-            }
+            const bool trouvej = nindLocalAmose.getLocalDef(noDoc, localDef);
             list<NindLocalIndex::Term>::const_iterator localDefIt = localDef.begin();
-            //analyse chaque terme
-            while (sdumpLine >> word >> position >> comma >> taille) {
-                //le terme
-                string lemma;
-                AmoseTypes type;
-                string entitejNommeje;
-                analyzeWord(word, lemma, type, entitejNommeje);
-                //si le lemme est vide, raf
-                if (lemma.empty()) continue;
+            nbGetLocal++;
+            //lit tous les termes et leur localisation/taille
+            string lemme;
+            AmoseTypes type;
+            string entitejNommeje;
+            unsigned int position, taille;
+            while (nindAmose_litTexteAnalysej.motSuivant(lemme, type, entitejNommeje, position, taille)) {
                 //recupere l'id du terme dans le lexique, l'ajoute eventuellement
                 nbGetLex++;
-                const unsigned int id = nindLexicon.getWordId(lemma, type, entitejNommeje);
+                const unsigned int id = nindLexiconAmose.getWordId(lemme, type, entitejNommeje);
                 if (id == 0) {
-                    cerr<<word<<" INCONNU dans "<<lexiconindexFileName<<endl;
+                    cerr<<lemme<<" INCONNU dans "<<lexiconindexFileName<<endl;
                     continue;
                 }
                 //rejcupehre la liste des documents ouh est indexej ce terme
                 nbGetTerm++;
                 list<unsigned int> documentIds;
-                const bool trouvej = nindTermIndex.getDocList(id, documentIds);
+                const bool trouvej = nindTermAmose.getDocList(id, documentIds);
                 if (!trouvej) {
-                    cerr<<word<<" INCONNU dans "<<termindexFileName<<endl;
+                    cerr<<lemme<<" INCONNU dans "<<termindexFileName<<endl;
                     continue;
                 }
                 //le doc doit estre dans la liste
@@ -137,7 +111,7 @@ int main(int argc, char *argv[]) {
                     itdoc++;
                 }
                 if (itdoc == documentIds.end()) {
-                    cerr<<word<<" INCONNU dans document n° "<<noDoc<<endl;
+                    cerr<<lemme<<" INCONNU dans document n° "<<noDoc<<endl;
                     continue;
                 }
                 //vejrifie la validitej de la position
@@ -145,15 +119,13 @@ int main(int argc, char *argv[]) {
                 const list<NindLocalIndex::Localisation> &localisations = term.localisation;
                 const NindLocalIndex::Localisation &localisation =localisations.front();
                 if (term.term != id || localisation.position != position || localisation.length != taille) { 
-                    cerr<<word<<" ("<<position<<", "<<taille<<") INCONNU dans document n° "<<noDoc<<endl;
+                    cerr<<lemme<<" ("<<position<<", "<<taille<<") INCONNU dans document n° "<<noDoc<<endl;
                     throw FormatFileException(docsFileName);
                     continue;
                 }                
+                
             }
-            cout<<noDoc<<"\r"<<flush;
-            //if (noDoc ==2) break;
-       }
-        docsFile.close();
+        }
         end = clock();
         cout<<setw(8)<<setfill(' ')<<nbGetLex<<" accès à "<<lexiconindexFileName<<endl;
         cout<<setw(8)<<setfill(' ')<<nbGetTerm<<" accès à "<<termindexFileName<<endl;
@@ -164,36 +136,5 @@ int main(int argc, char *argv[]) {
     catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; throw; return false;}
     catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; throw; return false;}
     catch (...) {cerr<<"EXCEPTION unknown"<< endl; throw; return false; }
-}
-////////////////////////////////////////////////////////////
-static string date(const unsigned int identification)
-{
-    const time_t time = (time_t) identification;
-    struct tm * timeinfo = localtime (&time);
-    char buffer [80];
-    strftime (buffer,80,"%Y-%m-%d %X",timeinfo);
-    return string(buffer);
-}
-////////////////////////////////////////////////////////////
-static void analyzeWord(const string &word, 
-                        string &lemma, 
-                        AmoseTypes &type, 
-                        string &entitejNommeje)
-{
-    //si c'est une entitej nommeje, la sejpare en 2
-    const size_t pos = word.find(':');
-    if (pos != string::npos) {
-        entitejNommeje = word.substr(0, pos);
-        lemma = word.substr(pos +1);
-        type = NAMED_ENTITY;
-    }
-    else if (word.find('_') != string::npos) {
-        lemma = word;
-        type = MULTI_TERM;
-    }
-    else {
-        lemma = word;
-        type = SIMPLE_TERM;
-    }
 }
 ////////////////////////////////////////////////////////////

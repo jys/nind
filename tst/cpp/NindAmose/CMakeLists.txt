@@ -1,4 +1,18 @@
 include_directories(${CMAKE_SOURCE_DIR}/src/cpp/)
+include_directories(${CMAKE_SOURCE_DIR}/tst/cpp/)
+
+########### next target ###############
+SET(NindAmose_litTexteAnalysej_LIB_SRCS
+  NindAmose_litTexteAnalysej.h
+  NindAmose_litTexteAnalysej.cpp
+)
+
+add_library(NindAmose_litTexteAnalysej SHARED ${NindAmose_litTexteAnalysej_LIB_SRCS})
+
+target_link_libraries(NindAmose_litTexteAnalysej)
+
+set_target_properties(NindAmose_litTexteAnalysej PROPERTIES VERSION 1.1.0 SOVERSION 1)
+install(TARGETS NindAmose_litTexteAnalysej DESTINATION lib)
 
 ########### next target ###############
 
@@ -8,7 +22,7 @@ SET(NindAmose_indexeCorpus_SRCS
 
 add_executable(NindAmose_indexeCorpus ${NindAmose_indexeCorpus_SRCS})
 
-target_link_libraries(NindAmose_indexeCorpus NindIndex NindRetrolexicon NindBasics NindAmose)
+target_link_libraries(NindAmose_indexeCorpus NindAmose_litTexteAnalysej NindIndexTest NindIndex NindRetrolexicon NindBasics NindAmose)
 
 install(TARGETS NindAmose_indexeCorpus DESTINATION bin)
 
@@ -32,8 +46,20 @@ SET(NindAmose_testLecteur_SRCS
 
 add_executable(NindAmose_testLecteur ${NindAmose_testLecteur_SRCS})
 
-target_link_libraries(NindAmose_testLecteur NindIndex NindRetrolexicon NindBasics NindAmose)
+target_link_libraries(NindAmose_testLecteur NindAmose_litTexteAnalysej NindIndexTest NindIndex NindRetrolexicon NindBasics NindAmose)
 
 install(TARGETS NindAmose_testLecteur DESTINATION bin)
+
+########### next target ###############
+
+SET(NindAmose_testSynchro_SRCS
+   NindAmose_testSynchro.cpp
+)
+
+add_executable(NindAmose_testSynchro ${NindAmose_testSynchro_SRCS})
+
+target_link_libraries(NindAmose_testSynchro NindAmose_litTexteAnalysej NindIndexTest NindIndex NindRetrolexicon NindBasics NindAmose)
+
+install(TARGETS NindAmose_testSynchro DESTINATION bin)
 
 ########### next target ###############

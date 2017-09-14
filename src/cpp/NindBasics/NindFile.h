@@ -50,6 +50,10 @@ public:
     *\return current size of file */
     inline long int getFileSize() const;
 
+    /**\brief get unique identifiant of file
+    *\return identifiant of file */
+    inline long int getFileIdent() const;
+
     /**\brief Set file on relative position
     *\param offset Number of bytes to offset from origin
     *\param origin Position from where offset is added :
@@ -227,6 +231,13 @@ inline long int NindFile::getPos() const
 inline long int NindFile::getFileSize() const
 {
     return m_fileSize;
+}
+////////////////////////////////////////////////////////////
+//brief get unique identifiant of file
+//return identifiant of file */
+inline long int NindFile::getFileIdent() const
+{
+    return (long int)m_file;
 }
 ////////////////////////////////////////////////////////////
 //brief Set file on relative position

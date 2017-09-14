@@ -59,7 +59,7 @@ using namespace std;
 //param fileName absolute path file name
 //param isLocalIndexWriter true if localIndex writer, false if localIndex reader  
 //param lexiconIdentification unique identification of lexicon 
-//param indirectionEntryNb number of entries in a single indirection block */
+//param indirectionBlocSize number of entries in a single indirection block */
 NindLocalIndex::NindLocalIndex(const std::string &fileName,
                                const bool isLocalIndexWriter,
                                const Identification &lexiconIdentification,
@@ -164,10 +164,10 @@ bool NindLocalIndex::getTermIdents(const unsigned int ident,
 //brief Write a full document as a list of terms whith their localisations
 //param ident ident of doc
 //param localDef structure containing all datas of the specified doc. empty when deletion
-//param lexiconIdentification unique identification of lexicon */
+//param fileIdentification unique identification of lexicon */
 void NindLocalIndex::setLocalDef(const unsigned int ident,
                                  const std::list<struct Term> &localDef,
-                                 const Identification &lexiconIdentification)
+                                 const Identification &fileIdentification)
 {
     try {
         //est-ce que ce document est dejah connu ?
@@ -179,7 +179,7 @@ void NindLocalIndex::setLocalDef(const unsigned int ident,
         }
         const unsigned int identInt = (*itident).second;
         //ejtablit la nouvelle identification
-        m_identification = lexiconIdentification;
+        m_identification = fileIdentification;
         m_identification.specificFileIdent = m_currIdent;
         //1) verifie que l'identInt n'est pas en dehors du dernier bloc d'indirection
         //il faut le faire maintenant parce que le buffer d'ecriture est unique
@@ -241,9 +241,26 @@ void NindLocalIndex::setLocalDef(const unsigned int ident,
 ////////////////////////////////////////////////////////////
 //brief number of documents in the collection 
 //return number of documents in the collection */
-unsigned int NindLocalIndex::getDocCount() const
+unsigned int NindLocalIndex::getDocCount() 
 {
+    synchronizeInternalCounts();
     return m_docIdTradExtInt.size();
+}
+////////////////////////////////////////////////////////////
+//brief read specific counts from localindex file. 
+//param none */
+void NindLocalIndex::synchronizeInternalCounts()
+{
+    //regarde si le fichier a changej depuis le dernier calcul de traduction des identifiants
+    Identification identification;
+    getFileIdentification(identification);
+    //si pas de changement, raf
+    if (identification == m_identification) return;
+    //met ah jour l'identification
+    m_identification = identification;
+    //met ah jour la map
+    //initialise la map de traduction des id externes -> id internes uniquement pour les nouveaux docs
+    fillDocIdTradExtInt(m_currIdent +1, m_identification.specificFileIdent +1);
 }
 ////////////////////////////////////////////////////////////
 //Rejcupehre l'identifiant interne 
@@ -255,15 +272,7 @@ unsigned int NindLocalIndex::getInternalIdent(const unsigned int ident)
     if (itident != m_docIdTradExtInt.end()) return (*itident).second;
     //l'identifiant externe n'est pas connu
     //regarde si le fichier a changej depuis le dernier calcul de traduction des identifiants
-    Identification identification;
-    getFileIdentification(identification);
-    //si pas de changement, identifiant inconnu, retourne 0
-    if (identification == m_identification) return 0;
-    //met ah jour l'identification
-    m_identification = identification;
-    //met ah jour la map
-    //initialise la map de traduction des id externes -> id internes
-    fillDocIdTradExtInt(m_currIdent +1, m_identification.specificFileIdent +1);
+    synchronizeInternalCounts();
     //cherche l'identifiant dans la map courante
     itident = m_docIdTradExtInt.find(ident);
     //si l'identifiant externe est connu, retourne l'identifiant interne

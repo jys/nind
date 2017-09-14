@@ -35,11 +35,14 @@ NindTermAmose::NindTermAmose(const string &fileName,
                   isTermIndexWriter, 
                   lexiconIdentification,
                   indirectionBlocSize),
+    m_identification(),
     m_uniqueTermCount({0, 0, 0, 0}),
     m_termOccurrences({0, 0, 0, 0})
 {
+    //mejmorise l'identification du fichier
+    getFileIdentification(m_identification);
     //commence par restaurer les compteurs s'ils existent sur le fichier termindex
-    synchronizeInternalCounts();
+    readInternalCounts();
 }
 ////////////////////////////////////////////////////////////
 NindTermAmose::~NindTermAmose()
@@ -50,11 +53,11 @@ NindTermAmose::~NindTermAmose()
 //param ident ident of term
 //param type type of term (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY) 
 //param newDocuments list of documents ids + frequencies where term is in 
-//param lexiconIdentification unique identification of lexicon */
+//param fileIdentification unique identification of file */
 void NindTermAmose::addDocsToTerm(const unsigned int ident,
                                   const AmoseTypes type,
                                   const list<Document> &newDocuments,
-                                  const Identification &lexiconIdentification)
+                                  const Identification &fileIdentification)
 {
     //rejcupehre la dejfinition de ce terme
     list<TermCG> termDef;
@@ -99,21 +102,24 @@ void NindTermAmose::addDocsToTerm(const unsigned int ident,
         //increjmente la frejquence globale de ce terme
         termcg.frequency += frequency;
     }
+    //ejtablit la nouvelle identification
+    m_identification = fileIdentification;
+    m_identification.specificFileIdent = m_termOccurrences[ALL];
     //ejcrit le rejsultat sur le fichier
-    setTermDef(ident, termDef, lexiconIdentification);  
+    setTermDef(ident, termDef, m_identification);  
     //ejcrit les novelles valeurs des compteurs
-    saveInternalCounts(lexiconIdentification);
+    saveInternalCounts(m_identification);
 }
 ////////////////////////////////////////////////////////////
 //brief remove doc reference from the specified term
 //param ident ident of term
 //param type type of term (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY) 
 //param documentId id of document to remove
-//param lexiconIdentification unique identification of lexicon */
+//param fileIdentification unique identification of file */
 void NindTermAmose::removeDocFromTerm(const unsigned int ident,
                                       const AmoseTypes type,
                                       const unsigned int documentId,
-                                      const Identification &lexiconIdentification)
+                                      const Identification &fileIdentification)
 {
     //rejcupehre la dejfinition de ce terme
     list<TermCG> termDef;
@@ -141,38 +147,17 @@ void NindTermAmose::removeDocFromTerm(const unsigned int ident,
             m_uniqueTermCount[ALL] -=1;
             termDef.clear();        
         }
+        //ejtablit la nouvelle identification
+        m_identification = fileIdentification;
+        m_identification.specificFileIdent = m_termOccurrences[ALL];
         //terminej, ejcrit la nouvelle dejfinition
-        setTermDef(ident, termDef, lexiconIdentification);  
+        setTermDef(ident, termDef, m_identification);  
         //ejcrit les novelles valeurs des compteurs
-        saveInternalCounts(lexiconIdentification);
+        saveInternalCounts(m_identification);
         return;
     }
     //si document pas trouvej, rien n'est fait
 }   
-////////////////////////////////////////////////////////////
-//brief read specific counts from termindex file. 
-//Synchronization between writer and readers is up to application */
-    void NindTermAmose::synchronizeInternalCounts()
-{
-    //rejcupehre la dejfinition de ce terme
-    list<TermCG> termDef;
-    getTermDef(0, termDef);
-    //si le terme n'existe pas, on ne fait rien
-    if (termDef.size() == 0) return;
-    //travaille sur l'unique ejlejment
-    CountsStruct &countsStruct = termDef.front();
-    list<Counts> &counts = countsStruct.documents;
-    //remplit les compteurs avec la structure
-    list<Counts>::const_iterator itcount = counts.begin();
-    m_uniqueTermCount[ALL] = (*itcount).ident;
-    m_termOccurrences[ALL] = (*itcount++).frequency;
-    m_uniqueTermCount[SIMPLE_TERM] = (*itcount).ident;
-    m_termOccurrences[SIMPLE_TERM] = (*itcount++).frequency;
-    m_uniqueTermCount[MULTI_TERM] = (*itcount).ident;
-    m_termOccurrences[MULTI_TERM] = (*itcount++).frequency;
-    m_uniqueTermCount[NAMED_ENTITY] = (*itcount).ident;
-    m_termOccurrences[NAMED_ENTITY] = (*itcount++).frequency;
-}
 ////////////////////////////////////////////////////////////
 //brief Read the list of documents where term is indexed
 //frequencies are not returned
@@ -214,6 +199,7 @@ unsigned int NindTermAmose::getDocFreq(const unsigned int termId)
 //return number of unique terms of specified type into the base */
 unsigned int NindTermAmose::getUniqueTermCount(const AmoseTypes type)
 {
+    synchronizeInternalCounts();
     return m_uniqueTermCount[type];
 }
 ////////////////////////////////////////////////////////////
@@ -222,12 +208,55 @@ unsigned int NindTermAmose::getUniqueTermCount(const AmoseTypes type)
 //return number  of terms of specified type into the base */
 unsigned int NindTermAmose::getTermOccurrences(const AmoseTypes type)
 {
+    synchronizeInternalCounts();
     return m_termOccurrences[type];
+}
+////////////////////////////////////////////////////////////
+//brief read specific counts from termindex file if needed. 
+    void NindTermAmose::synchronizeInternalCounts()
+{
+    //l'ejcrivain est par dejfinition dejjah synchronisej
+    if (m_isWriter) return;
+    //le lecteur est ah synchroniser que s'il y a eu changement
+    //regarde si le fichier a changej depuis la derniehre mise ah jour
+    Identification identification;
+    getFileIdentification(identification);
+//     cerr<<"m_identification.specificFileIdent="<<m_identification.specificFileIdent;
+//     cerr<<" identification.specificFileIdent="<<identification.specificFileIdent<<endl;
+    //si pas de changement, raf
+    if (identification == m_identification) return;
+    //met ah jour l'identification
+    m_identification = identification; 
+    readInternalCounts();
+}
+
+////////////////////////////////////////////////////////////
+//brief read specific counts from termindex file. 
+    void NindTermAmose::readInternalCounts()
+{
+    //rejcupehre la dejfinition de ce terme
+    list<TermCG> termDef;
+    getTermDef(0, termDef);
+    //si le terme n'existe pas, on ne fait rien
+    if (termDef.size() == 0) return;
+    //travaille sur l'unique ejlejment
+    CountsStruct &countsStruct = termDef.front();
+    list<Counts> &counts = countsStruct.documents;
+    //remplit les compteurs avec la structure
+    list<Counts>::const_iterator itcount = counts.begin();
+    m_uniqueTermCount[ALL] = (*itcount).ident;
+    m_termOccurrences[ALL] = (*itcount++).frequency;
+    m_uniqueTermCount[SIMPLE_TERM] = (*itcount).ident;
+    m_termOccurrences[SIMPLE_TERM] = (*itcount++).frequency;
+    m_uniqueTermCount[MULTI_TERM] = (*itcount).ident;
+    m_termOccurrences[MULTI_TERM] = (*itcount++).frequency;
+    m_uniqueTermCount[NAMED_ENTITY] = (*itcount).ident;
+    m_termOccurrences[NAMED_ENTITY] = (*itcount++).frequency;
 }
 ////////////////////////////////////////////////////////////
 //brief write specific counts on termindex file
 //synchronization between writer and readers is up to application */
-    void NindTermAmose::saveInternalCounts(const Identification &lexiconIdentification)
+    void NindTermAmose::saveInternalCounts(const Identification &identification)
 {
     //les compteurs sont sauvegardejs sur le fichier termindex comme des termes
     list<CountsStruct> termDef;
@@ -242,6 +271,6 @@ unsigned int NindTermAmose::getTermOccurrences(const AmoseTypes type)
     counts.push_back(Counts(m_uniqueTermCount[MULTI_TERM], m_termOccurrences[MULTI_TERM]));
     counts.push_back(Counts(m_uniqueTermCount[NAMED_ENTITY], m_termOccurrences[NAMED_ENTITY]));
     //ejcrit comme term 0
-    setTermDef(0, termDef, lexiconIdentification);
+    setTermDef(0, termDef, identification);
 }
 ////////////////////////////////////////////////////////////

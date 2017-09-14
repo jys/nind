@@ -1,13 +1,25 @@
 
 include_directories(${CMAKE_SOURCE_DIR}/src/cpp/)
 
+########### next target ###############
+SET(NindIndex_litDumpS2_LIB_SRCS
+  NindIndex_litDumpS2.h
+  NindIndex_litDumpS2.cpp
+)
+
+add_library(NindIndex_litDumpS2 SHARED ${NindIndex_litDumpS2_LIB_SRCS})
+
+target_link_libraries(NindIndex_litDumpS2)
+
+set_target_properties(NindIndex_litDumpS2 PROPERTIES VERSION 1.1.0 SOVERSION 1)
+install(TARGETS NindIndex_litDumpS2 DESTINATION lib)
 
 ########### next target ###############
 SET(NindIndexTest_LIB_SRCS
-  NindIndexTest.h
-  NindIndexTest.cpp
   NindDate.h
   NindDate.cpp
+  NindFichiers.h
+  NindFichiers.cpp
 )
 
 add_library(NindIndexTest SHARED ${NindIndexTest_LIB_SRCS})
@@ -31,37 +43,15 @@ set_target_properties(NindIndex_indexe PROPERTIES VERSION 1.1.0 SOVERSION 1)
 install(TARGETS NindIndex_indexe DESTINATION lib)
 
 ########### next target ###############
-SET(NindTermIndex_testEcrivain_SRCS
-   NindTermIndex_testEcrivain.cpp
-)
-
-add_executable(NindTermIndex_testEcrivain ${NindTermIndex_testEcrivain_SRCS})
-
-target_link_libraries(NindTermIndex_testEcrivain NindIndexTest NindIndex NindRetrolexicon NindLexicon NindBasics)
-
-install(TARGETS NindTermIndex_testEcrivain DESTINATION bin)
-
-########### next target ###############
 SET(NindIndex_testEcrivain_SRCS
    NindIndex_testEcrivain.cpp
 )
 
 add_executable(NindIndex_testEcrivain ${NindIndex_testEcrivain_SRCS})
 
-target_link_libraries(NindIndex_testEcrivain NindIndex_indexe NindIndexTest NindIndex NindRetrolexicon NindLexicon NindBasics)
+target_link_libraries(NindIndex_testEcrivain NindIndex_indexe NindIndex_litDumpS2 NindIndexTest NindIndex NindRetrolexicon NindLexicon NindBasics)
 
 install(TARGETS NindIndex_testEcrivain DESTINATION bin)
-
-########### next target ###############
-SET(NindTermIndex_testLecteur_SRCS
-   NindTermIndex_testLecteur.cpp
-)
-
-add_executable(NindTermIndex_testLecteur ${NindTermIndex_testLecteur_SRCS})
-
-target_link_libraries(NindTermIndex_testLecteur NindIndexTest NindIndex NindRetrolexicon NindLexicon NindBasics)
-
-install(TARGETS NindTermIndex_testLecteur DESTINATION bin)
 
 ########### next target ###############
 SET(NindIndex_testLecteur_SRCS
@@ -70,7 +60,7 @@ SET(NindIndex_testLecteur_SRCS
 
 add_executable(NindIndex_testLecteur ${NindIndex_testLecteur_SRCS})
 
-target_link_libraries(NindIndex_testLecteur NindIndexTest NindIndex NindRetrolexicon NindLexicon NindBasics)
+target_link_libraries(NindIndex_testLecteur NindIndex_indexe NindIndex_litDumpS2 NindIndexTest NindIndex NindRetrolexicon NindLexicon NindBasics)
 
 install(TARGETS NindIndex_testLecteur DESTINATION bin)
 
@@ -86,37 +76,15 @@ target_link_libraries(Nind_testLateconNumber NindBasics)
 install(TARGETS Nind_testLateconNumber DESTINATION bin)
 
 ########### next target ###############
-SET(Nind_testNumbersInLocalIndexes_SRCS
-   Nind_testNumbersInLocalIndexes.cpp
+SET(NindIndex_testSynchro_SRCS
+   NindIndex_testSynchro.cpp
 )
 
-add_executable(Nind_testNumbersInLocalIndexes ${Nind_testNumbersInLocalIndexes_SRCS})
+add_executable(NindIndex_testSynchro ${NindIndex_testSynchro_SRCS})
 
-target_link_libraries(Nind_testNumbersInLocalIndexes NindIndexTest NindLexicon NindBasics)
+target_link_libraries(NindIndex_testSynchro NindIndex_indexe NindIndex_litDumpS2 NindIndexTest NindIndex NindRetrolexicon NindLexicon NindBasics)
 
-install(TARGETS Nind_testNumbersInLocalIndexes DESTINATION bin)
-
-########### next target ###############
-SET(NindLexiconIndex_testEcrivain_SRCS
-   NindLexiconIndex_testEcrivain.cpp
-)
-
-add_executable(NindLexiconIndex_testEcrivain ${NindLexiconIndex_testEcrivain_SRCS})
-
-target_link_libraries(NindLexiconIndex_testEcrivain NindIndexTest NindIndex NindRetrolexicon NindBasics)
-
-install(TARGETS NindLexiconIndex_testEcrivain DESTINATION bin)
-
-########### next target ###############
-SET(NindLexiconIndex_testLecteur_SRCS
-   NindLexiconIndex_testLecteur.cpp
-)
-
-add_executable(NindLexiconIndex_testLecteur ${NindLexiconIndex_testLecteur_SRCS})
-
-target_link_libraries(NindLexiconIndex_testLecteur NindIndexTest NindIndex NindRetrolexicon NindBasics)
-
-install(TARGETS NindLexiconIndex_testLecteur DESTINATION bin)
+install(TARGETS NindIndex_testSynchro DESTINATION bin)
 
 ########### next target ###############
 

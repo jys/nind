@@ -1,8 +1,9 @@
 //
-// C++ Implementation: NindAmose_indexeCorpus
+// C++ Implementation: NindAmose_testSynchro
 //
-// Description: un programme pour remplir le lexique, le fichier inverse et le fichier des index locaux
-// a partir d'un corpus deja syntaxiquement analyse issu d'un dump Lucene.
+// Description: Un corpus dejjah analysej par Lima est indexej. Intercallejs dans l'indexation des 
+// fichiers ejcrivains, des lectures sont faites par des fichiers lecteurs pour vejrifier que la
+// synchronicitej des lecteurs sur l'ejcrivain est bien assureje par le fichier physique.
 //
 // Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
@@ -32,6 +33,8 @@ using namespace std;
 static void displayHelp(char* arg0) {
     cout<<"© l'ATEJCON"<<endl;
     cout<<"Programme d'indexation d'un corpus déjà syntaxiquement analysé par Lima."<<endl;
+    cout<<"À chaque indexation par un fichier écrivain, une lecture est faite sur"<<endl;
+    cout<<"le fichier lecteur associé pour valider la synchronisation écrivain-lecteurs"<<endl;
     cout<<"Le corpus est un fichier texte avec une ligne par document :"<<endl;
     cout<<"<n° document>  { <terme> <localisation>,<taille> }"<<endl;
     cout<<"Si aucun fichier n'existe, les fichiers sont créés."<<endl;
@@ -45,7 +48,8 @@ static void displayHelp(char* arg0) {
 }
 ////////////////////////////////////////////////////////////
 #define NO_CG 0
-#define TERMS_BUFFER_SIZE 200000
+#define RED "\033[1;31m"
+#define BLA "\033[0m"
 ////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
     setlocale( LC_ALL, "French" );
@@ -59,7 +63,7 @@ int main(int argc, char *argv[]) {
     const unsigned int lexiconEntryNb = atoi(lexiconEntryNbStr.c_str());
     const unsigned int termindexEntryNb = atoi(termindexEntryNbStr.c_str());
     const unsigned int localindexEntryNb = atoi(localindexEntryNbStr.c_str());
-
+    
     try {
         //calcule les noms des fichiers lexique et inverse et index locaux
         const string incompleteFileName = docsFileName.substr(0, docsFileName.find('.'));
@@ -68,8 +72,8 @@ int main(int argc, char *argv[]) {
         const string termindexFileName = incompleteFileName + ".termindex";
         const string localindexFileName = incompleteFileName + ".localindex";
         //vejrifie que le systehme de fichiers est cohejrent
-        if (!NindFichiers::fichiersCohejrents(list<string>({ lexiconFileName, retrolexiconFileName, termindexFileName, localindexFileName }), false)) {
-            cout<<"Des anciens fichiers existent et sont incohérents!"<<endl;
+        if (!NindFichiers::fichiersCohejrents(list<string>({ lexiconFileName, retrolexiconFileName, termindexFileName, localindexFileName }), true)) {
+            cout<<"Des anciens fichiers existent!"<<endl;
             cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".*index"<<endl;
             return false;
         }
@@ -84,30 +88,30 @@ int main(int argc, char *argv[]) {
         NindIndex::Identification identification = nindLexiconAmose.getIdentification();
         cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;
         cout<<" ("<<NindDate::date(identification.lexiconTime)<<")"<<endl;
-        //le fichier inverse ecrivain
+        //les fichiers ejcrivains des termes et des index locaux 
         NindTermAmose nindTermAmose(termindexFileName, true, identification, termindexEntryNb);
-        //le fichier des index locaux
         NindLocalAmose nindLocalAmose(localindexFileName, true, identification, localindexEntryNb);
+        //les fichiers lecteurs lexique, des termes et des index locaux
+        NindLexiconAmose nindLexiconAmoseLect(lexiconFileName, false);
+        NindTermAmose nindTermAmoseLect(termindexFileName, false, identification);
+        NindLocalAmose nindLocalAmoseLect(localindexFileName, false, identification);
         //lit le fichier dump de documents
         NindAmose_litTexteAnalysej nindAmose_litTexteAnalysej(docsFileName);
-        unsigned int docsNb =0;
-        unsigned int termsNb =0;
-        unsigned int nbMajTerm =0;
-        unsigned int nbMajLex = 0;
-        //buferisation des termes
-        map<unsigned int, pair<AmoseTypes, list<NindTermIndex::Document> > > bufferTermes;
+        unsigned int docsNb =0, termsNb =0, nbMajTerm =0, nbMajLex = 0;
+        unsigned int nbLexNok = 0, nbLexOk = 0, nbTermNok = 0, nbTermOk = 0, nbLocalNok = 0, nbLocalOk = 0;
+        unsigned int nbRetrolexNok = 0, nbRetrolexOk = 0, nbComptNok = 0, nbComptOk = 0;
+        unsigned int nbNbdocNok = 0, nbNbdocOk = 0;
         unsigned int noDoc;
         while (nindAmose_litTexteAnalysej.documentSuivant(noDoc)) {
             docsNb++;
             cout<<noDoc<<"\r"<<flush;
             //la structure d'index locaux se fabrique pour un document complet
             list<NindLocalIndex::Term> localDef;
-            //bufferisation des termes pour un mesme document
-            map<unsigned int, pair<AmoseTypes, unsigned int> > bufferTermesParDoc;
+            //le no de doc avec la freq ah 1
+            const list<NindTermIndex::Document> newDocuments ={ NindTermIndex::Document(noDoc, 1) };
             //lit tous les termes et leur localisation/taille
-            string lemme;
+            string lemme, entitejNommeje;
             AmoseTypes type;
-            string entitejNommeje;
             unsigned int position, taille;
             while (nindAmose_litTexteAnalysej.motSuivant(lemme, type, entitejNommeje, position, taille)) {
                 //recupere l'id du terme dans le lexique, l'ajoute eventuellement
@@ -116,62 +120,56 @@ int main(int argc, char *argv[]) {
                 //si 0, le lemme n'ejtait pas valide
                 if (id == 0) continue;
                 termsNb++;
-                //bufferise le terme
-                //cherche s'il existe dejjah dans le buffer
-                map<unsigned int, pair<AmoseTypes, unsigned int> >::iterator itterm = bufferTermesParDoc.find(id);
-                //s'il n'existe pas, le creje 
-                if (itterm == bufferTermesParDoc.end()) bufferTermesParDoc[id] = pair<AmoseTypes, unsigned int>(type, 1);
-                //sinon increjmente le compteur
-                else { 
-                    if ((*itterm).second.first != type)
-                        cerr<<id<<" lemme="<<lemme<<" type="<<type<<" / "<<(*itterm).second.first<<" ds doc n°:"<<noDoc<<endl;
-                    (*itterm).second.second +=1;   
+                //vejrifie que ce qui a ejtej indexej est immejdiatement disponible
+                string lemmeLect, entitejNommejeLect;
+                AmoseTypes typeLect;
+                if (nindLexiconAmoseLect.getWord(id, lemmeLect, typeLect, entitejNommejeLect)) {
+                    if ((lemmeLect == lemme) && (typeLect == type) && (entitejNommejeLect == entitejNommeje)) nbRetrolexOk++;
+                    else nbRetrolexNok++;
                 }
+                else nbRetrolexNok++;
+               //recupere l'identification du lexique
+                identification = nindLexiconAmose.getIdentification();
+                nindTermAmose.addDocsToTerm(id, type, newDocuments, identification);                   
+                nbMajTerm++;
                 //augmente l'index local 
                 localDef.push_back(NindLocalIndex::Term(id, NO_CG));
                 NindLocalIndex::Term &term = localDef.back();
-                term.localisation.push_back(NindLocalIndex::Localisation(position, taille));               
+                term.localisation.push_back(NindLocalIndex::Localisation(position, taille));  
+                //vejrifie que ce qui a ejtej indexej est immejdiatement disponible
+                //vejrifie que les compteurs du lecteur sont ok
+                if (nindTermAmose.getUniqueTermCount(ALL) != nindTermAmoseLect.getUniqueTermCount(ALL)) nbComptNok++;
+                else nbComptOk++;
+                //rejcupehre l'id du terme
+                const unsigned int idlect = nindLexiconAmoseLect.getWordId(lemme, type, entitejNommeje);
+                if (idlect == 0) { nbLexNok++; continue; }
+                nbLexOk++;
+                //rejcupehre la liste des documents ouh est indexej ce terme
+                list<unsigned int> documentIds;
+                const bool trouvej = nindTermAmoseLect.getDocList(idlect, documentIds);
+                if (!trouvej) { nbTermNok++; continue; }
+                //le doc doit estre dans la liste
+                list<unsigned int>::const_iterator itdoc = documentIds.begin();
+                while (itdoc != documentIds.end()) {
+                    if (*itdoc == noDoc) break;
+                    itdoc++;
+                }
+                if (itdoc == documentIds.end()) {nbTermNok++; continue; }
+                if (nindTermAmoseLect.getDocFreq(idlect) != documentIds.size()) {nbTermNok++; continue; }
+                nbTermOk++;
             }
             //recupere l'identification du lexique
             identification = nindLexiconAmose.getIdentification();
             //ecrit la definition sur le fichier des index locaux
             nindLocalAmose.setLocalDef(noDoc, localDef, identification);
-            //bufferise termes + docs 
-            for (map<unsigned int, pair<AmoseTypes, unsigned int> >::const_iterator itterm = bufferTermesParDoc.begin();
-                 itterm != bufferTermesParDoc.end(); itterm++) {
-                const unsigned int &idterm = (*itterm).first;
-                const AmoseTypes &type = (*itterm).second.first;
-                const unsigned int &freq = (*itterm).second.second;
-                //cherche s'il existe dejjah dans le buffer
-                map<unsigned int, pair<AmoseTypes, list<NindTermIndex::Document> > >::iterator itterm2 = bufferTermes.find(idterm);
-                //s'il n'existe pas, le creje 
-                if (itterm2 == bufferTermes.end()) 
-                    bufferTermes[idterm] = pair<AmoseTypes, list<NindTermIndex::Document> >(type, { NindTermIndex::Document(noDoc,freq) });
-                //sinon ajoute le document
-                else (*itterm2).second.second.push_back(NindTermIndex::Document(noDoc,freq));          
-            }
-            //vejrifie si le buffer a dejpassej ses limites
-            if (bufferTermes.size() < TERMS_BUFFER_SIZE) continue;
-            //ejcrit le buffer sur disque
-            for (map<unsigned int, pair<AmoseTypes, list<NindTermIndex::Document> > >::const_iterator itterm2 = bufferTermes.begin();
-                 itterm2 != bufferTermes.end(); itterm2++) {
-                const unsigned int &termid = (*itterm2).first;
-                const AmoseTypes &type = (*itterm2).second.first;
-                const list<NindTermIndex::Document> &documents = (*itterm2).second.second;
-                nindTermAmose.addDocsToTerm(termid, type, documents, identification);                   
-                nbMajTerm++;
-            }
-            //raz buffer
-            bufferTermes.clear();
-        }
-        //ejcrit le buffer sur disque
-        for (map<unsigned int, pair<AmoseTypes, list<NindTermIndex::Document> > >::const_iterator itterm2 = bufferTermes.begin();
-                itterm2 != bufferTermes.end(); itterm2++) {
-            const unsigned int &termid = (*itterm2).first;
-            const AmoseTypes &type = (*itterm2).second.first;
-            const list<NindTermIndex::Document> &documents = (*itterm2).second.second;
-            nindTermAmose.addDocsToTerm(termid, type, documents, identification);                   
-            nbMajTerm++;
+            //vejrifie que tout est bien ejcrit et immejdiatement disponible
+            //recupere l'index local du doc             
+            list<NindLocalIndex::Term> localDefLect;
+            const bool trouvej = nindLocalAmoseLect.getLocalDef(noDoc, localDefLect);
+            if (localDef.size() == localDefLect.size()) nbLocalOk++;
+            else nbLocalNok++;
+            if (nindLocalAmose.getDocCount() == nindLocalAmoseLect.getDocCount()) nbNbdocOk++;
+            else nbNbdocNok++;
         }
         end = clock();
         cout<<setw(8)<<setfill(' ')<<nbMajLex<<" accès / mises à jour sur "<<lexiconFileName<<endl;
@@ -181,15 +179,18 @@ int main(int argc, char *argv[]) {
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
         cout<<cpuTimeUsed<<" secondes"<<endl;
         cout<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getUniqueTermCount(SIMPLE_TERM)<<" SIMPLE_TERM uniques"<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getUniqueTermCount(MULTI_TERM)<<" MULTI_TERM uniques"<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getUniqueTermCount(NAMED_ENTITY)<<" NAMED_ENTITY uniques"<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getUniqueTermCount(ALL)<<" termes uniques"<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(SIMPLE_TERM)<<" occurrences de SIMPLE_TERM"<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(MULTI_TERM)<<" occurrences de MULTI_TERM"<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(NAMED_ENTITY)<<" occurrences de NAMED_ENTITY"<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(ALL)<<" occurrences"<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.getDocCount()<<" documents indexés"<<endl;
+        cout<<setw(8)<<setfill(' ')<<nbLexOk<<" occurrences consultées avec succès dans "<<lexiconFileName<<endl;
+        cout<<RED<<setw(8)<<setfill(' ')<<nbLexNok<<BLA<<" occurrences consultées en échec dans "<<lexiconFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nbRetrolexOk<<" occurrences consultées avec succès dans "<<retrolexiconFileName<<endl;
+        cout<<RED<<setw(8)<<setfill(' ')<<nbRetrolexNok<<BLA<<" occurrences consultées en échec dans "<<retrolexiconFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nbTermOk<<" occurrences consultées avec succès dans "<<termindexFileName<<endl;
+        cout<<RED<<setw(8)<<setfill(' ')<<nbTermNok<<BLA<<" occurrences consultées en échec dans "<<termindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nbComptOk<<" compteurs consultés avec succès dans "<<termindexFileName<<endl;
+        cout<<RED<<setw(8)<<setfill(' ')<<nbComptNok<<BLA<<" compteurs consultés en échec dans "<<termindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nbLocalOk<<" occurrences consultées avec succès dans "<<localindexFileName<<endl;
+        cout<<RED<<setw(8)<<setfill(' ')<<nbLocalNok<<BLA<<" occurrences consultées en échec dans "<<localindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nbNbdocOk<<" compteurs consultés avec succès dans "<<localindexFileName<<endl;
+        cout<<RED<<setw(8)<<setfill(' ')<<nbNbdocNok<<BLA<<" compteurs consultés en échec dans "<<localindexFileName<<endl;
     }
     catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; throw; return false;}
     catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; throw; return false;}

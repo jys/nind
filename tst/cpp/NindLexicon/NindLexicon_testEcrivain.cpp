@@ -16,7 +16,7 @@
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
 #include "NindLexicon/NindLexicon.h"
-#include "NindIndex/NindIndexTest.h"
+#include "NindIndex/NindIndex_litDumpS2.h"
 #include "NindExceptions.h"
 #include <time.h>
 #include <string>
@@ -43,15 +43,13 @@ static void displayHelp(char* arg0) {
     cout<<"ex :   "<<arg0<<" FRE.FDB-DumpByDocuments.txt"<<endl;
 }
 ////////////////////////////////////////////////////////////
-#define LINE_SIZE 65536*100
-////////////////////////////////////////////////////////////
 void formeLexique(const bool pourDeVrai,
                   const string &docsFileName,
                   NindLexicon &nindLexicon,
-                  list<pair<unsigned int, string> > &allWords,
+                  list<pair<unsigned int, list<string> > > &allWords,
                   unsigned int &docsNb);
 void interrogeLexique(const bool pourDeVrai,
-                      const list<pair<unsigned int, string> > &allWords,
+                      const list<pair<unsigned int, list<string> > > &allWords,
                       NindLexicon &nindLexicon);
 ////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
@@ -71,7 +69,7 @@ int main(int argc, char *argv[]) {
         //le lexique ecrivain
         NindLexicon nindLexicon(lexiconFileName, true);
         //la correspondance de tous les mots avec leur identifiant
-        list<pair<unsigned int, string> > allWords;
+        list<pair<unsigned int, list<string> > > allWords;
         unsigned int docsNb;
         /////////////////////////////////////
         cout<<"1) forme le lexique pour de faux"<<endl;
@@ -133,56 +131,41 @@ int main(int argc, char *argv[]) {
 void formeLexique(const bool pourDeVrai,
                   const string &docsFileName,
                   NindLexicon &nindLexicon,
-                  list<pair<unsigned int, string> > &allWords,
+                  list<pair<unsigned int, list<string> > > &allWords,
                   unsigned int &docsNb)
 {
-    //la classe d'utilitaires
-    NindIndexTest nindIndexTest;
     //lit le fichier dump de documents
     docsNb = 0;
     allWords.clear();
-    char charBuff[LINE_SIZE];
-    ifstream docsFile(docsFileName.c_str(), ifstream::in);
-    if (docsFile.fail()) throw OpenFileException(docsFileName);
-    while (docsFile.good()) {
-        unsigned int noDoc;
-        list<NindIndexTest::WordDesc> wordsList;
-        docsFile.getline(charBuff, LINE_SIZE);
-        if (string(charBuff).empty()) continue;   //evacue ainsi les lignes vides
+    //lit le fichier dump de documents
+    NindIndex_litDumpS2 nindIndex_litDumpS2(docsFileName);
+    unsigned int noDocAnt, noDocFb;
+    while (nindIndex_litDumpS2.documentSuivant(noDocAnt, noDocFb)) {
         docsNb++;
-        if (docsFile.fail()) throw FormatFileException(docsFileName);
-        nindIndexTest.getWords(string(charBuff), noDoc, wordsList);
-        //ajoute tous les mots à la suite et dans l'ordre
-        //prend tous les mots à la suite et dans l'ordre
-        for (list<NindIndexTest::WordDesc>::const_iterator wordIt = wordsList.begin(); 
-                wordIt != wordsList.end(); wordIt++) {
-            //le mot 
-            const string word = (*wordIt).word;
-            //le terme
-            list<string> componants;
-            nindIndexTest.split(word, componants);
-            unsigned int id = 0;
-            if (pourDeVrai) id = nindLexicon.addWord(componants);
-            allWords.push_back(pair<unsigned int, string>(id, word));
-        }
         cout<<docsNb<<"\r"<<flush;
+        //lit tous les termes et leur localisation/taille
+        list<string> composants;
+        unsigned char cg;
+        list<pair<unsigned int, unsigned int> > localisation;
+        while (nindIndex_litDumpS2.motSuivant(composants, cg, localisation)) {
+            unsigned int id = 0;
+            if (pourDeVrai) id = nindLexicon.addWord(composants);
+            allWords.push_back(pair<unsigned int, list<string> >(id, composants));
+        }
+        
     }
-    docsFile.close();
 }
 ////////////////////////////////////////////////////////////
 void interrogeLexique(const bool pourDeVrai,
-                      const list<pair<unsigned int, string> > &allWords,
+                      const list<pair<unsigned int, list<string> > > &allWords,
                       NindLexicon &nindLexicon)
 {
-    //la classe d'utilitaires
-    NindIndexTest nindIndexTest;
-    for (list<pair<unsigned int, string> >::const_iterator wordIt = allWords.begin(); 
+    for (list<pair<unsigned int, list<string> > >::const_iterator wordIt = allWords.begin(); 
             wordIt != allWords.end(); wordIt++) {
-        list<string> componants;
-        nindIndexTest.split(wordIt->second, componants);
+        const list<string> &componants = (*wordIt).second;
         if (pourDeVrai) {
             const unsigned int id = nindLexicon.getId(componants);
-            if (id != wordIt->first) throw IntegrityException(wordIt->second);
+            if (id != wordIt->first) throw IntegrityException(wordIt->second.front());
         }
     }
 }

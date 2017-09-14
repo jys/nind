@@ -45,7 +45,6 @@ NindIndexTest::~NindIndexTest()
 //param cg grammatical category as string
 //return ident number */
 unsigned char NindIndexTest::getCgIdent(const string &cg)
-    throw(EncodeErrorException)
 {
     const map<string, unsigned char>::const_iterator it = m_cgStr2Id.find(cg);
     if (it == m_cgStr2Id.end()) throw EncodeErrorException("getCgIdent"); 
@@ -56,7 +55,6 @@ unsigned char NindIndexTest::getCgIdent(const string &cg)
 //param ident ident number
 //return grammatical category as string */
 string NindIndexTest::getCgStr(const unsigned char ident)
-    throw(DecodeErrorException)
 {
     if (ident >= m_cgId2Str.size()) throw EncodeErrorException("getCgStr");
     return m_cgId2Str[ident];
@@ -68,7 +66,6 @@ string NindIndexTest::getCgStr(const unsigned char ident)
 //param wordsList return words, cg and pos*/
 void NindIndexTest::getWords(const string &dumpLine, 
                                  unsigned int &noDoc, 
-//                                 list<pair<string, string> > &wordsList)
                                  list<struct WordDesc> &wordsList)
 {
     //cerr<<dumpLine<<endl;

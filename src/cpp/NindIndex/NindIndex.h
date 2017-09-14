@@ -48,10 +48,13 @@ public:
         ~Identification() {}
         //specificFileIdent n'inervient pas dans les comparaisons
         bool operator==(const Identification &id2) const {
-            return (this->lexiconWordsNb == id2.lexiconWordsNb && this->lexiconTime == id2.lexiconTime); }
+            return (this->lexiconWordsNb == id2.lexiconWordsNb && this->lexiconTime == id2.lexiconTime
+                && this->specificFileIdent == id2.specificFileIdent); }
         bool operator!=(const Identification &id2) const {
-            return (this->lexiconWordsNb != id2.lexiconWordsNb || this->lexiconTime != id2.lexiconTime); }    
+            return (this->lexiconWordsNb != id2.lexiconWordsNb || this->lexiconTime != id2.lexiconTime
+                && this->specificFileIdent != id2.specificFileIdent); }    
     };
+    Identification fileIdentification;
 
 protected:
     //<flagIdentification>(1) <maxIdentifiant>(3) <identifieurUnique>(4) <identifieurSpecifique>(4) = 12
@@ -80,15 +83,15 @@ protected:
         
     /**\brief Write on file datas of specified definition yet constructed into write buffer
     *\param ident ident of definition
-    *\param lexiconIdentification unique identification of lexicon */
+    *\param fileIdentification unique identification of lexicon */
     void setDefinition(const unsigned int ident,
-                       const Identification &lexiconIdentification);
+                       const Identification &fileIdentification);
         
     /**\brief check if indirection exists and create indirection block if necessary
     *\param ident ident of definition
-    *\param lexiconIdentification unique identification of lexicon */
+    *\param fileIdentification unique identification of lexicon */
     void checkExtendIndirection(const unsigned int ident,
-                                const Identification &lexiconIdentification);
+                                const Identification &fileIdentification);
         
     /**\brief get size of 1rst indirection block
     *\return size of 1rst indirection block */
@@ -113,7 +116,7 @@ private:
     unsigned long int  getIndirection(const unsigned int ident);
     
     //ajoute un bloc d'indirection vide suivi d'une identification a la position courante du fichier
-    void addIndirection(const Identification &lexiconIdentification);
+    void addIndirection(const Identification &fileIdentification);
         
     //verifie l'apairage avec le lexique
     void checkIdentification(const Identification &lexiconIdentification);
@@ -125,13 +128,16 @@ private:
     //retourne true si l'identification est dejjah ejcrite
     bool findNewArea(const unsigned int definitionSize,
                      const unsigned int dataSize,
-                     const Identification &lexiconIdentification,
+                     const Identification &fileIdentification,
                      unsigned long int &offsetDefinition,
                      unsigned int &longueurDefinition);
     
     //brief Place l'ancienne zone de donnejes dans la gestion du vide
     void vacateOldArea(const unsigned long int oldOffsetEntry,
                        const unsigned int oldLengthEntry);
+    
+    //dumpe la map des indirections (uniquement pour debogue)
+    void dumpIndirection();
 
     unsigned int m_definitionMinimumSize;       //taille minimum admissible pour une definition
     unsigned int m_indirectionBlocSize;         //nbre d'entrees d'un bloc d'indirection

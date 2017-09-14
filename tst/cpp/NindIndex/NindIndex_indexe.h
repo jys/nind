@@ -63,12 +63,10 @@ public:
     /**\brief Add a simple word or a composed word with its cg ans position into index files
     *\param componants word to index
     *\param cg categorie grammaticale
-    *\param pos position into origine file
-    *\param size size into origine file */
+    *\param localisation positions and sizes into origine file */
     void indexe(const std::list<std::string> &componants,
                 const unsigned int cg,
-                const unsigned int pos,
-                const unsigned int size);
+                const std::list<std::pair<unsigned int, unsigned int> > localisation);
     
     /**\brief Flushes buffered terms on term index file */
     void flush();
@@ -84,6 +82,26 @@ public:
     /**\brief Gets number of accesses on local index file
     *\return  number of accesses on local index file */
     unsigned int localindexAccessNb() const;
+    
+    /**\brief Vejrifie que dans une dejfinition de terme, il y a bien le bon n° de doc avec la bonne cg
+    *\param noDoc n° de document ah chercher
+    *\param cg cg du terme
+    *\param termDef dejfinition du terme
+    *\return vrai si le doc a ejtej trouvej avec la bonne cg, sinon faux */    
+    static bool trouveDoc(const unsigned int noDoc, 
+                          const unsigned int cg, 
+                          const std::list<NindTermIndex::TermCG> &termDef);
+    
+    /**\brief Vejrifie que dans une dejfinition de terme, il y a bien le bon n° de doc avec la bonne cg
+    *\param id id du terme ah chercher
+    *\param cg cg du terme
+    *\param localisation localisation du terme
+    *\param term dejfinition du terme dans l'index local
+    *\return vrai si le doc a ejtej trouvej avec la bonne cg, sinon faux */    
+    static bool trouveTerme(const unsigned int id, 
+                            const unsigned int cg, 
+                            const std::list<std::pair<unsigned int, unsigned int> > localisation, 
+                            const NindLocalIndex::Term &term);
     
  private:
     NindLexiconIndex m_nindLexicon;

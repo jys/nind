@@ -29,9 +29,7 @@ static void majInverse (const unsigned int cg,
 //Construit la definition d'un fichier pour l'index local
 static void majLocal(const unsigned int id,
                      const unsigned int cg,
-                     const unsigned int pos,
-                     const unsigned int taille,
-                     const list<string> &componants,
+                     const list<pair<unsigned int, unsigned int> > localisation,
                      list<NindLocalIndex::Term> &localIndex);
 ////////////////////////////////////////////////////////////
 //brief Creates NindIndex_indexe with specified names and parameters associated with.
@@ -51,7 +49,7 @@ NindIndex_indexe::NindIndex_indexe(const string &lexiconFileName,
                                    const unsigned int localindexEntryNb,
                                    const unsigned int termBufferSize,
                                    const unsigned int timeControl ) :
-    m_nindLexicon(lexiconFileName, true, lexiconEntryNb),
+    m_nindLexicon(lexiconFileName, true, false, lexiconEntryNb),
     m_nindTermindex(termindexFileName, true, NindIndex::Identification(0, 0, 0), termindexEntryNb),
     m_nindLocalindex(localindexFileName, true, NindIndex::Identification(0, 0, 0), localindexEntryNb),
     m_termBufferSize(termBufferSize),
@@ -92,12 +90,11 @@ void NindIndex_indexe::newDoc(const unsigned int docIdent)
 //brief Add a simple word or a composed word with its cg ans position into index files
 //param componants word to index
 //param cg categorie grammaticale
-//param pos position into origine file 
-//param size size into origine file */
+//param localisation positions and sizes into origine file */
 void NindIndex_indexe::indexe(const list<string> &componants,
                               const unsigned int cg,
-                              const unsigned int pos,
-                              const unsigned int size)
+                              const list<pair<unsigned int, unsigned int> > localisation)
+
 {
     //recupere l'id du terme dans le lexique, l'ajoute eventuellement
     unsigned int id = 0;
@@ -116,7 +113,7 @@ void NindIndex_indexe::indexe(const list<string> &componants,
         flush();
     }
     //augmente l'index local 
-    majLocal(id, cg, pos, size, componants, m_localindex);
+    majLocal(id, cg, localisation, m_localindex);
 }
 ////////////////////////////////////////////////////////////
 //brief Flushes buffered terms on term index file */
@@ -214,55 +211,70 @@ static void majInverse (const unsigned int cg,
 //Construit la definition d'un fichier pour l'index local
 static void majLocal(const unsigned int id,
                      const unsigned int cg,
-                     const unsigned int pos,
-                     const unsigned int taille,
-                     const list<string> &componants,
+                     const list<pair<unsigned int, unsigned int> > localisation,
                      list<NindLocalIndex::Term> &localIndex)
 {
-    //simulation de cas reel de termes en plusieurs parties (c'est tout a fait arbitraire)
-    //TAA#BB : (pos, len(TAA)), (pos+len(TAA), len(BB))
-    //kAA#BB#CC : (pos, len(kAA), (pos+len(kAA#BB), len(CC)), (pos+len(kAA), len(BB))
-    //BAA#BB#CC#DD : (pos-10, 10), (pos, len(BAA)), (pos+len(BAA#BB#CC), len(DD)), (pos+len(BAA#BB), len(CC))
-    //autres : (pos, taille)
     localIndex.push_back(NindLocalIndex::Term(id, cg));
     NindLocalIndex::Term &term = localIndex.back();
-    const unsigned int nbComposants =  componants.size();
-    list<string>::const_iterator compIt = componants.begin();
-    const string &firstComp = (*compIt++);
-    const char firstChar = firstComp.front();
-    if (nbComposants == 2 && firstChar == 'T') {
-        //TAA#BB : (pos, len(TAA)), (pos+len(TAA), len(BB))
-        const unsigned int lenAA = firstComp.size();
-        const unsigned int lenBB = (*compIt++).size();
-        term.localisation.push_back(NindLocalIndex::Localisation(pos, lenAA));
-        term.localisation.push_back(NindLocalIndex::Localisation(pos + lenAA, lenBB));
+    for (list<pair<unsigned int, unsigned int> >::const_iterator locIt = localisation.begin(); 
+         locIt != localisation.end(); locIt++) {
+        term.localisation.push_back(NindLocalIndex::Localisation((*locIt).first, (*locIt).second));
     }
-    else if (nbComposants == 3 && firstChar == 'k') {
-        //kAA#BB#CC : (pos, len(kAA), (pos+len(kAA#BB), len(CC)), (pos+len(kAA), len(BB))
-        const unsigned int lenAA = firstComp.size();
-        const unsigned int lenBB = (*compIt++).size();
-        const unsigned int lenCC = (*compIt++).size();
-        term.localisation.push_back(NindLocalIndex::Localisation(pos, lenAA));
-        term.localisation.push_back(NindLocalIndex::Localisation(pos + lenAA + lenBB + 1, lenCC));
-        term.localisation.push_back(NindLocalIndex::Localisation(pos + lenAA, lenBB));        
-    }
-    else if (nbComposants == 4 && firstChar == 'B') {
-        //BAA#BB#CC#DD : (pos-10, 10), (pos, len(BAA)), (pos+len(BAA#BB#CC), len(DD)), (pos+len(BAA#BB), len(CC))
-        const unsigned int lenAA = firstComp.size();
-        const unsigned int lenBB = (*compIt++).size();
-        const unsigned int lenCC = (*compIt++).size();
-        const unsigned int lenDD = (*compIt++).size();
-        term.localisation.push_back(NindLocalIndex::Localisation(pos - 10, 10));
-        term.localisation.push_back(NindLocalIndex::Localisation(pos, lenAA));
-        term.localisation.push_back(NindLocalIndex::Localisation(pos + lenAA + lenBB + lenCC + 2, lenDD));
-        term.localisation.push_back(NindLocalIndex::Localisation(pos + lenAA + lenBB + 1, lenCC));
-    }
-    else 
-        //autres : (pos, taille)
-        term.localisation.push_back(NindLocalIndex::Localisation(pos, taille));
 }
 ////////////////////////////////////////////////////////////
-
+//brief Vejrifie que dans une dejfinition de terme, il y a bien le bon n° de doc avec la bonne cg
+//param noDoc n° de document ah chercher
+//param cg cg du terme
+//param termDef dejfinition du terme
+//return vrai si le doc a ejtej trouvej avec la bonne cg, sinon faux */    
+bool NindIndex_indexe::trouveDoc(const unsigned int noDoc, 
+                                 const unsigned int cg, 
+                                 const list<NindTermIndex::TermCG> &termDef)
+{
+    list<NindTermIndex::TermCG>::const_iterator it1 = termDef.begin(); 
+    while (it1 != termDef.end()) {
+        if ((*it1).cg == cg) {
+            //c'est la meme cg, on va chercher le doc 
+            const list<NindTermIndex::Document> &documents = (*it1).documents;
+            //trouve le doc dans la liste ordonnee
+            list<NindTermIndex::Document>::const_iterator it2 = documents.begin(); 
+            while (it2 != documents.end()) {
+                //le doc devrait etre dans la liste ordonnee
+                if ((*it2).ident == noDoc) return true;
+                it2++;
+            }
+            if (it2 == documents.end()) return false;
+        }
+        it1++;
+    }
+    if (it1 == termDef.end()) return false;
+}
+////////////////////////////////////////////////////////////
+//brief Vejrifie que dans une dejfinition de terme, il y a bien le bon n° de doc avec la bonne cg
+//param id id du terme ah chercher
+//param cg cg du terme
+//param localisation localisation du terme
+//param term dejfinition du terme dans l'index local
+//return vrai si le doc a ejtej trouvej avec la bonne cg, sinon faux */    
+bool NindIndex_indexe::trouveTerme(const unsigned int id, 
+                                   const unsigned int cg, 
+                                   const list<pair<unsigned int, unsigned int> > localisation, 
+                                   const NindLocalIndex::Term &term)
+{
+    //vejrif id du terme et cg
+    if (term.term != id && term.cg != cg) return false;
+    //vejrif de la localisation
+    const list<NindLocalIndex::Localisation> &termLocalisation = term.localisation; 
+    if (localisation.size() != termLocalisation.size()) return false;
+    list<NindLocalIndex::Localisation>::const_iterator termlocIt = termLocalisation.begin();
+    list<pair<unsigned int, unsigned int> >::const_iterator locIt = localisation.begin();
+    while (termlocIt != termLocalisation.end()) {
+        if ((*termlocIt).position != (*locIt).first) return false;
+        if ((*termlocIt++).length != (*locIt++).second) return false;
+    }
+    return true;
+}
+////////////////////////////////////////////////////////////
 
 
     

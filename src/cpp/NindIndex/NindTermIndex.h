@@ -74,10 +74,10 @@ public:
     /**\brief Write a full term definition as a list of structures
     *\param ident ident of term
     *\param termDef structure containing all datas of the specified term 
-    *\param lexiconIdentification unique identification of lexicon */
+    *\param fileIdentification unique identification of lexicon */
     void setTermDef(const unsigned int ident,
                     const std::list<struct TermCG> &termDef,
-                    const Identification &lexiconIdentification);
+                    const Identification &fileIdentification);
         
 private:
 };
