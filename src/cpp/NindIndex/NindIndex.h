@@ -22,6 +22,7 @@
 #ifndef NindIndex_H
 #define NindIndex_H
 ////////////////////////////////////////////////////////////
+#include "NindBasics/NindPadFile.h"
 #include "NindBasics/NindFile.h"
 #include "NindCommonExport.h"
 #include "NindExceptions.h"
@@ -32,34 +33,9 @@
 namespace latecon {
     namespace nindex {
 ////////////////////////////////////////////////////////////
-class DLLExportLexicon NindIndex {
-public:
-    
-    void dumpEmptyAreas();
-    
-    /**\brief Structure to hold files identification */
-    struct Identification {
-        unsigned int lexiconWordsNb;
-        unsigned int lexiconTime;
-        unsigned int specificFileIdent;
-        Identification(): lexiconWordsNb(0), lexiconTime(0), specificFileIdent(0) {}
-        Identification(const unsigned int nb, const unsigned int id, const unsigned int spe): 
-            lexiconWordsNb(nb), lexiconTime(id), specificFileIdent(spe) {}
-        ~Identification() {}
-        //specificFileIdent n'inervient pas dans les comparaisons
-        bool operator==(const Identification &id2) const {
-            return (this->lexiconWordsNb == id2.lexiconWordsNb && this->lexiconTime == id2.lexiconTime
-                && this->specificFileIdent == id2.specificFileIdent); }
-        bool operator!=(const Identification &id2) const {
-            return (this->lexiconWordsNb != id2.lexiconWordsNb || this->lexiconTime != id2.lexiconTime
-                && this->specificFileIdent != id2.specificFileIdent); }    
-    };
-    Identification fileIdentification;
+class DLLExportLexicon NindIndex : public NindPadFile {
 
 protected:
-    //<flagIdentification>(1) <maxIdentifiant>(3) <identifieurUnique>(4) <identifieurSpecifique>(4) = 12
-#define TAILLE_IDENTIFICATION 12
-
     /**\brief Creates NindIndex with a specified name associated with.
     *\param fileName absolute path file name
     *\param isWriter true if writer, false if reader  
@@ -83,44 +59,17 @@ protected:
         
     /**\brief Write on file datas of specified definition yet constructed into write buffer
     *\param ident ident of definition
-    *\param fileIdentification unique identification of lexicon */
+    *\param fileIdentification unique identification of file */
     void setDefinition(const unsigned int ident,
                        const Identification &fileIdentification);
         
     /**\brief check if indirection exists and create indirection block if necessary
     *\param ident ident of definition
-    *\param fileIdentification unique identification of lexicon */
+    *\param fileIdentification unique identification of file */
     void checkExtendIndirection(const unsigned int ident,
                                 const Identification &fileIdentification);
-        
-    /**\brief get size of 1rst indirection block
-    *\return size of 1rst indirection block */
-    unsigned int getFirstIndirectionBlockSize();
-    
-    /**\brief get identification of lexicon
-    *\param identification where unique identification of lexicon is returned */
-    void getFileIdentification(Identification &identification);
-        
-    NindFile m_file;                //pour l'ecrivain ou le lecteur
-    std::string m_fileName;
-    bool m_isWriter;
-    
-    //return l'identifiant maximum possible avec le systehme actuel d'indirection
-    unsigned int getMaxIdent() const;
     
 private:
-    //etablit la carte des indirections  
-    void mapIndirection();
-        
-    //return l'offset de l'indirection de la definition specifiee, 0 si hors limite
-    unsigned long int  getIndirection(const unsigned int ident);
-    
-    //ajoute un bloc d'indirection vide suivi d'une identification a la position courante du fichier
-    void addIndirection(const Identification &fileIdentification);
-        
-    //verifie l'apairage avec le lexique
-    void checkIdentification(const Identification &lexiconIdentification);
-
     //ejtablit la carte des vides
     void mapEmptySpaces();
     
@@ -140,8 +89,6 @@ private:
     void dumpIndirection();
 
     unsigned int m_definitionMinimumSize;       //taille minimum admissible pour une definition
-    unsigned int m_indirectionBlocSize;         //nbre d'entrees d'un bloc d'indirection
-    std::list<std::pair<unsigned long int, unsigned int> > m_indirectionMapping;  //gestion des indirections
     std::list<std::pair<unsigned long int, unsigned int> > m_emptyAreas;         //gestion des zones libres
 };
 ////////////////////////////////////////////////////////////

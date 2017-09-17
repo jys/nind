@@ -74,7 +74,7 @@ NindLexiconIndex::NindLexiconIndex(const string &fileName,
     m_withRetrolexicon(withRetrolexicon)
 {
     //la taille du bloc d'indirection du fichier reel est structurante
-    m_modulo = getFirstIndirectionBlockSize(); 
+    m_modulo = getFirstEntriesBlockSize(); 
     //l'identifiant de mot le plus eleve (pour l'ecrivain)
     getFileIdentification(m_identification);
     //initialisation du retro lexique, eventuellement

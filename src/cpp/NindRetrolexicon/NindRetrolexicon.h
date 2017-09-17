@@ -21,7 +21,7 @@
 #ifndef NindRetrolexicon_H
 #define NindRetrolexicon_H
 ////////////////////////////////////////////////////////////
-#include "NindIndex/NindIndex.h"
+#include "NindBasics/NindPadFile.h"
 #include "NindBasics/NindFile.h"
 #include "NindCommonExport.h"
 #include "NindExceptions.h"
@@ -33,7 +33,7 @@ namespace latecon {
 ////////////////////////////////////////////////////////////
 /**\brief This class maintains correspondance between indentifiants and words
 */
-class DLLExportLexicon NindRetrolexicon {
+class DLLExportLexicon NindRetrolexicon : public NindPadFile {
 public:
     /**\brief Creates NindRetrolexicon.
     *\param fileName absolute path file name. Lexicon is identified by its file name
@@ -42,7 +42,7 @@ public:
     *\param indirectionBlocSize number of entries in a single indirection block */
     NindRetrolexicon(const std::string &fileName,
                           const bool isLexiconWriter,
-                          const NindIndex::Identification &lexiconIdentification,
+                          const Identification &lexiconIdentification,
                           const unsigned int indirectionBlocSize = 0);
 
     virtual ~NindRetrolexicon();
@@ -68,7 +68,7 @@ public:
     * \param lexiconWordsNb number of words contained in lexicon 
     * \param lexiconIdentification unique identification of lexicon */
     void addRetroWords(const std::list<struct RetroWord> &retroWords,
-                  const NindIndex::Identification &lexiconIdentification);
+                  const Identification &lexiconIdentification);
     
     /**\brief get word components from the specified ident
     * \param ident ident of word
@@ -78,7 +78,6 @@ public:
     bool getComponents(const unsigned int ident,
                        std::list<std::string> &components);
 
-
 private:
     //Recupere sur le fichier retro lexique la definition d'un mot specifie par son identifiant
     //ident identifiant du mot
@@ -87,32 +86,10 @@ private:
     bool getRetroWord(const unsigned int ident,
                     struct RetroWord &retroWord);
     
-    //ejtablit la carte des dejfinitions  
-    void mapDejfinition();
-    
-    //return l'offset de l'indirection de la dejfinition specifiej, 0 si hors limite
-    unsigned long int getDejfinitionPos(const unsigned int ident);
-
     //brief Read from file datas of a specified definition and leave result into read buffer 
     //param ident ident of definition
     //return true if ident was found, false otherwise 
     bool getDejfinition(const unsigned int ident);
-    
-    //ajoute un bloc de dejfinitions vides suivi d'une identification ah la position courante du fichier
-    void addBlocDejfinition(const NindIndex::Identification &lexiconIdentification);
-
-    //ejcrit l'identification du fichier ah l'adresse courente du fichier
-    void addIdentification(const NindIndex::Identification &lexiconIdentification);
-    
-    //vejrifie l'apairage avec le lexique
-    void checkIdentification(const NindIndex::Identification &lexiconIdentification);
-
-    
-    NindFile m_file;                //pour l'ecrivain ou le lecteur
-    std::string m_fileName;
-    bool m_isWriter;
-    unsigned int m_dejfinitionBlocSize;         //nbre d'entrees d'un bloc d'indirection
-    std::list<std::pair<unsigned long int, unsigned int> > m_dejfinitionMapping;  //gestion des indirections
 };
     } // end namespace
 } // end namespace
