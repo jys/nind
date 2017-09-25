@@ -29,6 +29,10 @@
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
+#define NO_CG 0
+//#define TERMS_BUFFER_SIZE 200000
+#define TERMS_BUFFER_SIZE 0
+////////////////////////////////////////////////////////////
 static void displayHelp(char* arg0) {
     cout<<"© l'ATEJCON"<<endl;
     cout<<"Programme d'indexation d'un corpus déjà syntaxiquement analysé par Lima."<<endl;
@@ -38,14 +42,12 @@ static void displayHelp(char* arg0) {
     cout<<"Si les fichiers existent et sont cohérents, ils sont mis à jour"<<endl;
     cout<<"Le nombre d'entrées des blocs d'indirection est spécifiée pour le lexique,"<<endl;
     cout<<"le fichier inversé et le fichier des index locaux."<<endl;
+    cout<<"Les termes sont bufferisés par paquets de "<<TERMS_BUFFER_SIZE<<" avant écriture."<<endl;
 
     cout<<"usage: "<<arg0<<" --help"<< endl;
     cout<<"       "<<arg0<<" <dump documents> <taille lexique> <taille inverse> <taille locaux>"<<endl;
     cout<<"ex :   "<<arg0<<" sample_fre.xml.mult.xml.txt 100003 100000 5000"<<endl;
 }
-////////////////////////////////////////////////////////////
-#define NO_CG 0
-#define TERMS_BUFFER_SIZE 200000
 ////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
     setlocale( LC_ALL, "French" );
@@ -116,6 +118,9 @@ int main(int argc, char *argv[]) {
                 //si 0, le lemme n'ejtait pas valide
                 if (id == 0) continue;
                 termsNb++;
+//                 identification = nindLexiconAmose.getIdentification();
+//                 list<NindTermIndex::Document> documents({ NindTermIndex::Document(noDoc, 1) });
+//                 nindTermAmose.addDocsToTerm(id, type, documents, identification);           
                 //bufferise le terme
                 //cherche s'il existe dejjah dans le buffer
                 map<unsigned int, pair<AmoseTypes, unsigned int> >::iterator itterm = bufferTermesParDoc.find(id);
@@ -190,6 +195,22 @@ int main(int argc, char *argv[]) {
         cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(NAMED_ENTITY)<<" occurrences de NAMED_ENTITY"<<endl;
         cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(ALL)<<" occurrences"<<endl;
         cout<<setw(8)<<setfill(' ')<<nindLocalAmose.getDocCount()<<" documents indexés"<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLexiconAmose.countterm<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLexiconAmose.countpasterm<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLexiconAmose.counttotal<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLexiconAmose.m_file.m_readCount<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLexiconAmose.m_file.m_writeCount<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.countterm<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.countpasterm<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.counttotal<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.m_file.m_readCount<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.m_file.m_writeCount<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.countterm<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.countpasterm<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.counttotal<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.m_file.m_readCount<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.m_file.m_writeCount<<endl;
+  
     }
     catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; throw; return false;}
     catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; throw; return false;}

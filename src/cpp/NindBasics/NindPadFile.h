@@ -95,10 +95,12 @@ protected:
         
     //ejcrit l'identification du fichier ah l'adresse courente du fichier
     void addIdentification(const Identification &fileIdentification);
-        
+public:        
     NindFile m_file;                //pour l'ecrivain ou le lecteur
+protected:
     std::string m_fileName;
-    bool m_isWriter;
+    bool m_isWriter;                    //vrai si ejcrivain
+    bool m_isExistingWriter;            //vrai si ejcrivain dejjah existant 
     std::list<std::pair<unsigned long int, unsigned int> > m_entriesBlocksMap;  //gestion des blocs d'entrejes
     
 private:

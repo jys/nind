@@ -34,6 +34,8 @@ namespace latecon {
     namespace nindex {
 ////////////////////////////////////////////////////////////
 class DLLExportLexicon NindIndex : public NindPadFile {
+public:
+    unsigned int countterm = 0, countpasterm = 0, counttotal = 0;
 
 protected:
     /**\brief Creates NindIndex with a specified name associated with.

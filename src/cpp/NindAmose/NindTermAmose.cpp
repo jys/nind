@@ -72,19 +72,17 @@ void NindTermAmose::addDocsToTerm(const unsigned int ident,
     }
     //travaille sur l'unique ejlejment
     TermCG &termcg = termDef.front();
-    list<Document> &documents = termcg.documents;
+    list<Document> &documents = termcg.documents;       //documents dejjah lah
     //ajoute tous les documents
     for (list<Document>::const_iterator itdoc = newDocuments.begin(); itdoc != newDocuments.end(); itdoc++) {
-        const Document &document = (*itdoc);
-        //la frejquence
-        unsigned int frequency = document.frequency;
+        const Document &document = (*itdoc);            //document ah ajouter
+        unsigned int frequency = document.frequency;    //sa frejquence
         //trouve la place dans la liste ordonnee
         list<NindTermIndex::Document>::iterator it2 = documents.begin(); 
         while (it2 != documents.end()) {
             //deja dans la liste, met ah jour la frejquence
             if ((*it2).ident == document.ident) {
-                frequency -= (*it2).frequency;
-                (*it2).frequency = document.frequency;
+                (*it2).frequency += frequency;
                 break;
             }
             //insere a l'interieur de la liste
@@ -152,7 +150,7 @@ void NindTermAmose::removeDocFromTerm(const unsigned int ident,
         m_identification.specificFileIdent = m_termOccurrences[ALL];
         //terminej, ejcrit la nouvelle dejfinition
         setTermDef(ident, termDef, m_identification);  
-        //ejcrit les novelles valeurs des compteurs
+        //ejcrit les nouvelles valeurs des compteurs
         saveInternalCounts(m_identification);
         return;
     }

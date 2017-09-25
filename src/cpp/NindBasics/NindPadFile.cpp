@@ -57,6 +57,7 @@ NindPadFile::NindPadFile(const string &fileName,
     m_file(fileName),
     m_fileName(fileName),
     m_isWriter(isWriter),
+    m_isExistingWriter(false),
     m_dataEntrySize(dataEntrySize),
     m_dataEntriesBlocSize(dataEntriesBlocSize),
     m_entriesBlocksMap()
@@ -71,6 +72,7 @@ NindPadFile::NindPadFile(const string &fileName,
                 mapEntriesBlocks();
                 //verifie l'apairage avec le lexique
                 checkIdentification(referenceIdentification); 
+                m_isExistingWriter = true;
             }
             else {
                 //si le fichier n'existe pas, le creje vide en ejcriture + lecture

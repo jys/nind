@@ -19,6 +19,7 @@
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
 #include "NindIndex_indexe.h"
+//#include <iostream>
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
@@ -275,6 +276,23 @@ bool NindIndex_indexe::trouveTerme(const unsigned int id,
     return true;
 }
 ////////////////////////////////////////////////////////////
-
-
+void NindIndex_indexe::getCounts(list<unsigned int> &counts) const
+{
+    counts.clear();
+    counts.push_back(m_nindLexicon.countterm);
+    counts.push_back(m_nindLexicon.countpasterm);
+    counts.push_back(m_nindLexicon.counttotal);
+    counts.push_back(m_nindLexicon.m_file.m_readCount);
+    counts.push_back(m_nindLexicon.m_file.m_writeCount);
+    counts.push_back(m_nindTermindex.countterm);
+    counts.push_back(m_nindTermindex.countpasterm);
+    counts.push_back(m_nindTermindex.counttotal);
+    counts.push_back(m_nindTermindex.m_file.m_readCount);
+    counts.push_back(m_nindTermindex.m_file.m_writeCount);
+    counts.push_back(m_nindLocalindex.countterm);
+    counts.push_back(m_nindLocalindex.countpasterm);
+    counts.push_back(m_nindLocalindex.counttotal);
+    counts.push_back(m_nindLocalindex.m_file.m_readCount);
+    counts.push_back(m_nindLocalindex.m_file.m_writeCount);
+}
     

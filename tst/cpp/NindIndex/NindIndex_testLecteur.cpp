@@ -138,6 +138,13 @@ int main(int argc, char *argv[]) {
         end = clock();
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
         cout<<cpuTimeUsed<<" secondes"<<endl;        
+        cout<<setw(8)<<setfill(' ')<<nindLexicon.m_file.m_readCount<<" lectures réelles sur "<<lexiconFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLexicon.m_file.m_writeCount<<" écritures réelles sur "<<lexiconFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermIndex.m_file.m_readCount<<" lectures réelles sur "<<termindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermIndex.m_file.m_writeCount<<" écritures réelles sur "<<termindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLocalIndex.m_file.m_readCount<<" lectures réelles sur "<<localindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLocalIndex.m_file.m_writeCount<<" écritures réelles sur "<<localindexFileName<<endl;
+      
     }
     catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; return false;}
     catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; return false;}

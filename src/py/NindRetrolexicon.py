@@ -40,7 +40,7 @@ def main():
 
 #// <fichier>               ::= { <blocDejfinition> <blocUtf8> } <blocIdentification> 
 #//
-#// <blocDejfinition>       ::= <flagDejfinition=43> <addrBlocSuivant> <nombreDejfinitions> { <dejfinitionMot> }
+#// <blocDejfinition>       ::= <flagDejfinition=47> <addrBlocSuivant> <nombreDejfinitions> { <dejfinitionMot> }
 #// <flagDejfinition=43>    ::= <Integer1>
 #// <addrBlocSuivant>       ::= <Integer5>
 #// <nombreDejfinitions>    ::= <Integer3>
@@ -136,7 +136,7 @@ class NindRetrolexicon(NindLateconFile):
             raise Exception("%d mauvaise définition %s"%(ident, self.latFileName))
         
     def getDejfinitionAddr(self, identifiant):
-        FLAG_DEJFINITION = 43
+        FLAG_DEJFINITION = 47
         TETE_DEJFINITION = 9
         TAILLE_DEJFINITION = 7
         self.seek(0, 0)

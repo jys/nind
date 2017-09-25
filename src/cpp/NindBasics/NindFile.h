@@ -27,6 +27,7 @@ namespace latecon {
 ////////////////////////////////////////////////////////////
 class DLLExportLexicon NindFile {
 public:
+    unsigned int m_readCount, m_writeCount;
 
     /**\brief Creates NindFile with a specified name associated with.
     *\param fileName absolute path file name */

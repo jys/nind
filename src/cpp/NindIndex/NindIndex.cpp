@@ -20,7 +20,7 @@
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
 #include "NindIndex.h"
-//#include <iostream>
+#include <iostream>
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
@@ -72,10 +72,11 @@ NindIndex::NindIndex(const std::string &fileName,
                              const unsigned int indirectionBlocSize):
     NindPadFile(fileName, isWriter, lexiconIdentification, TAILLE_INDIRECTION, indirectionBlocSize),
     m_definitionMinimumSize(definitionMinimumSize),
+    countterm(0), countpasterm(0), counttotal(0),
     m_emptyAreas()
 {
     try {
-        if (m_isWriter) mapEmptySpaces();
+        if (m_isExistingWriter) mapEmptySpaces();
     }
     catch (FileException &exc) {
         throw NindIndexException(m_fileName);
@@ -116,6 +117,7 @@ bool NindIndex::getDefinition(const unsigned int ident,
 void NindIndex::setDefinition(const unsigned int ident,
                               const Identification &fileIdentification)
 {
+    counttotal++;
     //indicateur que l'identification a dejjah ejtej ejcrite
     bool identOk = false;
     //1) trouve l'ancienne indirection si elle existe
@@ -178,7 +180,9 @@ void NindIndex::setDefinition(const unsigned int ident,
     if (!identOk) {
         m_file.setPos(-TAILLE_IDENTIFICATION, SEEK_END); 
         addIdentification(fileIdentification);
+        countpasterm++;
     }
+    else countterm++;
 }
 ////////////////////////////////////////////////////////////
 //brief verifie que l'indirection existe et cree un bloc supplementaire si c'est pertinent

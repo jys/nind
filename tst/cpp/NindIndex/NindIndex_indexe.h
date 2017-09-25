@@ -83,6 +83,8 @@ public:
     *\return  number of accesses on local index file */
     unsigned int localindexAccessNb() const;
     
+    void getCounts(std::list<unsigned int> &counts) const;
+     
     /**\brief Vejrifie que dans une dejfinition de terme, il y a bien le bon n° de doc avec la bonne cg
     *\param noDoc n° de document ah chercher
     *\param cg cg du terme

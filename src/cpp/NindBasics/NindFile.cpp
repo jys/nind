@@ -25,6 +25,7 @@ using namespace std;
 //param fileName absolute path file name
 //param bufferSize size of writing buffer (0 if just reader) */
 NindFile::NindFile(const string &fileName):
+    m_readCount(0), m_writeCount(0),
     m_fileName(fileName),
     m_file(0),
     m_wbuffer(0),
@@ -550,6 +551,7 @@ void NindFile::writeBuffer()
     //memorise la taille du fichier
     const long int current = ftell(m_file);
     if (current > m_fileSize) m_fileSize = current;
+    m_writeCount++;
 }
 ////////////////////////////////////////////////////////////
 //brief Write byte value to the file
@@ -568,6 +570,7 @@ void NindFile::writeValue(const unsigned char value,
     //memorise la taille du fichier
     const long int current = ftell(m_file);
     if (current > m_fileSize) m_fileSize = current;
+    m_writeCount++;
 }
 ////////////////////////////////////////////////////////////
 //Read bytes from file into specified buffer
@@ -580,6 +583,7 @@ void NindFile::readBytes(unsigned char* bytes,
         if (feof(m_file)) throw EofException(m_fileName);
         else throw ReadFileException(m_fileName);
     }
+    m_readCount++;
 }
 ////////////////////////////////////////////////////////////
 

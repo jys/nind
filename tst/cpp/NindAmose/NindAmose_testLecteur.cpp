@@ -132,6 +132,12 @@ int main(int argc, char *argv[]) {
         cout<<setw(8)<<setfill(' ')<<nbGetLocal<<" accès à "<<localindexFileName<<endl;
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
         cout<<cpuTimeUsed<<" secondes"<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLexiconAmose.m_file.m_readCount<<" lectures réelles sur "<<lexiconindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLexiconAmose.m_file.m_writeCount<<" écritures réelles sur "<<lexiconindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.m_file.m_readCount<<" lectures réelles sur "<<termindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindTermAmose.m_file.m_writeCount<<" écritures réelles sur "<<termindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.m_file.m_readCount<<" lectures réelles sur "<<localindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.m_file.m_writeCount<<" écritures réelles sur "<<localindexFileName<<endl;
     }
     catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; throw; return false;}
     catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; throw; return false;}

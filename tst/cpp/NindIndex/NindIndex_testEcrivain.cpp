@@ -25,6 +25,7 @@
 #include <list>
 #include <iostream>
 #include <fstream>
+#include <iomanip> 
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
@@ -116,11 +117,17 @@ int main(int argc, char *argv[]) {
         }
         nindIndex_indexe.flush();
         end = clock();
-        cout<<nindIndex_indexe.lexiconAccessNb()<<" accès / mises à jour sur "<<lexiconFileName<<endl;
-        cout<<nindIndex_indexe.termindexAccessNb()<<" mises à jour sur "<<termindexFileName<<endl;
-        cout<<nindIndex_indexe.localindexAccessNb()<<" mises à jour sur "<<localindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindIndex_indexe.lexiconAccessNb()<<" accès / mises à jour sur "<<lexiconFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindIndex_indexe.termindexAccessNb()<<" mises à jour sur "<<termindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindIndex_indexe.localindexAccessNb()<<" mises à jour sur "<<localindexFileName<<endl;
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
         cout<<cpuTimeUsed<<" secondes"<<endl;
+        
+        cout<<"compteurs d'écritures"<<endl;
+        list<unsigned int> counts;
+        nindIndex_indexe.getCounts(counts);
+        for (list<unsigned int>::const_iterator tt = counts.begin(); tt != counts.end(); tt++)
+            cout<<setw(8)<<setfill(' ')<<(*tt)<<endl;       
     }
     catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; return false;}
     catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; return false;}
