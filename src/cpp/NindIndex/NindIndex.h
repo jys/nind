@@ -8,9 +8,9 @@
 // pendant que son ecrivain l'enrichit en fonction des nouvelles indexations.
 // Cette classe est dérivable.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2014
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2015 LATECON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -34,19 +34,18 @@ namespace latecon {
     namespace nindex {
 ////////////////////////////////////////////////////////////
 class DLLExportLexicon NindIndex : public NindPadFile {
-public:
-    unsigned int countterm = 0, countpasterm = 0, counttotal = 0;
-
 protected:
     /**\brief Creates NindIndex with a specified name associated with.
     *\param fileName absolute path file name
     *\param isWriter true if writer, false if reader  
     *\param lexiconIdentification unique identification of lexicon  (if 0, no checks)
+    *\param specificsSize size in bytes of specific datas
     *\param definitionMinimumSize size in bytes of the smallest definition
     *\param indirectionBlocSize number of entries in a single indirection block */
     NindIndex(const std::string &fileName,
               const bool isWriter,
               const Identification &lexiconIdentification,
+              const unsigned int specificsSize,
               const unsigned int definitionMinimumSize = 0,
               const unsigned int indirectionBlocSize = 0);
 
@@ -60,10 +59,9 @@ protected:
                        const unsigned int bytesNb = 0);
         
     /**\brief Write on file datas of specified definition yet constructed into write buffer
-    *\param ident ident of definition
-    *\param fileIdentification unique identification of file */
-    void setDefinition(const unsigned int ident,
-                       const Identification &fileIdentification);
+    * buffer contains datas of specified definition + specific datas + identification
+    *\param ident ident of definition */
+    void setDefinition(const unsigned int ident);
         
     /**\brief check if indirection exists and create indirection block if necessary
     *\param ident ident of definition
@@ -72,16 +70,19 @@ protected:
                                 const Identification &fileIdentification);
     
 private:
+    //ejcrit une nouvelle indirection dans l'index
+    void setIndirection(const unsigned long int indirection,
+                        const unsigned long int offsetDejfinition,
+                        const unsigned int longueurDejfinition);
+    
     //ejtablit la carte des vides
     void mapEmptySpaces();
     
     //trouve une nouvelle zone pour les nouvelles donnejs
     //retourne true si l'identification est dejjah ejcrite
-    bool findNewArea(const unsigned int definitionSize,
-                     const unsigned int dataSize,
-                     const Identification &fileIdentification,
-                     unsigned long int &offsetDefinition,
-                     unsigned int &longueurDefinition);
+    bool findNewArea(const unsigned int dataSize,
+                     unsigned long int &offsetDejfinition,
+                     unsigned int &longueurDejfinition);
     
     //brief Place l'ancienne zone de donnejes dans la gestion du vide
     void vacateOldArea(const unsigned long int oldOffsetEntry,

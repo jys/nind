@@ -9,7 +9,7 @@
 //
 // Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2016 LATEJCON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -36,11 +36,11 @@ namespace latecon {
 class DLLExportLexicon NindRetrolexicon : public NindPadFile {
 public:
     /**\brief Creates NindRetrolexicon.
-    *\param fileName absolute path file name. Lexicon is identified by its file name
+    *\param fileNameExtensionLess absolute path file name without extension
     *\param isLexiconWriter true if lexicon writer, false if lexicon reader  
     *\param lexiconIdentification unique identification of lexicon 
     *\param indirectionBlocSize number of entries in a single indirection block */
-    NindRetrolexicon(const std::string &fileName,
+    NindRetrolexicon(const std::string &fileNameExtensionLess,
                           const bool isLexiconWriter,
                           const Identification &lexiconIdentification,
                           const unsigned int indirectionBlocSize = 0);

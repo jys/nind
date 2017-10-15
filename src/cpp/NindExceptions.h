@@ -3,9 +3,9 @@
 //
 // Description: les exceptions du projet NIND (nouvel index)
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2014
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2015 LATECON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -135,6 +135,14 @@ public:
         FileException("Bad use", "") {}
     BadUseException(const std::string word) :
         FileException("Bad use", word) {}
+};
+/**\brief when an error occurs on file index  */
+class NindPadFileException : public FileException {
+    public:
+    NindPadFileException() :
+        FileException("Nind Pad error", "") {}
+    NindPadFileException(const std::string fileName) :
+        FileException("Nind Pad error", fileName) {}
 };
 /**\brief when an error occurs on file index  */
 class NindIndexException : public FileException {

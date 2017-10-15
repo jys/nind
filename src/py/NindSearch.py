@@ -36,8 +36,8 @@ def main():
     
     #calcul des noms de fichiers (remplace l'extension)
     nn = lexiconindexFileName.split('.')
-    termindexFileName = '.'.join(nn[:-1])+'.termindex'
-    localindexFileName = '.'.join(nn[:-1])+'.localindex'
+    termindexFileName = '.'.join(nn[:-1])+'.nindtermindex'
+    localindexFileName = '.'.join(nn[:-1])+'.nindlocalindex'
     
     #ouvre les classes
     nindLexiconindex = NindLexiconindex(lexiconindexFileName)
@@ -45,28 +45,28 @@ def main():
     nindLocalindex = NindLocalindex(localindexFileName)
     
     #1) verifie l'identification des fichiers
-    (maxIdentifiant, dateHeure, spejcifique) = nindLexiconindex.getIdentification()
+    (maxIdentifiant, dateHeure) = nindLexiconindex.donneIdentificationFichier()
     print "max=%d dateheure=%d (%s)"%(maxIdentifiant, dateHeure, ctime(int(dateHeure)))
-    (maxIdentifiant2, dateHeure2, spejcifique) = nindTermindex.getIdentification()
+    (maxIdentifiant2, dateHeure2) = nindTermindex.donneIdentificationFichier()
     if maxIdentifiant2 != maxIdentifiant or dateHeure2 != dateHeure:
-        print "%s NON APAIRÉ : max=%d dateheure=%d (%s)"%(termindexFileName, maxIdentifiant, dateHeure, ctime(int(dateHeure)))
-    (maxIdentifiant2, dateHeure2, spejcifique) = nindLocalindex.getIdentification()
+        print "%s NON APAIRÉ : max=%d dateheure=%d (%s)"%(termindexFileName, maxIdentifiant2, dateHeure2, ctime(int(dateHeure2)))
+    (maxIdentifiant2, dateHeure2) = nindLocalindex.donneIdentificationFichier()
     if maxIdentifiant2 != maxIdentifiant or dateHeure2 != dateHeure:
-        print "%s NON APAIRÉ : max=%d dateheure=%d (%s)"%(localindexFileName, maxIdentifiant, dateHeure, ctime(int(dateHeure)))   
+        print "%s NON APAIRÉ : max=%d dateheure=%d (%s)"%(localindexFileName, maxIdentifiant2, dateHeure2, ctime(int(dateHeure2)))   
     
     #2) trouve l'identifiant du terme
     #trouve la clef des termes simples
     termesSimples = terme.split('_')
     sousMotId = 0
     for mot in termesSimples:
-        sousMotId = nindLexiconindex.getIdent(mot, sousMotId)
+        sousMotId = nindLexiconindex.donneIdentifiant(mot, sousMotId)
         if sousMotId == 0: break
     if sousMotId == 0:
         print 'INCONNU'
         sys.exit()
         
     #3) trouve les utilisations du terme dans le fichier inverse et les affiche
-    termesCGList = nindTermindex.getTermCGList(sousMotId)
+    termesCGList = nindTermindex.donneListeTermesCG(sousMotId)
     for (categorie, frequenceTerme, docs) in termesCGList:
         docsListe = []
         for (noDoc, frequenceDoc) in docs: docsListe.append('%d(%d)'%(noDoc, frequenceDoc))
@@ -76,7 +76,7 @@ def main():
     noDocStr = raw_input("%sno doc : %s"%(BLUE, OFF))
     if not noDocStr.isdigit(): sys.exit()
     noDoc = int(noDocStr)
-    termList = nindLocalindex.getTermList(noDoc)
+    termList = nindLocalindex.donneListeTermes(noDoc)
     resultat = []
     for (noTerme, categorie, localisationsList) in termList:
         if noTerme != sousMotId: continue

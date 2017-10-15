@@ -39,35 +39,29 @@ public:
     struct Identification {
         unsigned int lexiconWordsNb;
         unsigned int lexiconTime;
-        unsigned int specificFileIdent;
-        Identification(): lexiconWordsNb(0), lexiconTime(0), specificFileIdent(0) {}
-        Identification(const unsigned int nb, const unsigned int id, const unsigned int spe): 
-            lexiconWordsNb(nb), lexiconTime(id), specificFileIdent(spe) {}
+        Identification(): lexiconWordsNb(0), lexiconTime(0) {}
+        Identification(const unsigned int nb, const unsigned int id): lexiconWordsNb(nb), lexiconTime(id) {}
         ~Identification() {}
-        //specificFileIdent n'inervient pas dans les comparaisons
         bool operator==(const Identification &id2) const {
-            return (this->lexiconWordsNb == id2.lexiconWordsNb && this->lexiconTime == id2.lexiconTime
-                && this->specificFileIdent == id2.specificFileIdent); }
+            return (this->lexiconWordsNb == id2.lexiconWordsNb && this->lexiconTime == id2.lexiconTime); }
         bool operator!=(const Identification &id2) const {
-            return (this->lexiconWordsNb != id2.lexiconWordsNb || this->lexiconTime != id2.lexiconTime
-                && this->specificFileIdent != id2.specificFileIdent); }    
+            return (this->lexiconWordsNb != id2.lexiconWordsNb || this->lexiconTime != id2.lexiconTime); }    
     };
 protected:
-#define FLAG_IDENTIFICATION 53
-    //<flagIdentification>(1) <maxIdentifiant>(3) <identifieurUnique>(4) <identifieurSpecifique>(4) = 12
-#define TAILLE_IDENTIFICATION 12
-    //<flagIndexej=47>(1) <addrBlocSuivant>(5) <nombreIndex>(3) = 9
-#define TETE_BLOC_INDEX 9
+//<flagIndexej=47>(1) <addrBlocSuivant>(5) <nombreIndex>(3) = 9
+#define TAILLE_TETE_INDEX 9
 
     /**\brief Creates NindPadFile with a specified name associated with.
     *\param fileName absolute path file name
     *\param isWriter true if writer, false if reader  
     *\param referenceIdentification unique identification for checking (if 0, no checks)
+    *\param specificsSize size in bytes of specific datas
     *\param dataEntrySize size in bytes of one data entry (for neo writer)
     *\param dataEntriesBlocSize number of entries in a single block (for neo writer) */
     NindPadFile(const std::string &fileName,
                 const bool isWriter,
                 const Identification &referenceIdentification,
+                const unsigned int specificsSize,
                 const unsigned int dataEntrySize = 0,
                 const unsigned int dataEntriesBlocSize = 0);
 
@@ -88,19 +82,35 @@ protected:
          
     //return l'identifiant maximum possible avec le systehme actuel d'indirection
     unsigned int getMaxIdent() const;
+    
+    /**\brief Read from file specific datas and leave result into read buffer */
+    void getSpecifics();
 
     /**\brief get identification of file
     *\param identification where unique identification of file is returned */
     void getFileIdentification(Identification &identification);
-        
-    //ejcrit l'identification du fichier ah l'adresse courente du fichier
-    void addIdentification(const Identification &fileIdentification);
+    
+    /**\brief get size of specific datas + identification */
+    unsigned int getSpecificsAndIdentificationSize() const;   
+    
+    /**\brief write specifics header into write buffer */
+    void writeSpecificsHeader();
+    
+    /**\brief write identification into write buffer
+    * \param fileIdentification unique identification of file */
+    void writeIdentification(const Identification &fileIdentification);
+    
 public:        
+    /**\brief get file name
+    * \return file name */
+    std::string getFileName();
     NindFile m_file;                //pour l'ecrivain ou le lecteur
+    
 protected:
     std::string m_fileName;
     bool m_isWriter;                    //vrai si ejcrivain
     bool m_isExistingWriter;            //vrai si ejcrivain dejjah existant 
+    
     std::list<std::pair<unsigned long int, unsigned int> > m_entriesBlocksMap;  //gestion des blocs d'entrejes
     
 private:
@@ -110,11 +120,15 @@ private:
     //ejtablit la carte des blocs d'entrejes
     void mapEntriesBlocks();
     
-    //verifie l'apairage avec la rejfejrence
+    //vejrifie la structure des spejcifiques
+    void checkSpejcifiques();
+
+    //vejrifie l'apairage avec la rejfejrence
     void checkIdentification(const Identification &referenceIdentification);
 
-    unsigned int m_dataEntrySize;       //size in bytes of one data entry (for writer)
-    unsigned int m_dataEntriesBlocSize;         //number of entries in a single block (for writer)
+    unsigned int m_specificsSize;                //size in bytes of specific datas
+    unsigned int m_dataEntrySize;               //size in bytes of one data entry (for neo writer)
+    unsigned int m_dataEntriesBlocSize;         //number of entries in a single block (for neo writer)
 };
 ////////////////////////////////////////////////////////////
     } // end namespace

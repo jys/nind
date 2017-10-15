@@ -3,9 +3,9 @@
 //
 // Description: un programme pour effacer un document dans un corpus indexej
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2016
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2016 LATEJCON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -46,15 +46,13 @@ int main(int argc, char *argv[]) {
     try {
         //calcule les noms des fichiers lexique et inverse et index locaux
         const string incompleteFileName = lexiconFileName.substr(0, lexiconFileName.find('.'));
-        const string termindexFileName = incompleteFileName + ".termindex";
-        const string localindexFileName = incompleteFileName + ".localindex";
         //le lexique pour son identification
-        NindLexiconAmose nindLexicon(lexiconFileName);
+        NindLexiconAmose nindLexicon(incompleteFileName);
         const NindIndex::Identification identification = nindLexicon.getIdentification();
         //le fichier inverse ecrivain
-        NindTermAmose nindTermAmose(termindexFileName, true, identification);
+        NindTermAmose nindTermAmose(incompleteFileName, true, identification);
         //le fichier des index locaux
-        NindLocalAmose nindLocalAmose(localindexFileName, true, identification);
+        NindLocalAmose nindLocalAmose(incompleteFileName, true, identification);
         //rejcupehre tous les identifiants de termes contenus dans le document
         set<unsigned int> termIdents;
         const bool trouvej = nindLocalAmose.getTermIdents(docIdent, termIdents);

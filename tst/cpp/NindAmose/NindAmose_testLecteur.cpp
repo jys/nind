@@ -4,9 +4,9 @@
 // Description: un test vejrifier que nind renvoie bien en lecture toutes les informations 
 // reçues en ejcriture et seulement celles-là.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2016
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2016 LATEJCON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -53,23 +53,20 @@ int main(int argc, char *argv[]) {
     try {
         //calcule les noms des fichiers lexique et inverse et index locaux
         const string incompleteFileName = docsFileName.substr(0, docsFileName.find('.'));
-        const string lexiconindexFileName = incompleteFileName + ".lexiconindex";
-        const string termindexFileName = incompleteFileName + ".termindex";
-        const string localindexFileName = incompleteFileName + ".localindex";
         //pour calculer le temps consomme
         clock_t start, end;
         double cpuTimeUsed;
         /////////////////////////////////////
         //le lexique lecteur
-        NindLexiconAmose nindLexiconAmose(lexiconindexFileName, false);
+        NindLexiconAmose nindLexiconAmose(incompleteFileName, false);
         const NindIndex::Identification identification = nindLexiconAmose.getIdentification();
         //affiche les identifiants du lexique
         cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;
         cout<<" ("<<NindDate::date(identification.lexiconTime)<<")"<<endl;
         //le fichier inverse lecteur
-        NindTermAmose nindTermAmose(termindexFileName, false, identification);
+        NindTermAmose nindTermAmose(incompleteFileName, false, identification);
         //le fichier des index locaux
-        NindLocalAmose nindLocalAmose(localindexFileName, false, identification);
+        NindLocalAmose nindLocalAmose(incompleteFileName, false, identification);
         unsigned int nbGetLocal = 0;
         unsigned int nbGetTerm = 0;
         unsigned int nbGetLex = 0;
@@ -93,7 +90,7 @@ int main(int argc, char *argv[]) {
                 nbGetLex++;
                 const unsigned int id = nindLexiconAmose.getWordId(lemme, type, entitejNommeje);
                 if (id == 0) {
-                    cerr<<lemme<<" INCONNU dans "<<lexiconindexFileName<<endl;
+                    cerr<<lemme<<" INCONNU dans "<<nindLexiconAmose.getFileName()<<endl;
                     continue;
                 }
                 //rejcupehre la liste des documents ouh est indexej ce terme
@@ -101,7 +98,7 @@ int main(int argc, char *argv[]) {
                 list<unsigned int> documentIds;
                 const bool trouvej = nindTermAmose.getDocList(id, documentIds);
                 if (!trouvej) {
-                    cerr<<lemme<<" INCONNU dans "<<termindexFileName<<endl;
+                    cerr<<lemme<<" INCONNU dans "<<nindTermAmose.getFileName()<<endl;
                     continue;
                 }
                 //le doc doit estre dans la liste
@@ -127,17 +124,11 @@ int main(int argc, char *argv[]) {
             }
         }
         end = clock();
-        cout<<setw(8)<<setfill(' ')<<nbGetLex<<" accès à "<<lexiconindexFileName<<endl;
-        cout<<setw(8)<<setfill(' ')<<nbGetTerm<<" accès à "<<termindexFileName<<endl;
-        cout<<setw(8)<<setfill(' ')<<nbGetLocal<<" accès à "<<localindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nbGetLex<<" accès à "<<nindLexiconAmose.getFileName()<<endl;
+        cout<<setw(8)<<setfill(' ')<<nbGetTerm<<" accès à "<<nindTermAmose.getFileName()<<endl;
+        cout<<setw(8)<<setfill(' ')<<nbGetLocal<<" accès à "<<nindLocalAmose.getFileName()<<endl;
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
         cout<<cpuTimeUsed<<" secondes"<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLexiconAmose.m_file.m_readCount<<" lectures réelles sur "<<lexiconindexFileName<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLexiconAmose.m_file.m_writeCount<<" écritures réelles sur "<<lexiconindexFileName<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermAmose.m_file.m_readCount<<" lectures réelles sur "<<termindexFileName<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermAmose.m_file.m_writeCount<<" écritures réelles sur "<<termindexFileName<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.m_file.m_readCount<<" lectures réelles sur "<<localindexFileName<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.m_file.m_writeCount<<" écritures réelles sur "<<localindexFileName<<endl;
     }
     catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; throw; return false;}
     catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; throw; return false;}

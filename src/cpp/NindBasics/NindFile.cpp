@@ -4,9 +4,9 @@
 // Description: Les acces basiques a un fichier binaire sequentiel avec possibilites de bufferisation
 // Le fichier est ecrit en little-endian 
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2014
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2015 LATECON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -25,7 +25,6 @@ using namespace std;
 //param fileName absolute path file name
 //param bufferSize size of writing buffer (0 if just reader) */
 NindFile::NindFile(const string &fileName):
-    m_readCount(0), m_writeCount(0),
     m_fileName(fileName),
     m_file(0),
     m_wbuffer(0),
@@ -541,17 +540,20 @@ void NindFile::putStringAsBytes(const string &str)
 }
 ////////////////////////////////////////////////////////////
 //brief Write intermediate buffer to the file */
-void NindFile::writeBuffer()
+//param position offset into buffer of first byte to write
+//param length length to write */
+void NindFile::writeBuffer(const unsigned int position,
+                           const unsigned int length)
 {
-    const unsigned int size = m_wPtr - m_wbuffer;
-    const unsigned int writeSize =  fwrite(m_wbuffer, 1, size, m_file);
+    const unsigned int size = (length == 0) ? (m_wPtr - m_wbuffer) : length;
+    const unsigned int writeSize =  fwrite(m_wbuffer + position, 1, size, m_file);
     fflush(m_file);
     if (writeSize != size) throw WriteFileException(m_fileName);
-    m_wPtr = m_wbuffer;
+    //remet le pointeur d'ejcriture en teste du buffer pour une hypothejtique rejutilisation
+    m_wPtr = m_wbuffer;         
     //memorise la taille du fichier
     const long int current = ftell(m_file);
     if (current > m_fileSize) m_fileSize = current;
-    m_writeCount++;
 }
 ////////////////////////////////////////////////////////////
 //brief Write byte value to the file
@@ -570,7 +572,6 @@ void NindFile::writeValue(const unsigned char value,
     //memorise la taille du fichier
     const long int current = ftell(m_file);
     if (current > m_fileSize) m_fileSize = current;
-    m_writeCount++;
 }
 ////////////////////////////////////////////////////////////
 //Read bytes from file into specified buffer
@@ -583,7 +584,6 @@ void NindFile::readBytes(unsigned char* bytes,
         if (feof(m_file)) throw EofException(m_fileName);
         else throw ReadFileException(m_fileName);
     }
-    m_readCount++;
 }
 ////////////////////////////////////////////////////////////
 

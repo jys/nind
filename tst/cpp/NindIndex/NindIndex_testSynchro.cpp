@@ -68,13 +68,10 @@ int main(int argc, char *argv[]) {
     try {
         //calcule les noms des fichiers lexique, de termes et index locaux
         const string incompleteFileName = docsFileName.substr(0, docsFileName.find('.'));
-        const string lexiconFileName = incompleteFileName + ".lexiconindex";
-        const string termindexFileName = incompleteFileName + ".termindex";
-        const string localindexFileName = incompleteFileName + ".localindex";
         //vejrifie que le systehme de fichiers est cohejrent
-        if (!NindFichiers::fichiersCohejrents(list<string>({ lexiconFileName, termindexFileName, localindexFileName }), true)) {
+        if (!NindFichiers::fichiersCohejrents(incompleteFileName, true)) {
             cout<<"Des anciens fichiers existent !"<<endl;
-            cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".*index"<<endl;
+            cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".nind*"<<endl;
             return false;
         }
         //pour calculer le temps consomme
@@ -84,9 +81,7 @@ int main(int argc, char *argv[]) {
         cout<<"Forme le lexique, le fichier des termes et le fichier des index locaux avec "<<docsFileName<<endl;
         start = clock();
         //l'acces aux index
-        NindIndex_indexe nindIndex_indexe(lexiconFileName, 
-                                          termindexFileName, 
-                                          localindexFileName,
+        NindIndex_indexe nindIndex_indexe(incompleteFileName, 
                                           lexiconEntryNb,
                                           termindexEntryNb,
                                           localindexEntryNb,
@@ -94,13 +89,13 @@ int main(int argc, char *argv[]) {
                                           0);
         //Initialise les lecteurs
         //le lexique lecteur
-        NindLexiconIndex nindLexicon(lexiconFileName, false);
+        NindLexiconIndex nindLexicon(incompleteFileName, false);
         //l'identification
         const NindIndex::Identification identification = nindLexicon.getIdentification();
         //le fichier des termes lecteur
-        NindTermIndex nindTermIndex(termindexFileName, false, identification);
+        NindTermIndex nindTermIndex(incompleteFileName, false, identification, 0);
         //le fichier des index locaux
-        NindLocalIndex nindLocalIndex(localindexFileName, false, identification);
+        NindLocalIndex nindLocalIndex(incompleteFileName, false, identification);
         //lit le fichier dump de documents
         NindIndex_litDumpS2 nindIndex_litDumpS2(docsFileName);
         unsigned int nbInconnus = 0, nbTermNok = 0, nbTermOk = 0, nbLocalNok = 0, nbLocalOk = 0;
@@ -155,14 +150,14 @@ int main(int argc, char *argv[]) {
         }
         nindIndex_indexe.flush();
         end = clock();
-        cout<<setw(8)<<setfill(' ')<<nindIndex_indexe.lexiconAccessNb()<<" accès / mises à jour sur "<<lexiconFileName<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindIndex_indexe.termindexAccessNb()<<" mises à jour sur "<<termindexFileName<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindIndex_indexe.localindexAccessNb()<<" mises à jour sur "<<localindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindIndex_indexe.lexiconAccessNb()<<" accès / mises à jour sur "<<nindIndex_indexe.getLexiconFileName()<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindIndex_indexe.termindexAccessNb()<<" mises à jour sur "<<nindIndex_indexe.getTermFileName()<<endl;
+        cout<<setw(8)<<setfill(' ')<<nindIndex_indexe.localindexAccessNb()<<" mises à jour sur "<<nindIndex_indexe.getLocalFileName()<<endl;
         cout<<RED<<setw(8)<<setfill(' ')<<nbInconnus<<BLA<<" occurrences inconnues du lexique"<<endl;
-        cout<<setw(8)<<setfill(' ')<<nbTermOk<<" occurrences consultées avec succès dans "<<termindexFileName<<endl;
-        cout<<RED<<setw(8)<<setfill(' ')<<nbTermNok<<BLA<<" occurrences consultées en échec dans "<<termindexFileName<<endl;
-        cout<<setw(8)<<setfill(' ')<<nbLocalOk<<" occurrences consultées avec succès dans "<<localindexFileName<<endl;
-        cout<<RED<<setw(8)<<setfill(' ')<<nbLocalNok<<BLA<<" occurrences consultées en échec dans "<<localindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nbTermOk<<" occurrences consultées avec succès dans "<<nindIndex_indexe.getTermFileName()<<endl;
+        cout<<RED<<setw(8)<<setfill(' ')<<nbTermNok<<BLA<<" occurrences consultées en échec dans "<<nindIndex_indexe.getTermFileName()<<endl;
+        cout<<setw(8)<<setfill(' ')<<nbLocalOk<<" occurrences consultées avec succès dans "<<nindIndex_indexe.getLocalFileName()<<endl;
+        cout<<RED<<setw(8)<<setfill(' ')<<nbLocalNok<<BLA<<" occurrences consultées en échec dans "<<nindIndex_indexe.getLocalFileName()<<endl;
 
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
         cout<<cpuTimeUsed<<" secondes"<<endl;

@@ -3,9 +3,9 @@
 //
 // Description: Les acces basiques a un fichier binaire sequentiel avec possibilites de bufferisation
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2014
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2015 LATECON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -27,8 +27,6 @@ namespace latecon {
 ////////////////////////////////////////////////////////////
 class DLLExportLexicon NindFile {
 public:
-    unsigned int m_readCount, m_writeCount;
-
     /**\brief Creates NindFile with a specified name associated with.
     *\param fileName absolute path file name */
     NindFile(const std::string &fileName);
@@ -97,6 +95,10 @@ public:
     /**\brief Test if effective buffer was entirely read
     *\return true if effective buffer was entirely read */
     inline bool endOfInBuffer();
+    
+    /**\brief Set pointer in read buffer
+    *\param offset from buffer head where to read next time */
+    inline void setInBufferPtr(const unsigned int offset);
         
     /**\brief Get a 1-bytes integer from internal buffer
     *\return 4-bytes integer */
@@ -148,6 +150,10 @@ public:
      * \return the effective actual size */
     inline unsigned int getOutBufferSize();
 
+    /**\brief Set pointer in write buffer
+    *\param offset from buffer head where to write next time */
+    inline void setOutBufferPtr(const unsigned int offset);
+        
     /**\brief Put padding into the internal buffer
     *\param bytesNb number of padding bytes to write */
     void putPad(const unsigned int bytesNb);
@@ -194,8 +200,11 @@ public:
     *\param str string to write  */
     void putStringAsBytes(const std::string &str);
 
-    /**\brief Write intermediate buffer to the file */
-    void writeBuffer();
+    /**\brief Write intermediate buffer to the file 
+    *\param position offset into buffer of first byte to write
+    *\param length length to write */
+    void writeBuffer(const unsigned int position = 0,
+                     const unsigned int length = 0);
         
     /**\brief Write byte value to the file
     *\param value value to write
@@ -266,11 +275,25 @@ inline bool NindFile::endOfInBuffer()
     return (m_rPtr >= m_rbufferEnd);
 }
 ////////////////////////////////////////////////////////////
+//brief Set pointer in read buffer
+//param offset from buffer head where to read next time */
+inline void NindFile::setInBufferPtr(const unsigned int offset)
+{
+    m_rPtr = m_rbuffer + offset;
+}
+////////////////////////////////////////////////////////////
 //brief Return the effective size of buffer for writing
 //return the effective actual size */
 inline unsigned int NindFile::getOutBufferSize()
 {
     return (m_wPtr - m_wbuffer);
+}
+////////////////////////////////////////////////////////////
+//\brief Set pointer in write buffer
+//param offset from buffer head where to write next time */
+inline void NindFile::setOutBufferPtr(const unsigned int offset)
+{
+    m_wPtr = m_wbuffer + offset;
 }
 ////////////////////////////////////////////////////////////
     } // end namespace

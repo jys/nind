@@ -7,9 +7,9 @@
 // Cette classe gere les acces aux fichiers d'indexation en bufferisant l'acces au
 // fichier inverse... ou pas.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2016
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2016 LATECON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -34,25 +34,21 @@ static void majLocal(const unsigned int id,
                      list<NindLocalIndex::Term> &localIndex);
 ////////////////////////////////////////////////////////////
 //brief Creates NindIndex_indexe with specified names and parameters associated with.
-//param lexiconFileName absolute path lexicon file name
-//param termindexFileName absolute path term index file name
-//param localindexFileName absolute path local index file name
+//param fileNameExtensionLess absolute path file name without extension
 //param lexiconEntryNb number of lexicon entries in a single indirection block
 //param termindexEntryNb number of term index entries in a single indirection block
 //param localindexEntryNb number of local index entries in a single indirection block
 //param termBufferSize size of term buffer before indexation (0 means immediate indexation) 
 //param timeControl 3=structure, 2=+lexiconindex, 1=+termindex, 0=+localindex = normal*/
-NindIndex_indexe::NindIndex_indexe(const string &lexiconFileName,
-                                   const string &termindexFileName,
-                                   const string &localindexFileName,
+NindIndex_indexe::NindIndex_indexe(const string &fileNameExtensionLess,
                                    const unsigned int lexiconEntryNb,
                                    const unsigned int termindexEntryNb,
                                    const unsigned int localindexEntryNb,
                                    const unsigned int termBufferSize,
                                    const unsigned int timeControl ) :
-    m_nindLexicon(lexiconFileName, true, false, lexiconEntryNb),
-    m_nindTermindex(termindexFileName, true, NindPadFile::Identification(0, 0, 0), termindexEntryNb),
-    m_nindLocalindex(localindexFileName, true, NindPadFile::Identification(0, 0, 0), localindexEntryNb),
+    m_nindLexicon(fileNameExtensionLess, true, false, lexiconEntryNb),
+    m_nindTermindex(fileNameExtensionLess, true, NindPadFile::Identification(0, 0), 0, termindexEntryNb),
+    m_nindLocalindex(fileNameExtensionLess, true, NindPadFile::Identification(0, 0), localindexEntryNb),
     m_termBufferSize(termBufferSize),
     m_timeControl(timeControl),
     m_docIdent(0),
@@ -138,7 +134,8 @@ void NindIndex_indexe::flush()
             majInverse(cg3, docId, termIndex);
         }
         //ecrit sur le fichier inverse
-        if (m_timeControl < 2) m_nindTermindex.setTermDef(id2, termIndex, identification);
+        const list<unsigned int> specifics;
+        if (m_timeControl < 2) m_nindTermindex.setTermDef(id2, termIndex, identification, specifics);
         //incremente le compteur
         m_termindexAccessNb++;
     }
@@ -276,23 +273,25 @@ bool NindIndex_indexe::trouveTerme(const unsigned int id,
     return true;
 }
 ////////////////////////////////////////////////////////////
-void NindIndex_indexe::getCounts(list<unsigned int> &counts) const
+//brief donne le nom du fichier lexique
+//return nom du fichier lexique */
+string NindIndex_indexe::getLexiconFileName()
 {
-    counts.clear();
-    counts.push_back(m_nindLexicon.countterm);
-    counts.push_back(m_nindLexicon.countpasterm);
-    counts.push_back(m_nindLexicon.counttotal);
-    counts.push_back(m_nindLexicon.m_file.m_readCount);
-    counts.push_back(m_nindLexicon.m_file.m_writeCount);
-    counts.push_back(m_nindTermindex.countterm);
-    counts.push_back(m_nindTermindex.countpasterm);
-    counts.push_back(m_nindTermindex.counttotal);
-    counts.push_back(m_nindTermindex.m_file.m_readCount);
-    counts.push_back(m_nindTermindex.m_file.m_writeCount);
-    counts.push_back(m_nindLocalindex.countterm);
-    counts.push_back(m_nindLocalindex.countpasterm);
-    counts.push_back(m_nindLocalindex.counttotal);
-    counts.push_back(m_nindLocalindex.m_file.m_readCount);
-    counts.push_back(m_nindLocalindex.m_file.m_writeCount);
+    return m_nindLexicon.getFileName();
 }
-    
+////////////////////////////////////////////////////////////
+//brief donne le nom du fichier inversej
+//return nom du fichier inversej */
+string NindIndex_indexe::getTermFileName()
+{
+    return m_nindTermindex.getFileName();
+}
+////////////////////////////////////////////////////////////
+//brief donne le nom du fichier local
+//return nom du fichier local */
+string NindIndex_indexe::getLocalFileName()
+{
+    return m_nindLocalindex.getFileName();
+}
+////////////////////////////////////////////////////////////
+

@@ -2,9 +2,9 @@
 //
 // Description: un test valider l'encodage et le decodage des nombres latecon.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2014
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2015 LATEJCON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 

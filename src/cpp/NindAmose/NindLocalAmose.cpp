@@ -6,9 +6,9 @@
 // Cette classe gere les comptages necessaires a Amose ainsi que les caches pour les acces
 // multiples au meme document du fichier des index locaux.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2015
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -24,20 +24,19 @@ using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
 //brief Creates NindLocalAmose with a specified name associated with.
-//param fileName absolute path file name
+//param fileNameExtensionLess absolute path file name without extension
 //param isLocalIndexWriter true if localIndex writer, false if localIndex reader  
 //param lexiconIdentification unique identification of lexicon 
 //param indirectionEntryNb number of entries in a single indirection block */
-NindLocalAmose::NindLocalAmose(const string &fileName,
+NindLocalAmose::NindLocalAmose(const string &fileNameExtensionLess,
                                const bool isLocalIndexWriter,
                                const Identification &lexiconIdentification,
                                const unsigned int indirectionBlocSize):
-    NindLocalIndex(fileName, 
+    NindLocalIndex(fileNameExtensionLess, 
                    isLocalIndexWriter, 
                    lexiconIdentification,
                    indirectionBlocSize),
-    m_nindLexicon(fileName.substr(0, fileName.find('.'))+".lexiconindex", 
-                  false)
+    m_nindLexicon(fileNameExtensionLess, false)
 {
 }
 ////////////////////////////////////////////////////////////

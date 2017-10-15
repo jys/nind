@@ -3,9 +3,9 @@
 //
 // Description: un petit moteur de recherche sur un lexique, fichier inverse et fichier des index locaux existants.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2014
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2015 LATECON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -56,17 +56,16 @@ int main(int argc, char *argv[]) {
     if (lexiconFileName == "--help") {displayHelp(argv[0]); return true;}
 
     try {
+        const list<unsigned int> spejcifiques;
         //calcule les noms des fichiers lexique et inverse
-        const size_t pos = lexiconFileName.find('.');
-        const string termindexFileName = lexiconFileName.substr(0, pos) + ".termindex";
-        const string localindexFileName = lexiconFileName.substr(0, pos) + ".localindex";
+        const string incompleteFileName = lexiconFileName.substr(0, lexiconFileName.find('.'));
         //le lexique lecteur
-        NindLexiconIndex nindLexicon(lexiconFileName, false);
+        NindLexiconIndex nindLexicon(incompleteFileName, false);
         const NindIndex::Identification identification = nindLexicon.getIdentification();
         //le fichier inverse lecteur
-        NindTermIndex nindTermIndex(termindexFileName, false, identification);
+        NindTermIndex nindTermIndex(incompleteFileName, false, identification, 0);
         //le fichier des index locaux
-        NindLocalIndex nindLocalIndex(localindexFileName, false, identification);
+        NindLocalIndex nindLocalIndex(incompleteFileName, false, identification);
         //la classe d'utilitaires
         NindIndex_litDumpS2 nindIndex_litDumpS2;
         cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;

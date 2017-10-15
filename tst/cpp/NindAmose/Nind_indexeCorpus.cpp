@@ -4,9 +4,9 @@
 // Description: un programme pour remplir le lexique, le fichier inverse et le fichier des index locaux
 // a partir d'un corpus deja syntaxiquement analyse issu d'un dump Lucene.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2016
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2016 LATEJCON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -41,6 +41,7 @@ static void displayHelp(char* arg0) {
     cout<<"Le lexique et les fichiers inverse et d'index locaux sont créés."<<endl;
     cout<<"Les fichiers lexique, inverse et d'index locaux doivent être absents."<<endl;
     cout<<"Les documents sont indexés au fur et à mesure de leur lecture."<<endl;
+    cout<<"L'indexation des termes et des documents se fait document par document."<<endl;
     cout<<"Le nombre d'entrées des blocs d'indirection est spécifiée pour le lexique,"<<endl;
     cout<<"le fichier inversé et le fichier des index locaux."<<endl;
 
@@ -76,14 +77,10 @@ int main(int argc, char *argv[]) {
     try {
         //calcule les noms des fichiers lexique et inverse et index locaux
         const string incompleteFileName = docsFileName.substr(0, docsFileName.find('.'));
-        const string lexiconFileName = incompleteFileName + ".lexiconindex";
-        const string retrolexiconFileName = incompleteFileName + ".retrolexiconindex";
-        const string termindexFileName = incompleteFileName + ".termindex";
-        const string localindexFileName = incompleteFileName + ".localindex";
         //vejrifie que le systehme de fichiers est cohejrent
-        if (!NindFichiers::fichiersCohejrents(list<string>({ lexiconFileName, retrolexiconFileName, termindexFileName, localindexFileName }), false)) {
+        if (!NindFichiers::fichiersCohejrents(incompleteFileName, false)) {
             cout<<"Des anciens fichiers existent et sont incohérents!"<<endl;
-            cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".*index"<<endl;
+            cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".nind*"<<endl;
             return false;
         }
         //pour calculer le temps consomme
@@ -94,18 +91,19 @@ int main(int argc, char *argv[]) {
         cout<<"Forme le lexique, le fichier inversé et le fichier des index locaux avec "<<docsFileName<<endl;
         start = clock();
         //le lexique ecrivain avec retro lexique (meme taille d'indirection que le fichier inverse)
-        NindLexiconIndex nindLexicon(lexiconFileName, true, false, lexiconEntryNb, termindexEntryNb);
+        NindLexiconIndex nindLexicon(incompleteFileName, true, false, lexiconEntryNb, termindexEntryNb);
         NindIndex::Identification identification = nindLexicon.getIdentification();
         //le fichier inverse ecrivain
-        NindTermIndex nindTermIndex(termindexFileName, true, identification, termindexEntryNb);
+        NindTermIndex nindTermIndex(incompleteFileName, true, identification, 0, termindexEntryNb);
         //le fichier des index locaux
-        NindLocalIndex nindLocalIndex(localindexFileName, true, identification, localindexEntryNb);
+        NindLocalIndex nindLocalIndex(incompleteFileName, true, identification, localindexEntryNb);
         //lit le fichier dump de documents
         //lit le fichier dump de documents
         NindAmose_litTexteAnalysej nindAmose_litTexteAnalysej(docsFileName);
         unsigned int docsNb = 0;
         unsigned int nbMajTerm = 0, nbMajLex = 0;
         unsigned int noDoc;
+        const list<unsigned int> spejcifiques;
         while (nindAmose_litTexteAnalysej.documentSuivant(noDoc)) {
             docsNb++;
             cout<<noDoc<<"\r"<<flush;
@@ -149,34 +147,18 @@ int main(int argc, char *argv[]) {
                 //si le terme n'existe pas encore, la liste reste vide
                 majInverse(idterm, noDoc, freq, termIndex); 
                 //ecrit sur le fichier inverse
-                nindTermIndex.setTermDef(idterm, termIndex, identification);
+                nindTermIndex.setTermDef(idterm, termIndex, identification, spejcifiques);
                 nbMajTerm +=1;
             }
             //ecrit la definition sur le fichier des index locaux
             nindLocalIndex.setLocalDef(noDoc, localIndex, identification);
         }
         end = clock();
-        cout<<setw(8)<<setfill(' ')<<nbMajLex<<" accès / mises à jour sur "<<lexiconFileName<<endl;
-        cout<<setw(8)<<setfill(' ')<<nbMajTerm<<" mises à jour sur "<<termindexFileName<<endl;
-        cout<<setw(8)<<setfill(' ')<<docsNb<<" mises à jour sur "<<localindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nbMajLex<<" accès / mises à jour sur "<<nindLexicon.getFileName()<<endl;
+        cout<<setw(8)<<setfill(' ')<<nbMajTerm<<" mises à jour sur "<<nindTermIndex.getFileName()<<endl;
+        cout<<setw(8)<<setfill(' ')<<docsNb<<" mises à jour sur "<<nindLocalIndex.getFileName()<<endl;
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
         cout<<cpuTimeUsed<<" secondes"<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLexicon.countterm<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLexicon.countpasterm<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLexicon.counttotal<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLexicon.m_file.m_readCount<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLexicon.m_file.m_writeCount<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermIndex.countterm<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermIndex.countpasterm<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermIndex.counttotal<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermIndex.m_file.m_readCount<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermIndex.m_file.m_writeCount<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLocalIndex.countterm<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLocalIndex.countpasterm<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLocalIndex.counttotal<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLocalIndex.m_file.m_readCount<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLocalIndex.m_file.m_writeCount<<endl;
-        
     }
     catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; throw; return false;}
     catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; throw; return false;}

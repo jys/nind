@@ -65,14 +65,10 @@ int main(int argc, char *argv[]) {
     try {
         //calcule les noms des fichiers lexique et inverse et index locaux
         const string incompleteFileName = docsFileName.substr(0, docsFileName.find('.'));
-        const string lexiconFileName = incompleteFileName + ".lexiconindex";
-        const string retrolexiconFileName = incompleteFileName + ".retrolexiconindex";
-        const string termindexFileName = incompleteFileName + ".termindex";
-        const string localindexFileName = incompleteFileName + ".localindex";
         //vejrifie que le systehme de fichiers est cohejrent
-        if (!NindFichiers::fichiersCohejrents(list<string>({ lexiconFileName, retrolexiconFileName, termindexFileName, localindexFileName }), false)) {
+        if (!NindFichiers::fichiersCohejrents(incompleteFileName, false)) {
             cout<<"Des anciens fichiers existent et sont incohérents!"<<endl;
-            cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".*index"<<endl;
+            cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".nind*"<<endl;
             return false;
         }
         //pour calculer le temps consomme
@@ -82,14 +78,14 @@ int main(int argc, char *argv[]) {
         cout<<"Forme le sytème de fichiers nind avec "<<docsFileName<<endl;
         start = clock();
         //le lexique ecrivain avec retro lexique (meme taille d'indirection que le fichier inverse)
-        NindLexiconAmose nindLexiconAmose(lexiconFileName, true, lexiconEntryNb, termindexEntryNb);
+        NindLexiconAmose nindLexiconAmose(incompleteFileName, true, lexiconEntryNb, termindexEntryNb);
         NindIndex::Identification identification = nindLexiconAmose.getIdentification();
         cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;
         cout<<" ("<<NindDate::date(identification.lexiconTime)<<")"<<endl;
         //le fichier inverse ecrivain
-        NindTermAmose nindTermAmose(termindexFileName, true, identification, termindexEntryNb);
+        NindTermAmose nindTermAmose(incompleteFileName, true, identification, termindexEntryNb);
         //le fichier des index locaux
-        NindLocalAmose nindLocalAmose(localindexFileName, true, identification, localindexEntryNb);
+        NindLocalAmose nindLocalAmose(incompleteFileName, true, identification, localindexEntryNb);
         //lit le fichier dump de documents
         NindAmose_litTexteAnalysej nindAmose_litTexteAnalysej(docsFileName);
         unsigned int docsNb =0;
@@ -179,10 +175,10 @@ int main(int argc, char *argv[]) {
             nbMajTerm++;
         }
         end = clock();
-        cout<<setw(8)<<setfill(' ')<<nbMajLex<<" accès / mises à jour sur "<<lexiconFileName<<endl;
-        cout<<setw(8)<<setfill(' ')<<termsNb<<" occurrences de termes ajoutés sur "<<termindexFileName<<endl;
-        cout<<setw(8)<<setfill(' ')<<nbMajTerm<<" mises à jour sur "<<termindexFileName<<endl;
-        cout<<setw(8)<<setfill(' ')<<docsNb<<" mises à jour sur "<<localindexFileName<<endl;
+        cout<<setw(8)<<setfill(' ')<<nbMajLex<<" accès / mises à jour sur "<<nindLexiconAmose.getFileName()<<endl;
+        cout<<setw(8)<<setfill(' ')<<termsNb<<" occurrences de termes ajoutés sur "<<nindTermAmose.getFileName()<<endl;
+        cout<<setw(8)<<setfill(' ')<<nbMajTerm<<" mises à jour sur "<<nindTermAmose.getFileName()<<endl;
+        cout<<setw(8)<<setfill(' ')<<docsNb<<" mises à jour sur "<<nindLocalAmose.getFileName()<<endl;
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
         cout<<cpuTimeUsed<<" secondes"<<endl;
         cout<<endl;
@@ -195,22 +191,6 @@ int main(int argc, char *argv[]) {
         cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(NAMED_ENTITY)<<" occurrences de NAMED_ENTITY"<<endl;
         cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(ALL)<<" occurrences"<<endl;
         cout<<setw(8)<<setfill(' ')<<nindLocalAmose.getDocCount()<<" documents indexés"<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLexiconAmose.countterm<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLexiconAmose.countpasterm<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLexiconAmose.counttotal<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLexiconAmose.m_file.m_readCount<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLexiconAmose.m_file.m_writeCount<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermAmose.countterm<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermAmose.countpasterm<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermAmose.counttotal<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermAmose.m_file.m_readCount<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindTermAmose.m_file.m_writeCount<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.countterm<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.countpasterm<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.counttotal<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.m_file.m_readCount<<endl;
-        cout<<setw(8)<<setfill(' ')<<nindLocalAmose.m_file.m_writeCount<<endl;
-  
     }
     catch (FileException &exc) {cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; throw; return false;}
     catch (exception &exc) {cerr<<"EXCEPTION :"<<exc.what()<< endl; throw; return false;}

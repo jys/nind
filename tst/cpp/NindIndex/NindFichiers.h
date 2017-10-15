@@ -5,7 +5,7 @@
 //
 // Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2017 LATEJCON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -27,10 +27,10 @@ namespace latecon {
 class DLLExportLexicon NindFichiers {
 public:
     /**\brief Teste le systehme de fichiers
-    *\param nomsFichiers liste de tous les fichiers à tester la prejsence
+    *\param fileNameExtensionLess absolute path file name without extension
     *\param tousAbsents vrai si les fichiers doivent estre tous absents
     *\return vrai si le systehme est cohejrent, sinon faux */
-    static bool fichiersCohejrents(const std::list<std::string> &nomsFichiers, 
+    static bool fichiersCohejrents(const std::string &fileNameExtensionLess, 
                                    const bool tousAbsents);
 };
 ////////////////////////////////////////////////////////////

@@ -5,7 +5,7 @@
 //
 // Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2017 LATEJCON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -20,16 +20,18 @@ using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
 //brief Teste le systehme de fichiers
-//param nomsFichiers liste de tous les fichiers à tester la prejsence
+//param fileNameExtensionLess absolute path file name without extension
 //param tousAbsents vrai si les fichiers doivent estre tous absents
 //return vrai si le systehme est cohejrent, sinon faux */
-bool NindFichiers::fichiersCohejrents(const std::list<std::string> &nomsFichiers, 
+bool NindFichiers::fichiersCohejrents(const string &fileNameExtensionLess, 
                                       const bool tousAbsents)
 {
     bool tous = true;
     bool aucun = true;
-    for (list<string>::const_iterator itnom = nomsFichiers.begin(); itnom != nomsFichiers.end(); itnom++) {
-        FILE *fichier =  fopen((*itnom).c_str(), "rb");
+    const list<string> extensions = {".nindlexiconindex", ".nindtermindex", ".nindlocalindex", ".nindretrolexicon" };
+    for (list<string>::const_iterator itext = extensions.begin(); itext != extensions.end(); itext++) {
+        const string fileName = fileNameExtensionLess + (*itext);
+        FILE *fichier = fopen(fileName.c_str(), "rb");
         if (fichier) {
             fclose(fichier);
             aucun = false;

@@ -7,9 +7,9 @@
 // Cette classe gere les acces aux fichiers d'indexation en bufferisant l'acces au
 // fichier inverse... ou pas.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2016
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2016 LATECON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -37,17 +37,13 @@ class DLLExportLexicon NindIndex_indexe {
 public:
 
     /**\brief Creates NindIndex_indexe with specified names and parameters associated with.
-    *\param lexiconFileName absolute path lexicon file name
-    *\param termindexFileName absolute path term index file name
-    *\param localindexFileName absolute path local index file name
+    *\param fileNameExtensionLess absolute path file name without extension
     *\param lexiconEntryNb number of lexicon entries in a single indirection block
     *\param termindexEntryNb number of term index entries in a single indirection block
     *\param localindexEntryNb number of local index entries in a single indirection block
     *\param termBufferSize size of term buffer before indexation (0 means immediate indexation) 
     *\param timeControl 3=structure, 2=+lexiconindex, 1=+termindex, 0=+localindex = normal*/
-    NindIndex_indexe(const std::string &lexiconFileName,
-                     const std::string &termindexFileName,
-                     const std::string &localindexFileName,
+    NindIndex_indexe(const std::string &fileNameExtensionLess,
                      const unsigned int lexiconEntryNb,
                      const unsigned int termindexEntryNb,
                      const unsigned int localindexEntryNb,
@@ -83,8 +79,18 @@ public:
     *\return  number of accesses on local index file */
     unsigned int localindexAccessNb() const;
     
-    void getCounts(std::list<unsigned int> &counts) const;
-     
+    /**\brief donne le nom du fichier lexique
+    *\return nom du fichier lexique */
+    std::string getLexiconFileName();
+    
+    /**\brief donne le nom du fichier inversej
+    *\return nom du fichier inversej */
+    std::string getTermFileName();
+    
+    /**\brief donne le nom du fichier local
+    *\return nom du fichier local */
+    std::string getLocalFileName();
+    
     /**\brief Vejrifie que dans une dejfinition de terme, il y a bien le bon n° de doc avec la bonne cg
     *\param noDoc n° de document ah chercher
     *\param cg cg du terme

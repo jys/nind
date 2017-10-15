@@ -5,9 +5,9 @@
 // voir "Adaptation de l'indexation nind au moteur de recherche Amose", LAT2015.JYS.448
 // Cette classe gere les spejcificitejs du lexique d'Amose, particuliehrement les types de mots.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2016
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 ////////////////////////////////////////////////////////////
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
@@ -36,11 +36,11 @@ class DLLExportLexicon NindLexiconAmose : public NindLexiconIndex {
 public:
 
     /**\brief Creates NindLexiconIndex.
-    *\param fileName absolute path file name. Lexicon is identified by its file name
+    *\param fileNameExtensionLess absolute path file name without extension
     *\param isLexiconWriter true if lexicon writer, false if lexicon reader  
     *\param indirectionBlocSize number of entries in a lexicon single indirection block (for first writer only)
     *\param retroIndirectionBlocSize number of entries in a retro lexicon single indirection block (for first writer only)*/
-    NindLexiconAmose(const std::string &fileName,
+    NindLexiconAmose(const std::string &fileNameExtensionLess,
                      const bool isLexiconWriter = false,
                      const unsigned int indirectionBlocSize = 0,
                      const unsigned int retroIndirectionBlocSize = 0);

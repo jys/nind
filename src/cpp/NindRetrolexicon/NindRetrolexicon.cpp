@@ -9,7 +9,7 @@
 //
 // Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2016 LATEJCON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -22,23 +22,6 @@
 //#include <iostream>
 using namespace latecon::nindex;
 using namespace std;
-////////////////////////////////////////////////////////////
-// <fichier>               ::= { <blocIndexej> <blocEnVrac> } <blocIdentification> 
-//
-// <blocIndexej>           ::= <flagIndexej=47> <addrBlocSuivant> <nombreIndex> { <donnejesIndexejes> }
-// <flagIndexej=47>        ::= <Integer1>
-// <addrBlocSuivant>       ::= <Integer5>
-// <nombreIndex>           ::= <Integer3>
-//
-// <donnejesIndexejes>     ::= { <Octet> }
-// <blocEnVrac>            ::= { <Octet> }
-//
-// <blocIdentification>    ::= <flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
-// <flagIdentification=53> ::= <Integer1>
-// <maxIdentifiant>        ::= <Integer3>
-// <identifieurUnique>     ::= <dateHeure>
-// <identifieurSpecifique> ::= <Integer4>
-// <dateHeure >            ::= <Integer4>
 ////////////////////////////////////////////////////////////
 // <donnejesIndexejes>     ::= <dejfinitionMot>
 // <blocEnVrac>            ::= <blocUtf8>
@@ -55,8 +38,10 @@ using namespace std;
 //
 // <blocUtf8>              ::= { <motUtf8> }
 // <motUtf8>               ::= { <Octet> }
-
+//
 // <blocEnVrac>            ::= { <Octet> }
+////////////////////////////////////////////////////////////
+// <spejcifique>           ::= <vide>
 ////////////////////////////////////////////////////////////
 #define FLAG_COMPOSEJ 31
 #define FLAG_SIMPLE 37
@@ -66,17 +51,24 @@ using namespace std;
 // //<motUtf8>(255) + TAILLE_IDENTIFICATION (12) = 268
 #define TAILLE_DEJFINITION_MAXIMUM 268
 // //taille maximum d'un mot compose (pour detecter les bouclages)
-#define TAILLE_COMPOSE_MAXIMUM 30
+#define TAILLE_COMPOSEJ_MAXIMUM 30
+//taille des spejcifiques
+#define TAILLE_SPEJCIFIQUES 0
 ////////////////////////////////////////////////////////////
 //brief Creates NindRetrolexicon.
-//param fileName absolute path file name
+//param fileNameExtensionLess absolute path file name without extension
 //param isLexiconWriter true if lexicon writer, false if lexicon reader  
 //param definitionBlocSize number of entries in a single definition block */
-NindRetrolexicon::NindRetrolexicon(const string &fileName,
+NindRetrolexicon::NindRetrolexicon(const string &fileNameExtensionLess,
                                    const bool isLexiconWriter,
                                    const Identification &lexiconIdentification,
                                    const unsigned int definitionBlocSize):
-    NindPadFile(fileName, isLexiconWriter, lexiconIdentification, TAILLE_DEJFINITION, definitionBlocSize)
+    NindPadFile(fileNameExtensionLess + ".nindretrolexicon", 
+                isLexiconWriter, 
+                lexiconIdentification, 
+                TAILLE_SPEJCIFIQUES, 
+                TAILLE_DEJFINITION, 
+                definitionBlocSize)
 {
 }
 ////////////////////////////////////////////////////////////
@@ -91,55 +83,62 @@ NindRetrolexicon::~NindRetrolexicon()
 void NindRetrolexicon::addRetroWords(const list<struct RetroWord> &retroWords,
                                      const Identification &lexiconIdentification)
 {
-    try {
-        if (!m_isWriter) throw BadUseException("retro lexicon is not writable");
-        //il y a autant d'ajout au fichier qu'il y a de nouveaux identifiants
-        for (list<struct RetroWord>::const_iterator it1 = retroWords.begin(); it1 != retroWords.end(); it1++) {
-            const struct RetroWord &retroWord = (*it1);
-            //1) rejcupehre l'adresse de la dejfinition
-            unsigned long int dejfinition = getEntryPos(retroWord.identifiant);
-            //2) si hors limite, ajoute un bloc de dejfinitions
-            if (dejfinition == 0) addEntriesBlock(lexiconIdentification);
-            //et rejcupehre l'adresse de la dejfinition
-            dejfinition = getEntryPos(retroWord.identifiant);
-            if (dejfinition == 0) throw OutOfBoundException("NindRetrolexicon::addRetroWords : " + m_fileName);
-            //3) si mot simple, ejcrit d'abord l'utf8 puis la dejfinition
-            if (retroWord.identifiantA == 0) {
-                //se positionne ah la fin (sur l'identification)
-                m_file.setPos(-TAILLE_IDENTIFICATION, SEEK_END);       
-                const unsigned long int utf8Pos = m_file.getPos();
-                m_file.createBuffer(TAILLE_DEJFINITION_MAXIMUM);
-                m_file.putStringAsBytes(retroWord.motSimple);
-                //ajoute la taille de l'identification
-                m_file.putPad(TAILLE_IDENTIFICATION);
-                m_file.writeBuffer();
-                //se positionne sur la dejfinition
-                m_file.setPos(dejfinition, SEEK_SET);
-                m_file.createBuffer(TAILLE_DEJFINITION);
-                //<flagSimple=37> <longueurMotUtf8> <adresseMotUtf8>
-                m_file.putInt1(FLAG_SIMPLE);
-                m_file.putInt1(retroWord.motSimple.length());
-                m_file.putInt5(utf8Pos);
-                m_file.writeBuffer();
-            }
-            //si mot composej, ejcrit la dejfinition
-            else {
-                //se positionne sur la dejfinition
-                m_file.setPos(dejfinition, SEEK_SET);
-                m_file.createBuffer(TAILLE_DEJFINITION);
-                //<flagComposej=31> <identifiantA> <identifiantS>
-                m_file.putInt1(FLAG_COMPOSEJ);
-                m_file.putInt3(retroWord.identifiantA);
-                m_file.putInt3(retroWord.identifiantS - retroWord.identifiant);
-                m_file.writeBuffer();
-            }
+    if (!m_isWriter) 
+        throw NindRetrolexiconException("NindRetrolexicon::addRetroWords retro lexicon is not writable" + m_fileName);
+    //taille des spejcifiques et de l'identification qui sont en queue de buffer
+    const int tailleQueue = getSpecificsAndIdentificationSize();
+    //pour savoir si l'identification a ejtej ejcrite
+    bool identOk = false;
+    //il y a autant d'ajout au fichier qu'il y a de nouveaux identifiants
+    for (list<struct RetroWord>::const_iterator it1 = retroWords.begin(); it1 != retroWords.end(); it1++) {
+        const struct RetroWord &retroWord = (*it1);
+        //1) rejcupehre l'adresse de la dejfinition
+        unsigned long int dejfinition = getEntryPos(retroWord.identifiant);
+        //2) si hors limite, ajoute un bloc de dejfinitions
+        if (dejfinition == 0) addEntriesBlock(lexiconIdentification);
+        //et rejcupehre l'adresse de la dejfinition
+        dejfinition = getEntryPos(retroWord.identifiant);
+        if (dejfinition == 0) throw NindRetrolexiconException("NindRetrolexicon::addRetroWords : " + m_fileName);
+        //3) si mot simple, ejcrit d'abord l'utf8 puis la dejfinition
+        if (retroWord.identifiantA == 0) {
+            identOk = true;
+            //se positionne ah la fin (sur les spejcifiques)
+            m_file.setPos(-tailleQueue, SEEK_END);       
+            const unsigned long int utf8Pos = m_file.getPos();
+            m_file.createBuffer(TAILLE_DEJFINITION_MAXIMUM + tailleQueue);
+            m_file.putStringAsBytes(retroWord.motSimple);
+            //ajoute les spejcifiques et l'identification
+            writeSpecificsHeader();
+            writeIdentification(lexiconIdentification);
+            m_file.writeBuffer();
+            //se positionne sur la dejfinition
+            m_file.setPos(dejfinition, SEEK_SET);
+            m_file.createBuffer(TAILLE_DEJFINITION);
+            //<flagSimple=37> <longueurMotUtf8> <adresseMotUtf8>
+            m_file.putInt1(FLAG_SIMPLE);
+            m_file.putInt1(retroWord.motSimple.length());
+            m_file.putInt5(utf8Pos);
+            m_file.writeBuffer();
         }
-        //ejcrit l'identification
-        m_file.setPos(-TAILLE_IDENTIFICATION, SEEK_END); 
-        addIdentification(lexiconIdentification);
+        //si mot composej, ejcrit la dejfinition
+        else {
+            //se positionne sur la dejfinition
+            m_file.setPos(dejfinition, SEEK_SET);
+            m_file.createBuffer(TAILLE_DEJFINITION);
+            //<flagComposej=31> <identifiantA> <identifiantS>
+            m_file.putInt1(FLAG_COMPOSEJ);
+            m_file.putInt3(retroWord.identifiantA);
+            m_file.putInt3(retroWord.identifiantS - retroWord.identifiant);
+            m_file.writeBuffer();
+        }
     }
-    catch (FileException &exc) {
-        throw NindRetrolexiconException(m_fileName);
+    //ejcrit l'identification si elle n'a pas dejjah ejtej ejcrite
+    if (!identOk) {
+        m_file.setPos(-tailleQueue, SEEK_END); 
+        m_file.createBuffer(tailleQueue);
+        writeSpecificsHeader();
+        writeIdentification(lexiconIdentification);
+        m_file.writeBuffer();
     }
 }
 ////////////////////////////////////////////////////////////
@@ -169,14 +168,15 @@ bool NindRetrolexicon::getComponents(const unsigned int ident,
         //recupere le mot simple du couple
         struct RetroWord retroWordS;
         existe = getRetroWord(retroWord.identifiantS, retroWordS);
-        if (!existe) throw InvalidFileException("NindRetrolexicon::getComponents A : " + m_fileName);
-        if (retroWordS.identifiantA != 0) InvalidFileException("NindRetrolexicon::getComponents B : " + m_fileName);
+        if (!existe) throw NindRetrolexiconException("NindRetrolexicon::getComponents A : " + m_fileName);
+        if (retroWordS.identifiantA != 0) NindRetrolexiconException("NindRetrolexicon::getComponents B : " + m_fileName);
         components.push_front(retroWordS.motSimple);
         //recupere l'autre mot du couple
         existe = getRetroWord(retroWord.identifiantA, retroWord);
-        if (!existe) throw InvalidFileException("NindRetrolexicon::getComponents C : " + m_fileName);  
+        if (!existe) throw NindRetrolexiconException("NindRetrolexicon::getComponents C : " + m_fileName);  
         //pour detecter les bouclages induits par un fichier bouclant
-        if (components.size() == TAILLE_COMPOSE_MAXIMUM) throw InvalidFileException("NindRetrolexicon::getComponents D : " + m_fileName);  
+        if (components.size() == TAILLE_COMPOSEJ_MAXIMUM) 
+            throw NindRetrolexiconException("NindRetrolexicon::getComponents D : " + m_fileName);  
     }    
 }    
 ////////////////////////////////////////////////////////////
@@ -187,34 +187,29 @@ bool NindRetrolexicon::getComponents(const unsigned int ident,
 bool NindRetrolexicon::getRetroWord(const unsigned int ident,
                                     struct RetroWord &retroWord)   
 {
-    try {
-        const bool existe = getDejfinition(ident);
-        if (!existe) return false;
-        const unsigned char flag = m_file.getInt1();
-        if (flag == 0) return false;
-        //<flagSimple=37> <longueurMotUtf8> <adresseMotUtf8>
-        else if (flag == FLAG_SIMPLE) {
-            const unsigned char longueurMotUtf8 = m_file.getInt1();
-            const unsigned long adresseMotUtf8 = m_file.getInt5();
-            //se positionne sur la definition
-            m_file.setPos(adresseMotUtf8, SEEK_SET);    
-            m_file.readBuffer(longueurMotUtf8);
-            const string motUtf8 = m_file.getStringAsBytes(longueurMotUtf8);
-            retroWord = RetroWord(ident, motUtf8);
-            return true;
-        }
-        //<flagComposej=31> <identifiantA> <identifiantS>
-        else if (flag == FLAG_COMPOSEJ) {
-            const unsigned int identifiantA = m_file.getInt3();
-            const unsigned int identifiantS = ident + m_file.getSInt3();
-            retroWord = RetroWord(ident, identifiantA, identifiantS);
-            return true;
-        }
-        else throw InvalidFileException("NindRetrolexicon::getRetroWord : " + m_fileName);
+    const bool existe = getDejfinition(ident);
+    if (!existe) return false;
+    const unsigned char flag = m_file.getInt1();
+    if (flag == 0) return false;
+    //<flagSimple=37> <longueurMotUtf8> <adresseMotUtf8>
+    else if (flag == FLAG_SIMPLE) {
+        const unsigned char longueurMotUtf8 = m_file.getInt1();
+        const unsigned long adresseMotUtf8 = m_file.getInt5();
+        //se positionne sur la definition
+        m_file.setPos(adresseMotUtf8, SEEK_SET);    
+        m_file.readBuffer(longueurMotUtf8);
+        const string motUtf8 = m_file.getStringAsBytes(longueurMotUtf8);
+        retroWord = RetroWord(ident, motUtf8);
+        return true;
     }
-    catch (FileException &exc) {
-        throw NindRetrolexiconException(m_fileName);
+    //<flagComposej=31> <identifiantA> <identifiantS>
+    else if (flag == FLAG_COMPOSEJ) {
+        const unsigned int identifiantA = m_file.getInt3();
+        const unsigned int identifiantS = ident + m_file.getSInt3();
+        retroWord = RetroWord(ident, identifiantA, identifiantS);
+        return true;
     }
+    else throw NindRetrolexiconException("NindRetrolexicon::getRetroWord : " + m_fileName);
 }
 ////////////////////////////////////////////////////////////
 //brief Read from file datas of a specified definition and leave result into read buffer 

@@ -6,9 +6,9 @@
 // Cette classe gere les comptages necessaires a Amose ainsi que les caches pour les acces
 // multiples au meme terme du fichier inverse.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2015
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -35,11 +35,11 @@ class DLLExportLexicon NindTermAmose : public NindTermIndex {
 public:
 
     /** \brief Creates NindTermAmose with a specified name associated with.
-    *\param fileName absolute path file name
+    *\param fileNameExtensionLess absolute path file name without extension
     *\param isTermIndexWriter true if termIndex writer, false if termIndex reader  
     *\param lexiconIdentification unique identification of lexicon 
     *\param indirectionBlocSize number of entries in a single indirection block */
-    NindTermAmose(const std::string &fileName,
+    NindTermAmose(const std::string &fileNameExtensionLess,
                   const bool isTermIndexWriter,
                   const Identification &lexiconIdentification,
                   const unsigned int indirectionBlocSize = 0);
@@ -93,25 +93,19 @@ public:
 private:
     /**\brief read specific counts from termindex file if needed. 
      *\param none */
-    void synchronizeInternalCounts();
+    void synchronizeCounts();
     
     /**\brief read specific counts from termindex file. 
      *\param none */
-    void readInternalCounts();
+    void readCounts();
     
-    /**\brief write specific counts on termindex file
-    *\param fileIdentification unique identification of file */
-    void saveInternalCounts(const Identification &fileIdentification);
+    /**\brief set specific counts as list 
+    *\return counts as a list of words */
+    std::list<unsigned int> setCountsAsList();
     
-    //mejmorisation identification fichier
-    Identification m_identification;
-
     std::vector<unsigned int> m_uniqueTermCount;
     std::vector<unsigned int> m_termOccurrences;
     
-    //pour utiliser la structure commune pour sauvegarder les compteurs sur le fichier termindex
-    typedef Document Counts;
-    typedef TermCG CountsStruct;
 };
 ////////////////////////////////////////////////////////////
     } // end namespace
