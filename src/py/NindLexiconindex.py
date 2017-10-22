@@ -1,5 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.5
 # -*- coding: utf-8 -*-
+# Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
+# Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
+# This file is part of NIND (as "nouvelle indexation").
+# NIND is free software: you can redistribute it and/or modify it under the terms of the 
+# GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
+# (see <http://www.gnu.org/licenses/>), either version 3 of the License, or any later version.
+# NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Less General Public License for more details.
 import sys
 from os import getenv, path
 from time import ctime
@@ -11,13 +20,13 @@ from NindIndex import NindIndex
 def usage():
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
     else: script = sys.argv[0]
-    print """© l'ATEJCON.
+    print ("""© l'ATEJCON.
 Analyse ou dumpe un fichier nindlexiconindex du système nind et affiche les stats. 
 Le format du fichier est défini dans le document LAT2014.JYS.440.
 
 usage   : %s <fichier> [ <analyse> | <dumpe> ]
 exemple : %s FRE.termindex dumpe
-"""%(script, script)
+"""%(script, script))
 
 def main():
     try:
@@ -34,14 +43,14 @@ def main():
             outFile = codecs.open(outFilename, 'w', 'utf-8')
             nbLignes = nindLexiconindex.dumpeFichier(outFile)
             outFile.close()
-            print '%d lignes écrites dans %s'%(nbLignes, outFilename)
+            print ('%d lignes écrites dans %s'%(nbLignes, outFilename))
         else: raise Exception()
     except Exception as exc:
         if len(exc.args) == 0: usage()
         else:
-            print "******************************"
-            print exc.args[0]
-            print "******************************"
+            print ("******************************")
+            print (exc.args[0])
+            print ("******************************")
             raise
         sys.exit()
 
@@ -159,27 +168,27 @@ class NindLexiconindex(NindIndex):
                 total = totalDonnejes + totalExtensions
             if trace:
                 nbreMotsS, composejsMin, composejsMax, nbreMotsC, moyenne, ejcartType = calculeRejpartition(composejs)
-                print "============="
-                print "DONNÉES        % 10d (%6.2f %%) % 9d occurrences"%(totalDonnejes, float(100)*totalDonnejes/total, nbDonnejes)
-                print "EXTENSIONS     % 10d (%6.2f %%) % 9d occurrences"%(totalExtensions, float(100)*totalExtensions/total, nbExtensions)
-                print "TOTAL          % 10d %08X"%(total, total)
-                print "============="
+                print ("=============")
+                print ("DONNÉES        % 10d (%6.2f %%) % 9d occurrences"%(totalDonnejes, float(100)*totalDonnejes/total, nbDonnejes))
+                print ("EXTENSIONS     % 10d (%6.2f %%) % 9d occurrences"%(totalExtensions, float(100)*totalExtensions/total, nbExtensions))
+                print ("TOTAL          % 10d %08X"%(total, total))
+                print ("=============")
                 total = nbreMotsS + nbreMotsC
-                print "MOTS SIMPLES   % 10d (%6.2f %%)"%(nbreMotsS, float(100)*nbreMotsS/total)
-                print "MOTS COMPOSÉS  % 10d (%6.2f %%)"%(nbreMotsC, float(100)*nbreMotsC/total)
-                print "TOTAL          % 10d"%(total)
-                print "============="
-                print "COMPOSÉS MAX   % 10d composés finissant par le même mot simple"%(composejsMax)
-                print "COMPOSÉS MIN   % 10d composés finissant par le même mot simple"%(composejsMin)
-                print "MOYENNE        % 10d composés finissant par le même mot simple"%(moyenne)
-                print "ÉCART-TYPE     % 10d"%(ejcartType)
-                print "============="
-                print "%0.2f octets / mot"%(float(self.donneTailleFichier())/(nbreMotsS+nbreMotsC))
-                print "============="
+                print ("MOTS SIMPLES   % 10d (%6.2f %%)"%(nbreMotsS, float(100)*nbreMotsS/total))
+                print ("MOTS COMPOSÉS  % 10d (%6.2f %%)"%(nbreMotsC, float(100)*nbreMotsC/total))
+                print ("TOTAL          % 10d"%(total))
+                print ("=============")
+                print ("COMPOSÉS MAX   % 10d composés finissant par le même mot simple"%(composejsMax))
+                print ("COMPOSÉS MIN   % 10d composés finissant par le même mot simple"%(composejsMin))
+                print ("MOYENNE        % 10d composés finissant par le même mot simple"%(moyenne))
+                print ("ÉCART-TYPE     % 10d"%(ejcartType))
+                print ("=============")
+                print ("%0.2f octets / mot"%(float(self.donneTailleFichier())/(nbreMotsS+nbreMotsC)))
+                print ("=============")
                
         except Exception as exc: 
             cestBon = False
-            if trace: print 'ERREUR :', exc.args[0]  
+            if trace: print ('ERREUR :', exc.args[0])
 
         try:
             #rejcupehre l'adresse et la longueur des spejcifiques 
@@ -188,11 +197,11 @@ class NindLexiconindex(NindIndex):
             spejcifiques = []
             for i in range(tailleSpejcifiques): spejcifiques.append(self.litNombre1())
             if trace:
-                print "%d mots de données spécifiques"%(tailleSpejcifiques/4)
-                print ', '.join(spejcifiques)
+                print ("%d mots de données spécifiques"%(tailleSpejcifiques/4))
+                print (', '.join(spejcifiques))
         except Exception as exc: 
             cestBon = False
-            if trace: print 'ERREUR :', exc.args[0] 
+            if trace: print ('ERREUR :', exc.args[0])
    
     #######################################################################
     #dumpe le fichier lexique sur un fichier texte

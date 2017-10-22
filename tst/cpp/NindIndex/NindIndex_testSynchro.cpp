@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
         //calcule les noms des fichiers lexique, de termes et index locaux
         const string incompleteFileName = docsFileName.substr(0, docsFileName.find('.'));
         //vejrifie que le systehme de fichiers est cohejrent
-        if (!NindFichiers::fichiersCohejrents(incompleteFileName, true)) {
+        if (!NindFichiers::fichiersCohejrents(incompleteFileName, false, true)) {
             cout<<"Des anciens fichiers existent !"<<endl;
             cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".nind*"<<endl;
             return false;

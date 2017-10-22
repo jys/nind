@@ -1,5 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.5
 # -*- coding: utf-8 -*-
+# Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
+# Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
+# This file is part of NIND (as "nouvelle indexation").
+# NIND is free software: you can redistribute it and/or modify it under the terms of the 
+# GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
+# (see <http://www.gnu.org/licenses/>), either version 3 of the License, or any later version.
+# NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Less General Public License for more details.
 import sys
 from os import getenv, path
 from time import ctime
@@ -8,16 +17,17 @@ from NindPadFile import chercheVides
 from NindPadFile import calculeRejpartition
 
 def usage():
+    print(sys.version)
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
     else: script = sys.argv[0]
-    print """© l'ATEJCON.
+    print ("""© l'ATEJCON.
 Analyse un fichier NindIndex du système nind et affiche les stats. 
 Les types de fichiers : lexiconindex, termindex, localindex
 Le format du fichier est défini dans le document LAT2014.JYS.440.
 
 usage   : %s <fichier>
 exemple : %s FRE.termindex
-"""%(script, script)
+"""%(script, script))
 
 def main():
     if len(sys.argv) < 2 :
@@ -41,6 +51,9 @@ def main():
 # <dejfinition>           ::= { <Octet> }
 # <vide>                  ::= { <Octet> }
 ############################################################
+#<offsetDejfinition>(5) <longueurDejfinition>(3) = 8
+TAILLE_INDIRECTION = 8
+############################################################
 
 class NindIndex(NindPadFile):
     
@@ -62,7 +75,7 @@ class NindIndex(NindPadFile):
     def analyseFichierIndex(self, trace):
         cestbon = self.analyseFichierPadFile(trace)
         if trace:
-            print "============="
+            print ("=============")
         try:
             #met en place la carte des non-vides
             maxIdent, nonVidesList = self.donneCarteNonVides()
@@ -81,27 +94,27 @@ class NindIndex(NindPadFile):
                     dejfinitions.append(longueurDejfinition)
         except Exception as exc: 
             cestBon = False
-            if trace: print 'ERREUR :', exc.args[0]
+            if trace: print ('ERREUR :', exc.args[0])
         if trace:
             indirectionsUtilisejes, tailleMin, tailleMax, tailleDejfinitions, moyenne, ejcartType = calculeRejpartition(dejfinitions)
-            print "%d / %d indirections utilisées"%(indirectionsUtilisejes, maxIdent)
-            print "============="
+            print ("%d / %d indirections utilisées"%(indirectionsUtilisejes, maxIdent))
+            print ("=============")
         try:
             (nbreVides, tailleVides) = chercheVides(nonVidesList)
             if trace:
                 total = tailleVides + tailleDejfinitions
-                print "DÉFINITIONS    % 10d (%6.2f %%) % 9d occurrences"%(tailleDejfinitions, float(100)*tailleDejfinitions/total, indirectionsUtilisejes)
-                print "VIDES          % 10d (%6.2f %%) % 9d occurrences"%(tailleVides, float(100)*tailleVides/total,nbreVides)
-                print "TOTAL          % 10d %08X"%(total, total)
+                print ("DÉFINITIONS    % 10d (%6.2f %%) % 9d occurrences"%(tailleDejfinitions, float(100)*tailleDejfinitions/total, indirectionsUtilisejes))
+                print ("VIDES          % 10d (%6.2f %%) % 9d occurrences"%(tailleVides, float(100)*tailleVides/total,nbreVides))
+                print ("TOTAL          % 10d %08X"%(total, total))
         except Exception as exc: 
             cestBon = False
-            if trace: print 'ERREUR :', exc.args[0]  
+            if trace: print ('ERREUR :', exc.args[0])
         if trace:
-            print "============="
-            print "DÉFINITIONS MAX% 10d octets"%(tailleMax)
-            print "DÉFINITIONS MIN% 10d octets"%(tailleMin)
-            print "MOYENNE        % 10d octets"%(moyenne)
-            print "ÉCART-TYPE     % 10d octets"%(ejcartType)
+            print ("=============")
+            print ("DÉFINITIONS MAX% 10d octets"%(tailleMax))
+            print ("DÉFINITIONS MIN% 10d octets"%(tailleMin))
+            print ("MOYENNE        % 10d octets"%(moyenne))
+            print ("ÉCART-TYPE     % 10d octets"%(ejcartType))
            
        
         

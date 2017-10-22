@@ -1,5 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.5
 # -*- coding: utf-8 -*-
+# Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
+# Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
+# This file is part of NIND (as "nouvelle indexation").
+# NIND is free software: you can redistribute it and/or modify it under the terms of the 
+# GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
+# (see <http://www.gnu.org/licenses/>), either version 3 of the License, or any later version.
+# NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Less General Public License for more details.
 import sys
 from os import getenv, path
 from time import ctime
@@ -10,13 +19,13 @@ from NindIndex import NindIndex
 def usage():
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
     else: script = sys.argv[0]
-    print """© l'ATEJCON.
+    print ("""© l'ATEJCON.
 Analyse un fichier localindex du système nind et affiche les stats. 
 Le format du fichier est défini dans le document LAT2014.JYS.440.
 
 usage   : %s <fichier>
 exemple : %s FRE.termindex
-"""%(script, script)
+"""%(script, script))
 
 
 def main():
@@ -34,14 +43,14 @@ def main():
             outFile = codecs.open(outFilename, 'w', 'utf-8')
             nbLignes = nindLocalindex.dumpeFichier(outFile)
             outFile.close()
-            print '%d lignes écrites dans %s'%(nbLignes, outFilename)
+            print ('%d lignes écrites dans %s'%(nbLignes, outFilename))
         else: raise Exception()
     except Exception as exc:
         if len(exc.args) == 0: usage()
         else:
-            print "******************************"
-            print exc.args[0]
-            print "******************************"
+            print ("******************************")
+            print (exc.args[0])
+            print ("******************************")
             raise
         sys.exit()
 
@@ -96,6 +105,7 @@ class NindLocalindex(NindIndex):
             noDocExterne = self.litNombre4()
             self.docIdTradExtInt[noDocExterne] = noDocInterne       
   
+    #######################################################################
     #trouve les donnejes 
     def __donneDonnejes(self, identifiant):
         #lit la définition du mot
@@ -114,14 +124,15 @@ class NindLocalindex(NindIndex):
             raise Exception('%s : %d incohérent à %08X'%(self.latFileName, identifiant, offsetDejfinition+5))
         return True, longueurDonnejes, tailleExtension, identifiantExterne
 
+    #######################################################################
     #retourne la structure dejcrivant les localisations de termes pour le document spejcifiej
     def donneListeTermes(self, noDocExterne):
         #trouve le numejro interne
-        if noDocExterne not in self.docIdTradExtInt: return (0, [])          #doc inconnu
+        if noDocExterne not in self.docIdTradExtInt: return []          #doc inconnu
         noDocInterne = self.docIdTradExtInt[noDocExterne]
         #trouve les donnejes 
         trouvej, longueurDonnejes, tailleExtension, identifiantExterne = self.__donneDonnejes(noDocInterne)
-        if not trouvej: return (0, [])          #doc inconnu
+        if not trouvej: return []          #doc inconnu
         if identifiantExterne != noDocExterne: 
             raise Exception('%s : %d incohérent à %08X'%(self.latFileName, identifiant, self.tell()))
         finDonnejes = self.tell() + longueurDonnejes
@@ -147,7 +158,6 @@ class NindLocalindex(NindIndex):
     #analyse du fichier
     def analyseFichierLocalindex(self, trace):
         cestbon = self.analyseFichierIndex(trace)
-        print "============="
         try:
             #trouve le max des identifiants
             maxIdent = self.donneMaxIdentifiant()
@@ -181,26 +191,27 @@ class NindLocalindex(NindIndex):
             if trace:
                 nbDonnejes, occurrencesMin, occurrencesMax, totalOccurrences, moyenne, ejcartType = calculeRejpartition(occurrences)
                 total = totalDonnejes + totalExtensions
-                print "DONNÉES        % 10d (%6.2f %%) % 9d occurrences"%(totalDonnejes, float(100)*totalDonnejes/total, nbDonnejes)
-                print "EXTENSIONS     % 10d (%6.2f %%) % 9d occurrences"%(totalExtensions, float(100)*totalExtensions/total, nbExtensions)
-                print "TOTAL          % 10d %08X"%(total, total)
-                print "============="
-                print "DOCUMENTS      % 10d "%(nbDonnejes)
-                print "TERMES         % 10d occurences"%(totalOccurrences)
-                print "LOCALISATIONS  % 10d occurences"%(totalLocalisations)
-                print "============="
-                print "DOCUMENT MAX   % 10d occurrences de termes"%(occurrencesMax)
-                print "DOCUMENT MIN   % 10d occurrences de termes"%(occurrencesMin)
-                print "MOYENNE        % 10d occurrences de termes"%(moyenne)
-                print "ÉCART-TYPE     % 10d occurrences de termes"%(ejcartType)
-                print "============="
-                print "%0.2f octets / occurrence de terme"%(float(self.donneTailleFichier())/totalOccurrences)
+                print ("=============")
+                print ("DONNÉES        % 10d (%6.2f %%) % 9d occurrences"%(totalDonnejes, float(100)*totalDonnejes/total, nbDonnejes))
+                print ("EXTENSIONS     % 10d (%6.2f %%) % 9d occurrences"%(totalExtensions, float(100)*totalExtensions/total, nbExtensions))
+                print ("TOTAL          % 10d %08X"%(total, total))
+                print ("=============")
+                print ("DOCUMENTS      % 10d "%(nbDonnejes))
+                print ("TERMES         % 10d occurences"%(totalOccurrences))
+                print ("LOCALISATIONS  % 10d occurences"%(totalLocalisations))
+                print ("=============")
+                print ("DOCUMENT MAX   % 10d occurrences de termes"%(occurrencesMax))
+                print ("DOCUMENT MIN   % 10d occurrences de termes"%(occurrencesMin))
+                print ("MOYENNE        % 10d occurrences de termes"%(moyenne))
+                print ("ÉCART-TYPE     % 10d occurrences de termes"%(ejcartType))
+                print ("=============")
+                print ("%0.2f octets / occurrence de terme"%(float(self.donneTailleFichier())/totalOccurrences))
                 
         except Exception as exc: 
             cestBon = False
-            if trace: print 'ERREUR :', exc.args[0]  
+            if trace: print ('ERREUR :', exc.args[0])
             
-        if trace: print "============="
+        if trace: print ("=============")
         try:
             #rejcupehre l'adresse et la longueur des spejcifiques 
             (offsetSpejcifiques, tailleSpejcifiques) = self.donneSpejcifiques()
@@ -211,11 +222,11 @@ class NindLocalindex(NindIndex):
             maxIdentifiantInterne = self.litNombre4()
             nombreDocuments = self.litNombre4()
             if trace:
-                print "Max identifiant interne utilisé: %d"%(maxIdentifiantInterne)
-                print "Nombre de documents indexés    : %d"%(nombreDocuments)
+                print ("Max identifiant interne utilisé: %d"%(maxIdentifiantInterne))
+                print ("Nombre de documents indexés    : %d"%(nombreDocuments))
         except Exception as exc: 
             cestBon = False
-            if trace: print 'ERREUR :', exc.args[0] 
+            if trace: print ('ERREUR :', exc.args[0])
 
     #######################################################################
     #dumpe le fichier lexique sur un fichier texte

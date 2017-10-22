@@ -9,5 +9,7 @@ install(PROGRAMS
     NindLocalindex.py
     NindSearch.py
     NindTermindex.py
+    Nind_dumpDocument.py
+    Nind_dumpLexicon.py
   DESTINATION bin)
 

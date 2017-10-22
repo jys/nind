@@ -1,5 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.5
 # -*- coding: utf-8 -*-
+# Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
+# Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
+# This file is part of NIND (as "nouvelle indexation").
+# NIND is free software: you can redistribute it and/or modify it under the terms of the 
+# GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
+# (see <http://www.gnu.org/licenses/>), either version 3 of the License, or any later version.
+# NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Less General Public License for more details.
 import sys
 from os import getenv, path
 from time import ctime
@@ -10,13 +19,13 @@ from NindIndex import NindIndex
 def usage():
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
     else: script = sys.argv[0]
-    print """© l'ATEJCON.
+    print ("""© l'ATEJCON.
 Analyse ou dumpe un fichier nindtermindex du système nind et affiche les stats. 
 Le format du fichier est défini dans le document LAT2014.JYS.440.
 
 usage   : %s <fichier> [ <analyse> | <dumpe> ]
 exemple : %s FRE.termindex dumpe
-"""%(script, script)
+"""%(script, script))
 
 OFF = "\033[m"
 RED = "\033[1;31m"
@@ -36,14 +45,14 @@ def main():
             outFile = codecs.open(outFilename, 'w', 'utf-8')
             nbLignes = nindTermindex.dumpeFichier(outFile)
             outFile.close()
-            print '%d lignes écrites dans %s'%(nbLignes, outFilename)
+            print ('%d lignes écrites dans %s'%(nbLignes, outFilename))
         else: raise Exception()
     except Exception as exc:
         if len(exc.args) == 0: usage()
         else:
-            print "******************************"
-            print exc.args[0]
-            print "******************************"
+            print ("******************************")
+            print (exc.args[0])
+            print ("******************************")
             raise
         sys.exit()
     
@@ -65,11 +74,11 @@ def main():
 # <spejcifique>           ::= { <valeur> }
 # <valeur>                ::= <Integer4>
 ############################################################
-
 FLAG_DEJFINITION = 17
 FLAG_CG = 61
 #<flagDejfinition=17>(1) <identifiantTerme>(3) <longueurDonnejes>(3) = 7
 TAILLE_TESTE_DEJFINITION = 7
+############################################################
 
 class NindTermindex(NindIndex):
     def __init__(self, termindexFileName):
@@ -83,13 +92,13 @@ class NindTermindex(NindIndex):
         self.seek(offsetDejfinition, 0)
         #<flagDejfinition=13> <identifiantHash> <longueurDonnejes> 
         if self.litNombre1() != FLAG_DEJFINITION: 
-            raise Exception('%s : pas FLAG_DEJFINITION à %08X'%(self.latFileName, offsetDejfinition))
+            raise Exception('NindTermindex.__donneDonnejes %s : pas FLAG_DEJFINITION à %08X'%(self.latFileName, offsetDejfinition))
         if self.litNombre3() != identifiant: 
-            raise Exception('%s : %d pas trouvé à %08X'%(self.latFileName, index, offsetDejfinition+1))
+            raise Exception('NindTermindex.__donneDonnejes %s : %d pas trouvé à %08X'%(self.latFileName, index, offsetDejfinition +1))
         longueurDonnejes = self.litNombre3()
         tailleExtension = longueurDejfinition - longueurDonnejes - TAILLE_TESTE_DEJFINITION
         if tailleExtension < 0:
-            raise Exception('%s : %d incohérent à %08X'%(self.latFileName, identifiant, offsetDejfinition+5))
+            raise Exception('NindTermindex.__donneDonnejes %s : %d incohérent à %08X'%(self.latFileName, index, offsetDejfinition +5))
         return True, longueurDonnejes, tailleExtension
 
     #retourne la structure dejcrivant le fichier inversej pour ce terme
@@ -102,7 +111,8 @@ class NindTermindex(NindIndex):
         resultat = []
         while self.tell() < finDonnejes:
             #<flagCg=61> <catejgorie> <frejquenceTerme> <nbreDocs> <listeDocuments>
-            if self.litNombre1() != FLAG_CG: raise Exception('%s : pas FLAG_CG à %d'%(self.latFileName, self.tell() -1))
+            if self.litNombre1() != FLAG_CG: 
+                raise Exception('NindTermindex.donneListeTermesCG %s : pas FLAG_CG'%(self.latFileName))
             catejgorie = self.litNombre1()
             frejquenceTerme = self.litNombreULat()
             nbreDocs = self.litNombreULat()
@@ -130,6 +140,7 @@ class NindTermindex(NindIndex):
             nbHapax = 0
             frejquences = []
             for identifiant in range(maxIdent):
+                #print ("identifiant=", identifiant)
                 #trouve les donnejes 
                 trouvej, longueurDonnejes, tailleExtension = self.__donneDonnejes(identifiant)
                 if not trouvej: continue      #identifiant pas trouve
@@ -142,7 +153,7 @@ class NindTermindex(NindIndex):
                 while self.tell() < finDonnejes:
                     #<flagCg=61> <catejgorie> <frejquenceTerme> <nbreDocs> <listeDocuments>
                     if self.litNombre1() != FLAG_CG: 
-                        raise Exception('%s : pas FLAG_CG à %08X'%(self.latFileName, self.tell() -1))
+                        raise Exception('NindTermindex.analyseFichierTermindex %s : pas FLAG_CG'%(self.latFileName))
                     catejgorie = self.litNombre1()
                     frejquenceTerme = self.litNombreULat()
                     nbreDocs = self.litNombreULat()
@@ -162,45 +173,45 @@ class NindTermindex(NindIndex):
                     
             if trace:
                 nbTermesCG, frejquenceMin, frejquenceMax, totalFrejquences, moyenne, ejcartType = calculeRejpartition(frejquences)
-                print "============="
+                print ("=============")
                 total = totalDonnejes + totalExtensions
-                print "DONNÉES        % 10d (%6.2f %%) % 9d occurrences"%(totalDonnejes, float(100)*totalDonnejes/total, nbDonnejes)
-                print "EXTENSIONS     % 10d (%6.2f %%) % 9d occurrences"%(totalExtensions, float(100)*totalExtensions/total, nbExtensions)
-                print "TOTAL          % 10d %08X"%(total, total)
-                print "============="
-                print "TERMES-CG      % 10d"%(nbTermesCG)
-                print "FRÉQUENCE MIN  % 10d"%(frejquenceMin)
-                print "FRÉQUENCE MAX  % 10d"%(frejquenceMax)
-                print "TOTAL FRÉQUENCE% 10d"%(totalFrejquences)
-                print "MOYENNE        % 10d"%(moyenne)
-                print "ÉCART TYPE     % 10d"%(ejcartType)
-                print "============="
-                print "TERMES-DOCS    % 10d occurrences"%(occurrencesDoc)
-                print "TERMES         % 10d occurrences"%(totalFrejquences)
-                print "HAPAX          % 10d (%6.2f %%)"%(nbHapax, float(100)*nbHapax/nbDonnejes)
-                print "============="
-                print "%0.2f octets / occurrence de terme-doc"%(float(self.donneTailleFichier())/occurrencesDoc)
-                print "%0.2f octets / occurrence de terme"%(float(self.donneTailleFichier())/totalFrejquences)
+                print ("DONNÉES        % 10d (%6.2f %%) % 9d occurrences"%(totalDonnejes, float(100)*totalDonnejes/total, nbDonnejes))
+                print ("EXTENSIONS     % 10d (%6.2f %%) % 9d occurrences"%(totalExtensions, float(100)*totalExtensions/total, nbExtensions))
+                print ("TOTAL          % 10d %08X"%(total, total))
+                print ("=============")
+                print ("TERMES-CG      % 10d"%(nbTermesCG))
+                print ("FRÉQUENCE MIN  % 10d"%(frejquenceMin))
+                print ("FRÉQUENCE MAX  % 10d"%(frejquenceMax))
+                print ("TOTAL FRÉQUENCE% 10d"%(totalFrejquences))
+                print ("MOYENNE        % 10d"%(moyenne))
+                print ("ÉCART TYPE     % 10d"%(ejcartType))
+                print ("=============")
+                print ("TERMES-DOCS    % 10d occurrences"%(occurrencesDoc))
+                print ("TERMES         % 10d occurrences"%(totalFrejquences))
+                print ("HAPAX          % 10d (%6.2f %%)"%(nbHapax, float(100)*nbHapax/nbDonnejes))
+                print ("=============")
+                print ("%0.2f octets / occurrence de terme-doc"%(float(self.donneTailleFichier())/occurrencesDoc))
+                print ("%0.2f octets / occurrence de terme"%(float(self.donneTailleFichier())/totalFrejquences))
         except Exception as exc: 
             cestBon = False
-            if trace: print 'ERREUR :', exc.args[0]  
+            if trace: print ('ERREUR :', exc.args[0])
             
         try:
             #rejcupehre l'adresse et la longueur des spejcifiques 
             (offsetSpejcifiques, tailleSpejcifiques) = self.donneSpejcifiques()
             #doit estre un multiple de 4
-            if tailleSpejcifiques/4*4 != tailleSpejcifiques:
+            if tailleSpejcifiques//4*4 != tailleSpejcifiques:
                 raise Exception('%s : taille incompatible des spécifiques (doit être multiple de 4)'%(self.latFileName))
             self.seek(offsetSpejcifiques, 0)
             spejcifiques = []
-            for i in range(tailleSpejcifiques/4): spejcifiques.append('%d'%(self.litNombre4()))
+            for i in range(tailleSpejcifiques//4): spejcifiques.append('%d'%(self.litNombre4()))
             if trace:
-                print "============="
-                print "%d mots de données spécifiques"%(tailleSpejcifiques/4)
-                print ', '.join(spejcifiques)
+                print ("=============")
+                print ("%d mots de données spécifiques"%(tailleSpejcifiques//4))
+                print (', '.join(spejcifiques))
         except Exception as exc: 
             cestBon = False
-            if trace: print 'ERREUR :', exc.args[0] 
+            if trace: print ('ERREUR :', exc.args[0])
 
     #######################################################################
     #dumpe le fichier lexique sur un fichier texte
@@ -219,7 +230,8 @@ class NindTermindex(NindIndex):
             finDonnejes = self.tell() + longueurDonnejes
             while self.tell() < finDonnejes:
                 #<flagCg=61> <catejgorie> <frejquenceTerme> <nbreDocs> <listeDocuments>
-                if self.litNombre1() != FLAG_CG: raise Exception('pas FLAG_CG à %d'%(self.tell() -1))
+                if self.litNombre1() != FLAG_CG: 
+                    raise Exception('NindTermindex.dumpeFichier %s : pas FLAG_CG'%(self.latFileName))
                 catejgorie = self.litNombre1()
                 frejquenceTerme = self.litNombreULat()
                 nbreDocs = self.litNombreULat()

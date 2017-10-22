@@ -21,14 +21,17 @@ using namespace std;
 ////////////////////////////////////////////////////////////
 //brief Teste le systehme de fichiers
 //param fileNameExtensionLess absolute path file name without extension
+//param avecRetrolexicon vrai si le retrolexicon fait partie des fichiers
 //param tousAbsents vrai si les fichiers doivent estre tous absents
 //return vrai si le systehme est cohejrent, sinon faux */
 bool NindFichiers::fichiersCohejrents(const string &fileNameExtensionLess, 
+                                      const bool avecRetrolexicon,
                                       const bool tousAbsents)
 {
     bool tous = true;
     bool aucun = true;
-    const list<string> extensions = {".nindlexiconindex", ".nindtermindex", ".nindlocalindex", ".nindretrolexicon" };
+    list<string> extensions = {".nindlexiconindex", ".nindtermindex", ".nindlocalindex"};
+    if (avecRetrolexicon) extensions.push_back(".nindretrolexicon");
     for (list<string>::const_iterator itext = extensions.begin(); itext != extensions.end(); itext++) {
         const string fileName = fileNameExtensionLess + (*itext);
         FILE *fichier = fopen(fileName.c_str(), "rb");

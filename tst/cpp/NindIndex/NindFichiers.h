@@ -28,9 +28,11 @@ class DLLExportLexicon NindFichiers {
 public:
     /**\brief Teste le systehme de fichiers
     *\param fileNameExtensionLess absolute path file name without extension
+    *\param avecRetrolexicon vrai si le retrolexicon fait partie des fichiers
     *\param tousAbsents vrai si les fichiers doivent estre tous absents
     *\return vrai si le systehme est cohejrent, sinon faux */
     static bool fichiersCohejrents(const std::string &fileNameExtensionLess, 
+                                   const bool avecRetrolexicon,
                                    const bool tousAbsents);
 };
 ////////////////////////////////////////////////////////////

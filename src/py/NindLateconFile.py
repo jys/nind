@@ -1,10 +1,25 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.5
 # -*- coding: utf-8 -*-
+# Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
+# Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
+# This file is part of NIND (as "nouvelle indexation").
+# NIND is free software: you can redistribute it and/or modify it under the terms of the 
+# GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
+# (see <http://www.gnu.org/licenses/>), either version 3 of the License, or any later version.
+# NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Less General Public License for more details.
+################################################################
+# IMPORTANT : des essais ont ejtej faits avec une bufferisation des lectures comme pour NindLateconFile.cpp
+# Rejsultats trehs dejcevants en temps de traitement.
+# Nous gardons la lecture directe depuis le fichier et remercions la gestion du cache !
+################################################################
 import sys
 import os
 
 def usage():
-    print """© l'ATÉCON.
+    print(sys.version)
+    print ("""© l'ATEJCON.
 Programme de test de la classe NindLateconFile.
 Cette classe permet l'accès aux fichiers binaires avec codages Latecon.
 Nind_testLateconNumber a écrit dans /tmp/Nind_testLateconNumber.lat la
@@ -15,7 +30,7 @@ latecon sous 2 interprétations : 1) non signée, 2) signée"
 
 usage   : %s <fichier codage latecon>
 exemple : %s /tmp/Nind_testLateconNumber.lat
-"""%(sys.argv[0], sys.argv[0])
+"""%(sys.argv[0], sys.argv[0]))
 
 def main():
     if len(sys.argv) < 2 :
@@ -27,11 +42,11 @@ def main():
     #taille du fichier
     latFile.seek(0, 2)
     taille = latFile.tell()
-    print "taille du fichier : %d"%(taille)
+    print ("taille du fichier : %d"%(taille))
     #lit la taille
     latFile.seek(0, 0)
     taille = latFile.litNombre3()
-    print "taille=%d"%(taille)
+    print ("taille=%d"%(taille))
     nonSignes = []
     signes = []
     #lit les nombres en non signé 
@@ -40,7 +55,7 @@ def main():
     latFile.seek(3, 0)
     for i in range(4): signes.append(latFile.litNombreSLat())
     #affiche
-    for i in range(4): print "U: %d S: %d"%(nonSignes[i], signes[i])
+    for i in range(4): print ("U: %d S: %d"%(nonSignes[i], signes[i]))
     
 #calcule la clef A
 def clefA(mot):
@@ -58,7 +73,7 @@ def clefB(mot):
     clef = 0x55555555
     shifts = 0
     for octet in mBytes: 
-        clef ^= (ord(octet) << shifts%23)
+        clef ^= (octet << shifts%23)
         shifts += 5
     return clef
 
@@ -70,14 +85,14 @@ def catNb2Str(cat):
 
 ######################################################################################
 class NindLateconFile:
-    def __init__(self, latFileName, enEcriture = False):
+    def __init__(self, latFileName, enEjcriture = False):
         self.latFileName = latFileName
-        if not enEcriture:
+        if not enEjcriture:
             #ouvre le fichier en lecture
             self.latFile = open(self.latFileName, 'rb')
             self.latFile.seek(0, 0)
         else:
-            #ecrit le fichier completement
+            #ejcrit le fichier completement
             self.latFile = open(self.latFileName, 'wb')
         
     def seek(self, offset, from_what):
@@ -90,46 +105,54 @@ class NindLateconFile:
         self.latFile.close()
         
     def litNombre1(self):
-        oc = self.latFile.read(1)
-        return ord(oc)
+        return ord(self.latFile.read(1))
 
     def litNombre2(self):
         #gros-boutiste
-        oc = self.latFile.read(2)
-        return ord(oc[0])*256 + ord(oc[1])
+        ba = bytes(self.latFile.read(2))
+        return ba[0]*0x100 + ba[1]
+        #return (ba[0] <<8) + ba[1]
 
     def litNombre3(self):
         #petit-boutiste
-        oc = self.latFile.read(3)
-        return (ord(oc[2])*256 + ord(oc[1]))*256 + ord(oc[0])
+        ba = bytes(self.latFile.read(3))
+        return (ba[2]*0x100 + ba[1])*0x100 + ba[0]
+        #return (((ba[2] <<8) + ba[1]) <<8) + ba[0]
+        #return (ba[2] <<16) + (ba[1] <<8) + ba[0]
 
     def litNombreS3(self):
         #petit-boutiste
-        oc = self.latFile.read(3)
-        res = (ord(oc[2])*256 + ord(oc[1]))*256 + ord(oc[0])
+        ba = bytes(self.latFile.read(3))
+        res = (ba[2]*0x100 + ba[1])*0x100 + ba[0]
+        #res = (((ba[2] <<8) + ba[1]) <<8) + ba[0]
+        #res = (ba[2] <<16) + (ba[1] <<8) + ba[0]
         if res < 0x800000: return res 
         return res - 0x1000000
 
     def litNombre4(self):
         #petit-boutiste
-        oc = self.latFile.read(4)
-        return ((ord(oc[3])*256 + ord(oc[2]))*256 + ord(oc[1]))*256 + ord(oc[0])
+        ba = bytes(self.latFile.read(4))
+        return ((ba[3]*0x100 + ba[2])*0x100 + ba[1])*0x100 + ba[0]
+        #return (((((ba[3] <<8) + ba[2]) <<8) + ba[1]) <<8) + ba[0]
+        #return (ba[3] <<24) + (ba[2] <<16) + (ba[1] <<8) + ba[0]
 
     def litNombre5(self):
         #gros-boutiste
-        oc = self.latFile.read(5)
-        return (((ord(oc[0])*256 + ord(oc[1]))*256 + ord(oc[2]))*256 + ord(oc[3]))*256 + ord(oc[4])
+        ba = bytes(self.latFile.read(5))
+        return (((ba[0]*0x100 + ba[1])*0x100 + ba[2])*0x100 + ba[3])*0x100 + ba[4]
+        #return (((((((ba[0] <<8) + ba[1]) <<8) + ba[2]) <<8) + ba[3]) <<8) + ba[4]
+        #return (ba[0] <<32) + (ba[1] <<24) + (ba[2] <<16) + (ba[3] <<8) + ba[4]
 
     def litNombreULat(self):
         octet = ord(self.latFile.read(1))
         if not octet&0x80: return octet
         result = ord(self.latFile.read(1))
-        if not octet&0x40: return (octet&0x3F) * 256 + result
-        result = result * 256 + ord(self.latFile.read(1))
-        if not octet&0x20: return (octet&0x1F) * 256 * 256 + result
-        result = result * 256 + ord(self.latFile.read(1))
-        if not octet&0x10: return (octet&0x0F) * 256 * 256 * 256 + result
-        result = result * 256 + ord(self.latFile.read(1))
+        if not octet&0x40: return (octet&0x3F) * 0x100 + result
+        result = result * 0x100 + ord(self.latFile.read(1))
+        if not octet&0x20: return (octet&0x1F) * 0x10000 + result
+        result = result * 0x100 + ord(self.latFile.read(1))
+        if not octet&0x10: return (octet&0x0F) * 0x1000000 + result
+        result = result * 0x100 + ord(self.latFile.read(1))
         if not octet&0x08: return result
         raise Exception('entier Ulatecon invalide à %08X'%(self.latFile.tell()))
 
@@ -138,15 +161,15 @@ class NindLateconFile:
         if octet&0xC0 == 0x00: return octet
         if octet&0xC0 == 0x40: return octet - 0x80
         result = ord(self.latFile.read(1))
-        if octet&0x60 == 0x00: return (octet&0x3F) * 256 + result
-        if octet&0x60 == 0x20: return (octet&0x3F) * 256 + result - 0x4000
-        result = result * 256 + ord(self.latFile.read(1))
-        if octet&0x30 == 0x00: return (octet&0x1F) * 256 * 256 + result
-        if octet&0x30 == 0x10: return (octet&0x1F) * 256 * 256 + result - 0x200000
-        result = result * 256 + ord(self.latFile.read(1))
-        if octet&0x18 == 0x00: return (octet&0x0F) * 256 * 256 * 256 + result
-        if octet&0x18 == 0x08: return (octet&0x0F) * 256 * 256 * 256 + result - 0x10000000
-        result = result * 256 + ord(self.latFile.read(1))
+        if octet&0x60 == 0x00: return (octet&0x3F) * 0x100 + result
+        if octet&0x60 == 0x20: return (octet&0x3F) * 0x100 + result - 0x4000
+        result = result * 0x100 + ord(self.latFile.read(1))
+        if octet&0x30 == 0x00: return (octet&0x1F) * 0x10000 + result
+        if octet&0x30 == 0x10: return (octet&0x1F) * 0x10000 + result - 0x200000
+        result = result * 0x100 + ord(self.latFile.read(1))
+        if octet&0x18 == 0x00: return (octet&0x0F) * 0x1000000 + result
+        if octet&0x18 == 0x08: return (octet&0x0F) * 0x1000000 + result - 0x10000000
+        result = result * 0x100 + ord(self.latFile.read(1))
         if (octet&0x08 == 0x00) and (result&0x80000000 == 0x00000000): return result
         if (octet&0x08 == 0x00) and (result&0x80000000 == 0x80000000): return result - 0x0100000000
         raise Exception('entier Slatecon invalide à %08X'%(self.latFile.tell()))
@@ -158,33 +181,43 @@ class NindLateconFile:
     def litChaine(self, longueur):
         return self.latFile.read(longueur).decode('utf-8')
     
-    def ecritNombre1(self, entier):
+    def ejcritNombre1(self, entier):
         self.latFile.write(chr(entier&0xFF))
 
-    def ecritNombre3(self, entier):
+    def ejcritNombre3(self, entier):
+        ba = bytearray(3)
         #petit-boutiste
-        self.latFile.write(chr(entier&0xFF))
-        self.latFile.write(chr((entier/0x100)&0xFF))
-        self.latFile.write(chr((entier/0x10000)&0xFF))
+        ba[0] = entier&0xFF
+        ba[1] = (entier/0x100)&0xFF
+        ba[2] = (entier/0x10000)&0xFF
+        self.latFile.write(ba)
         
-    def ecritNombre4(self, entier):
+    def ejcritNombre4(self, entier):
+        ba = bytearray(4)
         #petit-boutiste
-        self.latFile.write(chr(entier&0xFF))
-        self.latFile.write(chr((entier/0x100)&0xFF))
-        self.latFile.write(chr((entier/0x10000)&0xFF))
-        self.latFile.write(chr((entier/0x1000000)&0xFF))
+        ba[0] = entier&0xFF
+        ba[1] = (entier/0x100)&0xFF
+        ba[2] = (entier/0x10000)&0xFF
+        ba[3] = (entier/0x1000000)&0xFF
+        self.latFile.write(ba)
         
-    def ecritNombre5(self, entier):
+    def ejcritNombre5(self, entier):
+        ba = bytearray(5)
         #gros-boutiste
-        self.latFile.write(chr((entier/0x100000000)&0xFF))
-        self.latFile.write(chr((entier/0x1000000)&0xFF))
-        self.latFile.write(chr((entier/0x10000)&0xFF))
-        self.latFile.write(chr((entier/0x100)&0xFF))
-        self.latFile.write(chr(entier&0xFF))
+        ba[0] = (entier/0x100000000)&0xFF
+        ba[1] = (entier/0x1000000)&0xFF
+        ba[2] = (entier/0x10000)&0xFF
+        ba[3] = (entier/0x100)&0xFF
+        ba[4] = entier&0xFF
+        self.latFile.write(ba)
 
-    def ecritChaine(self, chaine):
+    def ejcritChaine(self, chaine):
         self.latFile.write(chaine.encode('utf-8'))
         
+    def ejcritZejros(self, taille):
+        self.latFile.write(bytearray(taille))
+
+       
 if __name__ == '__main__':
     main()
        

@@ -1,5 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.5
 # -*- coding: utf-8 -*-
+# Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
+# Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
+# This file is part of NIND (as "nouvelle indexation").
+# NIND is free software: you can redistribute it and/or modify it under the terms of the 
+# GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
+# (see <http://www.gnu.org/licenses/>), either version 3 of the License, or any later version.
+# NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Less General Public License for more details.
 import sys
 from os import getenv, path
 from time import ctime
@@ -9,13 +18,13 @@ from NindPadFile import chercheVides
 def usage():
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
     else: script = sys.argv[0]
-    print """© l'ATEJCON.
+    print ("""© l'ATEJCON.
 Analyse un fichier retrolexicon du système nind et affiche les stats. 
 Le format du fichier est défini dans le document LAT2014.JYS.440.
 
 usage   : %s <fichier>
 exemple : %s FRE.termindex
-"""%(script, script)
+"""%(script, script))
 
 def main():
     if len(sys.argv) < 2 :
@@ -67,7 +76,6 @@ class NindRetrolexicon(NindPadFile):
     def getWord (self, ident):
         mot = []
         (trouvej, motSimple, identifiantA, identifiantS) = self.getWordDef(ident)
-        #print 'A', ident, trouvej, motSimple, identifiantA, identifiantS
         #si pas trouvej, retourne chaisne vide
         if not trouvej: return ''
         while True:
@@ -77,13 +85,11 @@ class NindRetrolexicon(NindPadFile):
                 break
             #si c'est un mot composej, recupehre le mot simple du couple
             (trouvej, motSimple, identifiantA2, identifiantS2) = self.getWordDef(identifiantS)
-            #print 'B', identifiantS, trouvej, motSimple, identifiantA2, identifiantS2
             if not trouvej: raise Exception("%d pas trouvé dans %s"%(identifiantS, self.latFileName))
             if identifiantA2 != 0: raise Exception("%d pas terminal %s"%(identifiantS, self.latFileName))
             mot.insert(0, motSimple)
             #recupere l'autre mot du couple
             (trouvej, motSimple, identifiantA, identifiantS) = self.getWordDef(identifiantA)
-            #print 'C', identifiantA, trouvej, motSimple, identifiantA, identifiantS
             if not trouvej: raise Exception("%d pas trouvé dans %s"%(identifiantA, self.latFileName))
             #pour detecter les bouclages induits par un fichier bouclant
             if len(mot) == TAILLE_COMPOSEJ_MAXIMUM: 
@@ -141,30 +147,30 @@ class NindRetrolexicon(NindPadFile):
                     nbreComposejs += 1
         except Exception as exc: 
             cestBon = False
-            if trace: print 'ERREUR :', exc.args[0]
+            if trace: print ('ERREUR :', exc.args[0])
         if trace:
-            print "============="
-            print "%d / %d index utilisés"%(nbreSimples + nbreComposejs, maxIdent)
-            print "============="
+            print ("=============")
+            print ("%d / %d index utilisés"%(nbreSimples + nbreComposejs, maxIdent))
+            print ("=============")
             
         try:
             (nbreVides, tailleVides) = chercheVides(nonVidesList)
             total = tailleVides + totalUtf8
             if trace:
-                print "CHAÎNES UTF-8  % 10d (%6.2f %%) % 9d occurrences"%(totalUtf8, float(100)*totalUtf8/total, nbreSimples)
-                print "VIDES          % 10d (%6.2f %%) % 9d occurrences"%(tailleVides, float(100)*tailleVides/total, nbreVides)
-                print "TOTAL          % 10d %08X"%(total, total)
-                print "============="
+                print ("CHAÎNES UTF-8  % 10d (%6.2f %%) % 9d occurrences"%(totalUtf8, float(100)*totalUtf8/total, nbreSimples))
+                print ("VIDES          % 10d (%6.2f %%) % 9d occurrences"%(tailleVides, float(100)*tailleVides/total, nbreVides))
+                print ("TOTAL          % 10d %08X"%(total, total))
+                print ("=============")
                 total = nbreSimples + nbreComposejs
-                print "MOTS SIMPLES   % 10d (%6.2f %%)"%(nbreSimples, float(100)*nbreSimples/total)
-                print "MOTS COMPOSÉS  % 10d (%6.2f %%)"%(nbreComposejs, float(100)*nbreComposejs/total)
-                print "TOTAL          % 10d"%(total)
-                print "============="
-                print "%0.2f octets / mot"%(float(self.donneTailleFichier())/total)
-                print "============="
+                print ("MOTS SIMPLES   % 10d (%6.2f %%)"%(nbreSimples, float(100)*nbreSimples/total))
+                print ("MOTS COMPOSÉS  % 10d (%6.2f %%)"%(nbreComposejs, float(100)*nbreComposejs/total))
+                print ("TOTAL          % 10d"%(total))
+                print ("=============")
+                print ("%0.2f octets / mot"%(float(self.donneTailleFichier())/total))
+                print ("=============")
         except Exception as exc: 
             cestBon = False
-            if trace: print 'ERREUR :', exc.args[0]  
+            if trace: print ('ERREUR :', exc.args[0])
            
                        
 if __name__ == '__main__':
