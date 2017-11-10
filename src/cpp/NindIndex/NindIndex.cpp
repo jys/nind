@@ -140,7 +140,7 @@ void NindIndex::setDefinition(const unsigned int ident)
     unsigned long int offsetDejfinition = 0;
     unsigned int longueurDejfinition = 0;
     //2) trouve une place libre
-    //cherche d'abord une place compatible (>= tailleDefinition et < tailleDefinition + m_definitionMinimumSize)
+    //cherche d'abord une place compatible (>= dataSize et < dataSize + m_definitionMinimumSize)
     const bool AlaFin = findNewArea(dataSize, offsetDejfinition, longueurDejfinition);
     //3b) ecrit les nouvelles donnees
     m_file.setPos(offsetDejfinition, SEEK_SET);    //se positionne sur la dejfinition
@@ -280,7 +280,7 @@ bool NindIndex::findNewArea(const unsigned int dataSize,
     }
     //ejcrit a la fin 
     offsetDejfinition = m_file.getFileSize() - getSpecificsAndIdentificationSize();       //ecrit a la fin 
-    longueurDejfinition = dataSize;        //avec la taille juste
+    longueurDejfinition = (dataSize > m_definitionMinimumSize)? dataSize : m_definitionMinimumSize;  //avec la taille 
     return true;                                //ah la fin
 }
 ////////////////////////////////////////////////////////////

@@ -25,3 +25,14 @@ target_link_libraries(Nind_testSynchro NindBasics)
 install(TARGETS Nind_testSynchro DESTINATION bin)
 ########### next target ###############
 
+SET(testGlob_SRCS
+   testGlob.cpp
+)
+
+add_executable(testGlob ${testGlob_SRCS})
+
+target_link_libraries(testGlob NindBasics)
+
+install(TARGETS testGlob DESTINATION bin)
+########### next target ###############
+

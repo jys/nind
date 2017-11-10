@@ -5,12 +5,12 @@
 
 import sys
 import os
-import StringIO
+from io import StringIO
 from xml.sax.handler import ContentHandler
 import xml.sax
 
 def usage():
-    print """© l'ATÉCON.
+    print ("""© l'ATÉCON.
 Programme de test de la classe LatXmlParser.
 Attention, il faut respecter la façon de récupérer les textes 
 telle que programmée dans le présent programme de test,
@@ -18,7 +18,7 @@ sinon il y a risque de longues déconvenues...
 
 usage   : %s <paths séparés par ";"> <fichier xml> 
 exemple : %s "/bowText/tokens/bowTerm;bowTerm;" toto.xml 
-"""%(sys.argv[0], sys.argv[0])
+"""%(sys.argv[0], sys.argv[0]))
 
 def main():
     if len(sys.argv) < 3:
@@ -30,7 +30,7 @@ def main():
     pathsArray = pathsString.split(';')
     #c'est une classe qui va faire le boulot
     TestParser(inFileName, pathsArray)
-    print "Terminé"
+    print ("Terminé")
     
 class TestParser():
     def __init__(self, inFileName, pathsArray):
@@ -40,18 +40,18 @@ class TestParser():
         self.xmlParser.startParse(inFileName)
         
     def nodeCallback(self, path, attr):
-        outText = StringIO.StringIO()
+        outText = StringIO()
         outText.write('%d: %s => '%(self.xmlParser.getLineNumber(), path))
         for name in attr.getNames(): outText.write('%s=%s '%(name, attr.getValue(name)))
-        print outText.getvalue()
+        print (outText.getvalue())
         self.text = ''
         
     def endNodeCallback(self, path):
         #Sax ne s'interdit pas d'envoyer les textes par morceaux ! 
         #on ne peut disposer du texte complet qu'a la balise fermante
         #il est donc IMPERATIF de programmer ainsi        
-        print ('#%s#'%(self.text)).encode('utf-8')
-        print '%d: end %s'%(self.xmlParser.getLineNumber(), path)
+        print (('#%s#'%(self.text)).encode('utf-8'))
+        print ('%d: end %s'%(self.xmlParser.getLineNumber(), path))
 
     def textCallback(self, path, text):
         #Sax ne s'interdit pas d'envoyer les textes par morceaux ! 

@@ -1,5 +1,9 @@
-#!/usr/bin/env python3.5
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+__author__ = "jys"
+__copyright__ = "Copyright (C) 2017 LATEJCON"
+__license__ = "GNU LGPL"
+__version__ = "2.0.1"
 # Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 # Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 # This file is part of NIND (as "nouvelle indexation").
@@ -22,22 +26,40 @@ def usage():
     else: script = sys.argv[0]
     print ("""© l'ATEJCON.
 Analyse un fichier NindIndex du système nind et affiche les stats. 
+Peut donner l'offset dans le fichier et la longueur des données d'un index
 Les types de fichiers : lexiconindex, termindex, localindex
-Le format du fichier est défini dans le document LAT2014.JYS.440.
+Le format du fichier est défini dans le document LAT2017.JYS.470.
 
-usage   : %s <fichier>
+usage   : %s <fichier> [ <analyse> | <indirection> <index> ]
 exemple : %s FRE.termindex
+exemple : %s FRE.termindex indir 398892
 """%(script, script))
 
 def main():
-    if len(sys.argv) < 2 :
-        usage()
+    try:
+        if len(sys.argv) < 2 : raise Exception()
+        indexFileName = path.abspath(sys.argv[1])
+        action = 'analyse' 
+        if len(sys.argv) > 2 : action = sys.argv[2]
+        index = 0
+        if len(sys.argv) > 3 : index = int(sys.argv[3])
+        
+        #la classe
+        nindIndex = NindIndex(indexFileName)
+        if action.startswith('anal'): nindIndex.analyseFichierIndex(True)
+        elif action.startswith('ind'):
+            (offsetDejfinition, longueurDejfinition) = nindIndex.donneAdresseDejfinition(index)
+            print ('offset   : ', offsetDejfinition)
+            print ('longueur : ', longueurDejfinition)
+        else: raise Exception()
+    except Exception as exc:
+        if len(exc.args) == 0: usage()
+        else:
+            print ("******************************")
+            print (exc.args[0])
+            print ("******************************")
+            raise
         sys.exit()
-    indexFileName = path.abspath(sys.argv[1])
-    
-    #la classe
-    nindIndex = NindIndex(indexFileName)
-    nindIndex.analyseFichierIndex(True)
 
 ############################################################
 # <donnejesIndexejes>     ::= <indirection>
@@ -100,12 +122,19 @@ class NindIndex(NindPadFile):
             print ("%d / %d indirections utilisées"%(indirectionsUtilisejes, maxIdent))
             print ("=============")
         try:
-            (nbreVides, tailleVides) = chercheVides(nonVidesList)
+            nbreVides, tailleVides, typesVides, typesNonVides = chercheVides(nonVidesList)
             if trace:
                 total = tailleVides + tailleDejfinitions
                 print ("DÉFINITIONS    % 10d (%6.2f %%) % 9d occurrences"%(tailleDejfinitions, float(100)*tailleDejfinitions/total, indirectionsUtilisejes))
                 print ("VIDES          % 10d (%6.2f %%) % 9d occurrences"%(tailleVides, float(100)*tailleVides/total,nbreVides))
                 print ("TOTAL          % 10d %08X"%(total, total))
+                print ("=============")
+                typesVidesList = list(typesVides.items())
+                typesNonVidesList = list(typesNonVides.items())
+                typesVidesList.sort()
+                typesNonVidesList.sort()
+                print ("VIDES     de ", typesVidesList[:3], " à ", typesVidesList[-3:])
+                print ("NON VIDES de ", typesNonVidesList[:3], " à ", typesNonVidesList[-3:])
         except Exception as exc: 
             cestBon = False
             if trace: print ('ERREUR :', exc.args[0])

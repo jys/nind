@@ -29,8 +29,8 @@ using namespace std;
 // <dejfinitionMot>        ::= <motComposej> | <motSimple>
 // <motComposej>           ::= <flagComposej=31> <identifiantA> <identifiantS>
 // <flagComposej=31>       ::= <Integer1>
-// <identifiantA>          ::= <Integer3>
-// <identifiantS>          ::= <Integer3>
+// <identifiantA>          ::= <Integer4>
+// <identifiantS>          ::= <Integer4>
 // <motSimple>             ::= <flagSimple=37> <longueurMotUtf8> <adresseMotUtf8>
 // <flagSimple=37>         ::= <Integer1>
 // <longueurMotUtf8>       ::= <Integer1>
@@ -45,9 +45,9 @@ using namespace std;
 ////////////////////////////////////////////////////////////
 #define FLAG_COMPOSEJ 31
 #define FLAG_SIMPLE 37
-//<flagComposej=31>(1) <identifiantA>(3) <identifiantS>(3) = 7
+//<flagComposej=31>(1) <identifiantA>(4) <identifiantS>(4) = 9
 //<flagSimple=37>(1) <longueurMotUtf8>(1) <adresseMotUtf8>(5) = 7
-#define TAILLE_DEJFINITION 7
+#define TAILLE_DEJFINITION 9
 // //<motUtf8>(255) + TAILLE_IDENTIFICATION (12) = 268
 #define TAILLE_DEJFINITION_MAXIMUM 268
 // //taille maximum d'un mot compose (pour detecter les bouclages)
@@ -127,8 +127,9 @@ void NindRetrolexicon::addRetroWords(const list<struct RetroWord> &retroWords,
             m_file.createBuffer(TAILLE_DEJFINITION);
             //<flagComposej=31> <identifiantA> <identifiantS>
             m_file.putInt1(FLAG_COMPOSEJ);
-            m_file.putInt3(retroWord.identifiantA);
-            m_file.putInt3(retroWord.identifiantS - retroWord.identifiant);
+            m_file.putInt4(retroWord.identifiantA);
+            //m_file.putInt4(retroWord.identifiantS - retroWord.identifiant);
+            m_file.putInt4(retroWord.identifiantS);
             m_file.writeBuffer();
         }
     }
@@ -204,8 +205,9 @@ bool NindRetrolexicon::getRetroWord(const unsigned int ident,
     }
     //<flagComposej=31> <identifiantA> <identifiantS>
     else if (flag == FLAG_COMPOSEJ) {
-        const unsigned int identifiantA = m_file.getInt3();
-        const unsigned int identifiantS = ident + m_file.getSInt3();
+        const unsigned int identifiantA = m_file.getInt4();
+        //const unsigned int identifiantS = ident + m_file.getSInt4();
+        const unsigned int identifiantS = m_file.getInt4();
         retroWord = RetroWord(ident, identifiantA, identifiantS);
         return true;
     }

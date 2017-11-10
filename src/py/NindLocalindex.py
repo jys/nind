@@ -1,5 +1,9 @@
-#!/usr/bin/env python3.5
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+__author__ = "jys"
+__copyright__ = "Copyright (C) 2017 LATEJCON"
+__license__ = "GNU LGPL"
+__version__ = "2.0.1"
 # Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 # Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 # This file is part of NIND (as "nouvelle indexation").
@@ -21,11 +25,15 @@ def usage():
     else: script = sys.argv[0]
     print ("""© l'ATEJCON.
 Analyse un fichier localindex du système nind et affiche les stats. 
-Le format du fichier est défini dans le document LAT2014.JYS.440.
+Peut dumper nindlocalindex sur <fichier>-dump.txt
+Peut donner la liste des identifiants externes de tous les documents indexés
+Le format du fichier est défini dans le document LAT2017.JYS.470.
 
-usage   : %s <fichier>
-exemple : %s FRE.termindex
-"""%(script, script))
+usage   : %s <fichier> [ <analyse> | <dumpe> | <ident> ]
+exemple : %s FRE.nindlocalindex
+exemple : %s FRE.nindlocalindex dump
+exemple : %s FRE.nindlocalindex ident
+"""%(script, script, script, script))
 
 
 def main():
@@ -44,6 +52,10 @@ def main():
             nbLignes = nindLocalindex.dumpeFichier(outFile)
             outFile.close()
             print ('%d lignes écrites dans %s'%(nbLignes, outFilename))
+        elif action.startswith('id'):
+            listeIdentifiants = nindLocalindex.donneidentifiantsExternes()
+            #les affiche, un par ligne
+            for ident in listeIdentifiants: print (ident)
         else: raise Exception()
     except Exception as exc:
         if len(exc.args) == 0: usage()
@@ -197,8 +209,8 @@ class NindLocalindex(NindIndex):
                 print ("TOTAL          % 10d %08X"%(total, total))
                 print ("=============")
                 print ("DOCUMENTS      % 10d "%(nbDonnejes))
-                print ("TERMES         % 10d occurences"%(totalOccurrences))
-                print ("LOCALISATIONS  % 10d occurences"%(totalLocalisations))
+                print ("TERMES         % 10d occurrences"%(totalOccurrences))
+                print ("LOCALISATIONS  % 10d occurrences"%(totalLocalisations))
                 print ("=============")
                 print ("DOCUMENT MAX   % 10d occurrences de termes"%(occurrencesMax))
                 print ("DOCUMENT MIN   % 10d occurrences de termes"%(occurrencesMin))
@@ -259,7 +271,11 @@ class NindLocalindex(NindIndex):
             outFile.write('\n')
         return nbLignes
 
-  
+    #######################################################################
+    def donneidentifiantsExternes(self):
+        return list(self.docIdTradExtInt.keys())
+
+    #######################################################################
         
 if __name__ == '__main__':
     main()

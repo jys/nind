@@ -1,5 +1,9 @@
-#!/usr/bin/env python3.5
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+__author__ = "jys"
+__copyright__ = "Copyright (C) 2017 LATEJCON"
+__license__ = "GNU LGPL"
+__version__ = "2.0.1"
 # Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 # Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 # This file is part of NIND (as "nouvelle indexation").
@@ -23,7 +27,7 @@ def usage():
     print ("""© l'ATEJCON.
 Analyse un fichier plat du système nind et affiche les stats. 
 Les types de fichiers : lexiconindex, termindex, localindex, retrolexicon
-Le format du fichier est défini dans le document LAT2014.JYS.440.
+Le format du fichier est défini dans le document LAT2017.JYS.470.
 
 usage   : %s <fichier>
 exemple : %s FRE.termindex
@@ -60,7 +64,7 @@ def main():
 #
 # <blocIdentification>    ::= <flagIdentification=53> <maxIdentifiant> <identifieurUnique> 
 # <flagIdentification=53> ::= <Integer1>
-# <maxIdentifiant>        ::= <Integer3>
+# <maxIdentifiant>        ::= <Integer4>
 # <identifieurUnique>     ::= <dateHeure>
 # <dateHeure >            ::= <Integer4>
 #############################################################""    
@@ -69,8 +73,8 @@ FLAG_SPEJCIFIQUE = 57
 FLAG_IDENTIFICATION = 53
 #<flagIndexej=47>(1) <addrBlocSuivant>(5) <nombreIndex>(3) = 9
 TAILLE_TETE_INDEXEJ = 9
-#<flagIdentification=53>(1) <maxIdentifiant>(3) <identifieurUnique>(4) = 8
-TAILLE_IDENTIFICATION = 8
+#<flagIdentification=53>(1) <maxIdentifiant>(4) <identifieurUnique>(4) = 9
+TAILLE_IDENTIFICATION = 9
 #<flagSpecifique=57>(1)
 TAILLE_ENTETE_SPEJCIFIQUE = 1
 #<tailleEntreje>(1) <tailleSpejcifiques>(3) = 4
@@ -108,7 +112,7 @@ class NindPadFile(NindLateconFile):
         self.seek(-TAILLE_IDENTIFICATION, 2)
         if self.litNombre1() != FLAG_IDENTIFICATION: 
             raise Exception('NindPadFile.donneIdentificationFichier %s'%(self.latFileName))
-        maxIdentifiant = self.litNombre3()
+        maxIdentifiant = self.litNombre4()
         identifieurUnique = self.litNombre4()
         return (maxIdentifiant, identifieurUnique)
     
@@ -291,7 +295,7 @@ class NindPadFile(NindLateconFile):
             addrIdentification = self.tell()
             if self.litNombre1() != FLAG_IDENTIFICATION: 
                 raise Exception('%s : pas FLAG_IDENTIFICATION à %08X'%(self.latFileName, addrIdentification))
-            maxIdentifiant = self.litNombre3()
+            maxIdentifiant = self.litNombre4()
             dateHeure = self.litNombre4()
             print ("max=%d dateheure=%d (%s)"%(maxIdentifiant, dateHeure, time.ctime(int(dateHeure))))
         except Exception as exc: 
@@ -334,8 +338,8 @@ def chercheVides(nonVidesList):
             if longueurVide not in typesVides: typesVides[longueurVide] = 0
             typesVides[longueurVide] +=1
         addressePrec = addresse
-        longueurPrec = longueur    
-    return (nbreVides, tailleVides)
+        longueurPrec = longueur 
+    return nbreVides, tailleVides, typesVides, typesNonVides
 
 #############################################################   
 #ah partir d'une liste calcule le max, le min, la moyenne et l'ejcart-type 

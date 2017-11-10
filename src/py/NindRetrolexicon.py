@@ -1,5 +1,9 @@
-#!/usr/bin/env python3.5
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+__author__ = "jys"
+__copyright__ = "Copyright (C) 2017 LATEJCON"
+__license__ = "GNU LGPL"
+__version__ = "2.0.1"
 # Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 # Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 # This file is part of NIND (as "nouvelle indexation").
@@ -20,21 +24,36 @@ def usage():
     else: script = sys.argv[0]
     print ("""© l'ATEJCON.
 Analyse un fichier retrolexicon du système nind et affiche les stats. 
-Le format du fichier est défini dans le document LAT2014.JYS.440.
+Peut donner le mot spécifié par son identifiant.
+Le format du fichier est défini dans le document LAT2017.JYS.470.
 
-usage   : %s <fichier>
-exemple : %s FRE.termindex
-"""%(script, script))
+usage   : %s <fichier> [ <analyse> | <mot> <ident> ]
+exemple : %s FRE.nindretrolexicon
+exemple : %s FRE.nindretrolexicon mot 19321
+"""%(script, script, script))
 
 def main():
-    if len(sys.argv) < 2 :
-        usage()
+    try:
+        if len(sys.argv) < 2 : raise Exception()
+        retrolexiconFileName = path.abspath(sys.argv[1])
+        action = 'analyse' 
+        if len(sys.argv) > 2 : action = sys.argv[2]
+        ident = 0
+        if len(sys.argv) > 3 : ident = int(sys.argv[3])
+        
+        #la classe
+        nindRetrolexicon = NindRetrolexicon(retrolexiconFileName)
+        if action.startswith('anal'): nindRetrolexicon.analyseFichierRetrolexicon(True)
+        elif action.startswith('mot'): print (nindRetrolexicon.donneMot(ident))
+        else: raise Exception()
+    except Exception as exc:
+        if len(exc.args) == 0: usage()
+        else:
+            print ("******************************")
+            print (exc.args[0])
+            print ("******************************")
+            raise
         sys.exit()
-    lexiconindexFileName = path.abspath(sys.argv[1])
-    
-    #la classe
-    nindRetrolexicon = NindRetrolexicon(lexiconindexFileName)
-    nindRetrolexicon.analyseFichierRetrolexicon(True)
 
 #####################################################
 # <donnejesIndexejes>     ::= <dejfinitionMot>
@@ -43,8 +62,8 @@ def main():
 # <dejfinitionMot>        ::= <motComposej> | <motSimple>
 # <motComposej>           ::= <flagComposej=31> <identifiantA> <identifiantS>
 # <flagComposej=31>       ::= <Integer1>
-# <identifiantA>          ::= <Integer3>
-# <identifiantS>          ::= <Integer3>
+# <identifiantA>          ::= <Integer4>
+# <identifiantS>          ::= <Integer4>
 # <motSimple>             ::= <flagSimple=37> <longueurMotUtf8> <adresseMotUtf8>
 # <flagSimple=37>         ::= <Integer1>
 # <longueurMotUtf8>       ::= <Integer1>
@@ -60,11 +79,10 @@ def main():
 
 FLAG_COMPOSEJ = 31
 FLAG_SIMPLE = 37
-TAILLE_COMPOSEJ_MAXIMUM = 30
+TAILLE_COMPOSEJ_MAXIMUM = 100
 
 class NindRetrolexicon(NindPadFile):
-    def __init__(self, lexiconindexFileName):
-        retrolexiconFileName = '.'.join(lexiconindexFileName.split('.')[:-1])+'.retrolexiconindex'
+    def __init__(self, retrolexiconFileName):
         #si le lexique inverse n'existe pas, on ne fait rien
         if not path.isfile(retrolexiconFileName): raise Exception("%s n'existe pas"%(retrolexiconFileName))
         #on initialise la classe mehre en lecture uniquement
@@ -73,9 +91,9 @@ class NindRetrolexicon(NindPadFile):
     def createFile(self):
         return
                
-    def getWord (self, ident):
+    def donneMot (self, ident):
         mot = []
-        (trouvej, motSimple, identifiantA, identifiantS) = self.getWordDef(ident)
+        (trouvej, motSimple, identifiantA, identifiantS) = self.__donneDefMot(ident)
         #si pas trouvej, retourne chaisne vide
         if not trouvej: return ''
         while True:
@@ -84,20 +102,20 @@ class NindRetrolexicon(NindPadFile):
                 mot.insert(0, motSimple)
                 break
             #si c'est un mot composej, recupehre le mot simple du couple
-            (trouvej, motSimple, identifiantA2, identifiantS2) = self.getWordDef(identifiantS)
-            if not trouvej: raise Exception("%d pas trouvé dans %s"%(identifiantS, self.latFileName))
+            (trouvej, motSimple, identifiantA2, identifiantS2) = self.__donneDefMot(identifiantS)
+            if not trouvej: raise Exception("%d pas trouvé A dans %s"%(identifiantS, self.latFileName))
             if identifiantA2 != 0: raise Exception("%d pas terminal %s"%(identifiantS, self.latFileName))
             mot.insert(0, motSimple)
             #recupere l'autre mot du couple
-            (trouvej, motSimple, identifiantA, identifiantS) = self.getWordDef(identifiantA)
-            if not trouvej: raise Exception("%d pas trouvé dans %s"%(identifiantA, self.latFileName))
+            (trouvej, motSimple, identifiantA, identifiantS) = self.__donneDefMot(identifiantA)
+            if not trouvej: raise Exception("%d pas trouvé B dans %s"%(identifiantA, self.latFileName))
             #pour detecter les bouclages induits par un fichier bouclant
             if len(mot) == TAILLE_COMPOSEJ_MAXIMUM: 
                 raise Exception("%d bouclage dans %s"%(ident, self.latFileName))
         #retourne la chaisne
         return '_'.join(mot)
 
-    def getWordDef(self, ident):
+    def __donneDefMot(self, ident):
         #trouve l'adresse des donnees dans le fichier
         offsetDejfinition = self.donnePositionEntreje(ident)
         #si pas trouve, le mot est inconnu
@@ -115,8 +133,13 @@ class NindRetrolexicon(NindPadFile):
             return (True, self.litChaine(longueurMotUtf8), 0, 0)
         if flag == FLAG_COMPOSEJ:
             #<flagComposej=31> <identifiantA> <identifiantS>
-            return (True, '', self.litNombre3(), ident + self.litNombreS3())
+            identifiantA = self.litNombre4()
+            identifiantS = self.litNombre4()
+            return (True, '', identifiantA, identifiantS)
+            #return (True, '', self.litNombre4(), self.litNombre4())
         raise Exception("%d mauvaise définition %s"%(ident, self.latFileName))
+    
+    ##################################################################
         
     #analyse complehtement le fichier et retourne True si ok
     def analyseFichierRetrolexicon(self, trace):
@@ -142,8 +165,8 @@ class NindRetrolexicon(NindPadFile):
                     nbreSimples += 1
                 elif flag == FLAG_COMPOSEJ:
                     #<flagComposej=31> <identifiantA> <identifiantS>
-                    identifiantA = self.litNombre3()
-                    identifiantS = self.litNombre3()
+                    identifiantA = self.litNombre4()
+                    identifiantS = self.litNombre4()
                     nbreComposejs += 1
         except Exception as exc: 
             cestBon = False
@@ -154,7 +177,7 @@ class NindRetrolexicon(NindPadFile):
             print ("=============")
             
         try:
-            (nbreVides, tailleVides) = chercheVides(nonVidesList)
+            (nbreVides, tailleVides, typesVides, typesNonVides) = chercheVides(nonVidesList)
             total = tailleVides + totalUtf8
             if trace:
                 print ("CHAÎNES UTF-8  % 10d (%6.2f %%) % 9d occurrences"%(totalUtf8, float(100)*totalUtf8/total, nbreSimples))

@@ -53,6 +53,10 @@ public:
     *\return identifiant of file */
     inline long int getFileIdent() const;
 
+    /**\brief Return the effective size of read buffer 
+    *\return the effective actual size */
+    inline unsigned int getInBufferSize();
+
     /**\brief Set file on relative position
     *\param offset Number of bytes to offset from origin
     *\param origin Position from where offset is added :
@@ -88,9 +92,13 @@ public:
     *\param bytesNb size of internal buffer to receive read datas */
     void readBuffer(const unsigned int bytesNb);
         
-    /**\brief Reduce effective buffer data specifying amount of unread datas
-    *\param bytesNb size of effective unread datas */
+    /**\brief Set logical end of read buffer specifying offset from current read pointer
+    *\param bytesNb offset from current read pointer */
     void setEndInBuffer(const unsigned int bytesNb);
+
+    /**\brief Set logical end of read buffer specifying offset from head of buffer
+    *\param bytesNb offset from head of buffer */
+    void setAbsEndInBuffer(const unsigned int bytesNb);
 
     /**\brief Test if effective buffer was entirely read
     *\return true if effective buffer was entirely read */
@@ -100,6 +108,10 @@ public:
     *\param offset from buffer head where to read next time */
     inline void setInBufferPtr(const unsigned int offset);
         
+    /**\brief Set pointer in read buffer
+    *\param offset from actual read pointer where to read next time */
+    inline void setRelInBufferPtr(const unsigned int offset);
+
     /**\brief Get a 1-bytes integer from internal buffer
     *\return 4-bytes integer */
     unsigned int getInt1();
@@ -119,6 +131,10 @@ public:
     /**\brief Get a 4-bytes integer from internal buffer
     *\return 4-bytes integer */
     unsigned int getInt4();
+
+    /**\brief Get a 4-bytes integer from internal buffer
+    *\return 4-bytes integer */
+    signed int getSInt4();
 
     /**\brief Get a 5-bytes integer from internal buffer
     *\return 8-bytes integer */
@@ -223,7 +239,8 @@ private:
     unsigned char *m_wbufferEnd;     //fin buffer d'ecriture
     unsigned char *m_wPtr;           //pointeur buffer d'ecriture
     unsigned char *m_rbuffer;        //buffer de lecture
-    unsigned char *m_rbufferEnd;     //fin buffer de lecture
+    unsigned char *m_rbufferAbsEnd;  //fin buffer de lecture absolue
+    unsigned char *m_rbufferEnd;     //fin buffer de lecture ajustable
     unsigned char *m_rPtr;           //pointeur buffer de lecture
     long int m_fileSize;             //taille du fichier
     bool m_isLittleEndian;
@@ -248,6 +265,13 @@ inline long int NindFile::getFileSize() const
 inline long int NindFile::getFileIdent() const
 {
     return (long int)m_file;
+}
+////////////////////////////////////////////////////////////
+//brief Return the effective size of read buffer 
+//return the effective actual size */
+inline unsigned int NindFile::getInBufferSize()
+{
+    return (m_rbufferEnd - m_rbuffer);
 }
 ////////////////////////////////////////////////////////////
 //brief Set file on relative position
@@ -280,6 +304,13 @@ inline bool NindFile::endOfInBuffer()
 inline void NindFile::setInBufferPtr(const unsigned int offset)
 {
     m_rPtr = m_rbuffer + offset;
+}
+////////////////////////////////////////////////////////////
+//brief Set pointer in read buffer
+//param offset from actual read pointer where to read next time */
+inline void NindFile::setRelInBufferPtr(const unsigned int offset)
+{
+    m_rPtr += offset;
 }
 ////////////////////////////////////////////////////////////
 //brief Return the effective size of buffer for writing

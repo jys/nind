@@ -31,6 +31,7 @@ NindFile::NindFile(const string &fileName):
     m_wbufferEnd(0),
     m_wPtr(0),
     m_rbuffer(0),
+    m_rbufferAbsEnd(0),
     m_rbufferEnd(0),
     m_rPtr(0),
     m_fileSize(0),
@@ -164,18 +165,27 @@ void NindFile::readBuffer(const unsigned int bytesNb)
     if (m_rbuffer != 0) delete [] m_rbuffer;
     m_rbuffer = new (nothrow) unsigned char[bytesNb];
     if (m_rbuffer == 0) throw BadAllocException("in read buffer " + m_fileName);
-    m_rbufferEnd = m_rbuffer + bytesNb;
+    m_rbufferAbsEnd = m_rbuffer + bytesNb;
+    m_rbufferEnd = m_rbufferAbsEnd;
     m_rPtr = m_rbuffer;
     //lit le fichier
     readBytes(m_rbuffer, bytesNb);
 }
 ////////////////////////////////////////////////////////////
-//brief Reduce effective buffer data specifying amount of unread datas
-//param bytesNb size of effective unread datas */
+//brief Set logical end of read buffer specifying offset from current read pointer
+//param bytesNb offset from current read pointer */
 void NindFile::setEndInBuffer(const unsigned int bytesNb)
 {
-    if (m_rPtr + bytesNb > m_rbufferEnd) throw OutReadBufferException("in read buffer (A) " + m_fileName);
+    if (m_rPtr + bytesNb > m_rbufferAbsEnd) throw OutReadBufferException("in read buffer (A) " + m_fileName);
     m_rbufferEnd = m_rPtr + bytesNb;
+}
+////////////////////////////////////////////////////////////
+//brief Set logical end of read buffer specifying offset from head of buffer
+//param bytesNb offset from head of buffer */
+void NindFile::setAbsEndInBuffer(const unsigned int bytesNb)
+{
+    if (m_rbuffer + bytesNb > m_rbufferAbsEnd) throw OutReadBufferException("in read buffer (AA) " + m_fileName);
+    m_rbufferEnd = m_rbuffer + bytesNb;
 }
 ////////////////////////////////////////////////////////////
 //brief Get a 1-bytes integer from internal buffer
@@ -220,6 +230,16 @@ signed int NindFile::getSInt3()
 //brief Get a 4-bytes integer from internal buffer
 //return 4-bytes integer */
 unsigned int NindFile::getInt4()
+{
+    //petit boutiste
+    m_rPtr += 4;
+    if (m_rPtr > m_rbufferEnd) throw OutReadBufferException("in read buffer (E) " + m_fileName);
+    return ((m_rPtr[-1]*256 + m_rPtr[-2])*256 + m_rPtr[-3])*256 + m_rPtr[-4];
+}
+////////////////////////////////////////////////////////////
+//brief Get a 4-bytes integer from internal buffer
+//return 4-bytes integer */
+signed int NindFile::getSInt4()
 {
     //petit boutiste
     m_rPtr += 4;

@@ -1,5 +1,9 @@
-#!/usr/bin/env python3.5
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+__author__ = "jys"
+__copyright__ = "Copyright (C) 2017 LATEJCON"
+__license__ = "GNU LGPL"
+__version__ = "2.0.1"
 # Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 # Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 # This file is part of NIND (as "nouvelle indexation").
@@ -21,10 +25,10 @@ def usage():
     else: script = sys.argv[0]
     print ("""© l'ATEJCON.
 Analyse ou dumpe un fichier nindtermindex du système nind et affiche les stats. 
-Le format du fichier est défini dans le document LAT2014.JYS.440.
+Le format du fichier est défini dans le document LAT2017.JYS.470.
 
 usage   : %s <fichier> [ <analyse> | <dumpe> ]
-exemple : %s FRE.termindex dumpe
+exemple : %s FRE.nindtermindex dumpe
 """%(script, script))
 
 OFF = "\033[m"
@@ -59,7 +63,7 @@ def main():
 ############################################################
 # <dejfinition>           ::= <flagDejfinition=17> <identifiantTerme> <longueurDonnejes> <donnejesTerme>
 # <flagDejfinition=17>    ::= <Integer1>
-# <identifiantTerme>      ::= <Integer3>
+# <identifiantTerme>      ::= <Integer4>
 # <longueurDonnejes>      ::= <Integer3>
 # <donnejesTerme>         ::= { <donnejesCG> }
 # <donnejesCG>            ::= <flagCg=61> <catejgorie> <frejquenceTerme> <nbreDocs> <listeDocuments>
@@ -76,8 +80,8 @@ def main():
 ############################################################
 FLAG_DEJFINITION = 17
 FLAG_CG = 61
-#<flagDejfinition=17>(1) <identifiantTerme>(3) <longueurDonnejes>(3) = 7
-TAILLE_TESTE_DEJFINITION = 7
+#<flagDejfinition=17>(1) <identifiantTerme>(4) <longueurDonnejes>(3) = 8
+TAILLE_TESTE_DEJFINITION = 8
 ############################################################
 
 class NindTermindex(NindIndex):
@@ -90,10 +94,10 @@ class NindTermindex(NindIndex):
         (offsetDejfinition, longueurDejfinition) = self.donneAdresseDejfinition(identifiant)
         if offsetDejfinition == 0: return False, 0, 0      #identifiant pas trouve
         self.seek(offsetDejfinition, 0)
-        #<flagDejfinition=13> <identifiantHash> <longueurDonnejes> 
+        #<flagDejfinition=17> <identifiantTerme> <longueurDonnejes>
         if self.litNombre1() != FLAG_DEJFINITION: 
             raise Exception('NindTermindex.__donneDonnejes %s : pas FLAG_DEJFINITION à %08X'%(self.latFileName, offsetDejfinition))
-        if self.litNombre3() != identifiant: 
+        if self.litNombre4() != identifiant: 
             raise Exception('NindTermindex.__donneDonnejes %s : %d pas trouvé à %08X'%(self.latFileName, index, offsetDejfinition +1))
         longueurDonnejes = self.litNombre3()
         tailleExtension = longueurDejfinition - longueurDonnejes - TAILLE_TESTE_DEJFINITION

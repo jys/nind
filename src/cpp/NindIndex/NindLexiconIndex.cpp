@@ -33,11 +33,11 @@ using namespace std;
 // <motSimple>             ::= <longueurMot> <motUtf8>
 // <longueurMot>           ::= <Integer1>
 // <motUtf8>               ::= { <Octet> }
-// <identifiantS>          ::= <Integer3>
+// <identifiantS>          ::= <Integer4>
 // <nbreComposejs>         ::= <IntegerULat>
 // <composejs>             ::= { <composej> } 
 // <composej>              ::= <identifiantA> <identifiantRelC>
-// <identifiantA>          ::= <Integer3>
+// <identifiantA>          ::= <Integer4>
 // <identifiantRelC>       ::= <IntegerSLat>
 ////////////////////////////////////////////////////////////
 // <spejcifique>           ::= <vide>
@@ -47,7 +47,7 @@ using namespace std;
 //<flagDejfinition=13> <identifiantHash> <longueurDonnejes> = 7
 #define TAILLE_TESTE_DEJFINITION 7
 //<flagDejfinition=13>(1) <identifiantHash>(3) <longueurDonnejes>(3) 
-//<clefA>(4) <clefB>(4) <identifiantS>(3) <nbreComposejs>(1) = 19
+//<longueurMot>(1) <motUtf8>(4) <identifiantS>(4) <nbreComposejs>(3)  = 19
 #define TAILLE_DEJFINITION_MINIMUM 19
 //taille des spejcifiques
 #define TAILLE_SPEJCIFIQUES 0
@@ -108,16 +108,18 @@ unsigned int NindLexiconIndex::addWord(const list<string> &components)
     for (list<string>::const_iterator swIt = components.begin(); swIt != components.end(); swIt++) {
         bool estNouveau = false;
         const string &motSimple = *swIt;
-        list<Mot> dejfinition;
-        list<Mot>::iterator motIt;
-        //cherche l'identifiant du mot sur le fichier et prepare la structure de reecriture si pas trouve
-        const unsigned int motId = getDefinitionWords(motSimple, sousMotId, dejfinition, motIt);
+        //cherche l'identifiant du mot sur le fichier
+        const unsigned int motId = getIdentifiant(motSimple, sousMotId);
         if (motId != 0) {
-            //trouve, on passe au suivant
+            //trouvej, on passe au suivant
             sousMotId = motId;
             continue;
         }
         //pas trouve
+        list<Mot> dejfinition;
+        list<Mot>::iterator motIt;
+        // et prepare la structure de rejejcriture
+        getDefinitionWords(motSimple, dejfinition, motIt);
         //structure pour eventuellement mettre a jour le retro lexique
         list<struct NindRetrolexicon::RetroWord> retroWords;
         //si mot simple inconnu, on le cree
@@ -193,24 +195,25 @@ unsigned int NindLexiconIndex::getIdentifiant(const string &motSimple,
         const string fmotSimple = m_file.getString();
         if (fmotSimple == motSimple) {
             //c'est le bon mot
-            const unsigned int identifiantS = m_file.getInt3();
+            const unsigned int identifiantS = m_file.getInt4();
             if (sousMotId == 0) return identifiantS;        //retourne l'id du mot simple
             const unsigned int nbreComposejs = m_file.getUIntLat();
             unsigned int identifiantC = identifiantS;
             for (unsigned int i = 0; i != nbreComposejs; i++) {
                 //<identifiantA> <identifiantRelC>
-                const unsigned int identifiantA = m_file.getInt3();
+                const unsigned int identifiantA = m_file.getInt4();
                 identifiantC += m_file.getSIntLat();
                 if (sousMotId == identifiantA) return identifiantC;     //retourne l'id du mot composej
             }
             return 0;           //mot composej inconnu           
         }
         //ce n'est pas le bon mot, on le saute
-        m_file.getInt3();
+        //<identifiantS>
+        m_file.getInt4();
         const unsigned int nbreComposejs = m_file.getUIntLat();
         for (unsigned int i = 0; i != nbreComposejs; i++) {
             //<identifiantA> <identifiantRelC>
-            m_file.getInt3();
+            m_file.getInt4();
             m_file.getSIntLat();
         }        
     }
@@ -218,12 +221,9 @@ unsigned int NindLexiconIndex::getIdentifiant(const string &motSimple,
 }
 ////////////////////////////////////////////////////////////
 //recupere les donnees de tous les mots qui ont la meme clef modulo 
-//retourne l'identifiant du mot s'il existe, sinon retourne 0
-//si le mot n'existe pas, la structure retournée est valide, sinon elle ne l'est pas
-unsigned int NindLexiconIndex::getDefinitionWords(const string &motSimple,
-                                                   const unsigned int sousMotId,
-                                                   list<Mot> &dejfinition,
-                                                   list<Mot>::iterator &motIt)
+void NindLexiconIndex::getDefinitionWords(const string &motSimple,
+                                          list<Mot> &dejfinition,
+                                          list<Mot>::iterator &motIt)
 {
     bool motEstTrouve = false;
     //l'identifiant dans le fichier est la clef calculee modulo la taille du bloc d'indirection
@@ -245,30 +245,19 @@ unsigned int NindLexiconIndex::getDefinitionWords(const string &motSimple,
             Mot &motCourant = dejfinition.front();
             //<motSimple> <identifiantS> <nbreComposejs> <composejs>
             motCourant.motSimple = m_file.getString();
-            motCourant.identifiantS = m_file.getInt3();
+            motCourant.identifiantS = m_file.getInt4();
             const unsigned int nbreComposejs = m_file.getUIntLat();
             unsigned int identifiantC = motCourant.identifiantS;
             //est-ce le mot cherche ?
             if (motCourant.motSimple == motSimple) {
-                if (sousMotId == 0) return motCourant.identifiantS; //retourne id mot simple
                 motEstTrouve = true;
                 motIt = dejfinition.begin();
-                for (unsigned int i = 0; i != nbreComposejs; i++) {
-                    //<identifiantA> <identifiantRelC>
-                    const unsigned int identifiantA = m_file.getInt3();
-                    identifiantC += m_file.getSIntLat();
-                    //si mot composej trouve, on s'arrete immediatement
-                    if (sousMotId == identifiantA) return identifiantC;         //retourne id mot composej
-                    motCourant.composejs.push_back(Composej(identifiantA, identifiantC));
-                }
             }
-            else {
-                for (unsigned int i = 0; i != nbreComposejs; i++) {
-                    //<identifiantA> <identifiantRelC>
-                    const unsigned int identifiantA = m_file.getInt3();
-                    identifiantC += m_file.getSIntLat();
-                    motCourant.composejs.push_back(Composej(identifiantA, identifiantC));
-                }
+            for (unsigned int i = 0; i != nbreComposejs; i++) {
+                //<identifiantA> <identifiantRelC>
+                const unsigned int identifiantA = m_file.getInt4();
+                identifiantC += m_file.getSIntLat();
+                motCourant.composejs.push_back(Composej(identifiantA, identifiantC));
             }
         }
     }
@@ -279,7 +268,6 @@ unsigned int NindLexiconIndex::getDefinitionWords(const string &motSimple,
         motIt = dejfinition.begin();
         (*motIt).motSimple = motSimple;
     }
-    return 0;           //mot inconnu et structure coherente pour la reecriture
 }
 ////////////////////////////////////////////////////////////
 //Ecrit les donnees de tous les mots qui ont la meme clef modulo 
@@ -289,9 +277,9 @@ void NindLexiconIndex::setDefinitionWords(const list<Mot> &dejfinition,
     //1) calcule la taille max du buffer
     unsigned int tailleMaximum = TAILLE_TESTE_DEJFINITION + getSpecificsAndIdentificationSize();
     for (list<Mot>::const_iterator defIt = dejfinition.begin(); defIt != dejfinition.end(); defIt++) {
-        //<motSimple>(256) <identifiantS>(3) <nbreComposejs>(3) <composejs> = 262
-        //<identifiantA>(3) <identifiantRelC>(4) = 7
-        tailleMaximum += 262 + (*defIt).composejs.size() * 7;
+        //<motSimple>(256) <identifiantS>(4) <nbreComposejs>(3) <composejs> = 263
+        //<identifiantA>(4) <identifiantRelC>(4) = 8
+        tailleMaximum += 263 + (*defIt).composejs.size() * 8;
     }
     //2) forme le buffer a ecrire sur le fichier
     //l'identifiant dans le fichier est un modulo du bloc d'indirection
@@ -305,12 +293,12 @@ void NindLexiconIndex::setDefinitionWords(const list<Mot> &dejfinition,
     for (list<Mot>::const_iterator defIt = dejfinition.begin(); defIt != dejfinition.end(); defIt++) {  
         //<motSimple> <identifiantS> <nbreComposejs>
         m_file.putString((*defIt).motSimple);
-        m_file.putInt3((*defIt).identifiantS);
+        m_file.putInt4((*defIt).identifiantS);
         m_file.putUIntLat((*defIt).composejs.size());
         unsigned int identifiantC = (*defIt).identifiantS;
         for (list<Composej>::const_iterator compIt = (*defIt).composejs.begin(); compIt != (*defIt).composejs.end(); compIt++) {
             //<identifiantA> <identifiantRelC>
-            m_file.putInt3((*compIt).identA);
+            m_file.putInt4((*compIt).identA);
             m_file.putSIntLat((*compIt).identComp - identifiantC);
             identifiantC = (*compIt).identComp;
         }

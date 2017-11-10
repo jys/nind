@@ -108,12 +108,10 @@ private:
                                 const unsigned int sousMotId);
 
     //recupere les donnees de tous les mots qui ont la meme clef modulo 
-    //retourne l'identifiant du mot s'il existe, sinon retourne 0
-    //si le mot n'existe pas, la structure retournée est valide, sinon elle ne l'est pas
-    unsigned int getDefinitionWords(const std::string &motSimple,
-                                     const unsigned int sousMotId,
-                                     std::list<Mot> &mots,
-                                     std::list<Mot>::iterator &motIt);
+    //les donnejes ont dejjah ejtej lue par getIdentifiant
+    void getDefinitionWords(const std::string &motSimple,
+                            std::list<Mot> &mots,
+                            std::list<Mot>::iterator &motIt);
         
     //Ecrit les donnees de tous les mots qui ont la meme clef modulo 
     void setDefinitionWords(const std::list<Mot> &definition,

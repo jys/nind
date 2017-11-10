@@ -1,5 +1,9 @@
-#!/usr/bin/env python3.5
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+__author__ = "jys"
+__copyright__ = "Copyright (C) 2017 LATEJCON"
+__license__ = "GNU LGPL"
+__version__ = "2.0.1"
 # Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 # Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 # This file is part of NIND (as "nouvelle indexation").
@@ -135,6 +139,13 @@ class NindLateconFile:
         return ((ba[3]*0x100 + ba[2])*0x100 + ba[1])*0x100 + ba[0]
         #return (((((ba[3] <<8) + ba[2]) <<8) + ba[1]) <<8) + ba[0]
         #return (ba[3] <<24) + (ba[2] <<16) + (ba[1] <<8) + ba[0]
+
+    def litNombreS4(self):
+        #petit-boutiste
+        ba = bytes(self.latFile.read(4))
+        res = ((ba[3]*0x100 + ba[2])*0x100 + ba[1])*0x100 + ba[0]
+        if res < 0x80000000: return res 
+        return res - 0x100000000
 
     def litNombre5(self):
         #gros-boutiste

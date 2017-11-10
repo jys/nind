@@ -1,5 +1,9 @@
-#!/usr/bin/env python3.5
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+__author__ = "jys"
+__copyright__ = "Copyright (C) 2017 LATEJCON"
+__license__ = "GNU LGPL"
+__version__ = "2.0.1"
 # Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 # Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 # This file is part of NIND (as "nouvelle indexation").
@@ -21,12 +25,20 @@ def usage():
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
     else: script = sys.argv[0]
     print ("""© l'ATEJCON.
-Analyse ou dumpe un fichier nindlexiconindex du système nind et affiche les stats. 
-Le format du fichier est défini dans le document LAT2014.JYS.440.
+Analyse un fichier nindlexiconindex du système nind et affiche les stats. 
+Peut dumper nindlexiconindex sur <fichier>-dump.txt
+Peut donner les identifiants de mots composés avec le maximum de composants
+Peut donner l'identifiant du mot spécifié
+Peut donner les mots simples qui "collisionnent" sur la même indirection
+Le format du fichier est défini dans le document LAT2017.JYS.470.
 
-usage   : %s <fichier> [ <analyse> | <dumpe> ]
-exemple : %s FRE.termindex dumpe
-"""%(script, script))
+usage   : %s <fichier> [ <analyse> | <dumpe> | <max> | <ident> <mot> | <collision> <index> ]
+exemple : %s FRE.nindlexiconindex
+exemple : %s FRE.nindlexiconindex dumpe
+exemple : %s FRE.nindlexiconindex max
+exemple : %s FRE.nindlexiconindex ident "épistémologie_compulsive"
+exemple : %s FRE.nindlexiconindex coll 1268512
+"""%(script, script, script, script, script, script))
 
 def main():
     try:
@@ -34,6 +46,8 @@ def main():
         lexiconindexFileName = path.abspath(sys.argv[1])
         action = 'analyse' 
         if len(sys.argv) > 2 : action = sys.argv[2]
+        mot = ''
+        if len(sys.argv) > 3 : mot = sys.argv[3]
         
         #la classe
         nindLexiconindex = NindLexiconindex(lexiconindexFileName)
@@ -44,6 +58,18 @@ def main():
             nbLignes = nindLexiconindex.dumpeFichier(outFile)
             outFile.close()
             print ('%d lignes écrites dans %s'%(nbLignes, outFilename))
+        elif action.startswith('max'):
+            maximums = nindLexiconindex.donneMax(5)
+            for (nbreComposejs, identifiantS, index) in maximums:
+                print ('%8d  %8d  (%d)'%(identifiantS, index, nbreComposejs))
+        elif action.startswith('id'):
+            motsSimples = mot.split('_')
+            print ('identifiant : ', nindLexiconindex.donneIdentifiant(motsSimples))
+            print ('clef        : ', nindLexiconindex.donneClef(motsSimples[-1]))
+        elif action.startswith('col'):
+            collisions = nindLexiconindex.donneCollisions(int(mot))
+            for (motSimple, identifiantS, nbreComposes) in collisions:
+                print ('%8d %s (%d)'%(identifiantS, motSimple, nbreComposes))
         else: raise Exception()
     except Exception as exc:
         if len(exc.args) == 0: usage()
@@ -64,11 +90,11 @@ def main():
 # <motSimple>             ::= <longueurMot> <motUtf8>
 # <longueurMot>           ::= <Integer1>
 # <motUtf8>               ::= { <Octet> }
-# <identifiantS>          ::= <Integer3>
+# <identifiantS>          ::= <Integer4>
 # <nbreComposejs>         ::= <IntegerULat>
 # <composejs>             ::= { <composej> } 
 # <composej>              ::= <identifiantA> <identifiantRelC>
-# <identifiantA>          ::= <Integer3>
+# <identifiantA>          ::= <Integer4>
 # <identifiantRelC>       ::= <IntegerSLat>
 ##############################
 # <spejcifique>           ::= <vide>
@@ -102,7 +128,7 @@ class NindLexiconindex(NindIndex):
         return True, longueurDonnejes, tailleExtension
         
     #trouve l'identifiant du mot
-    def donneIdentifiant(self, mot, sousMotId):
+    def __donneIdentifiantIntermejdiaire(self, mot, sousMotId):
         clefB = NindLateconFile.clefB(mot)
         index = clefB % self.nombreIndirection
         #trouve les donnejes 
@@ -114,24 +140,32 @@ class NindLexiconindex(NindIndex):
             motSimple = self.litString()
             if motSimple != mot: 
                 #pas le mot cherche, on continue
-                self.litNombre3()      #identifiantS
+                self.litNombre4()      #identifiantS
                 nbreComposes = self.litNombreULat()
                 for i in range(nbreComposes):
-                    self.litNombre3()          #identifiantA
+                    self.litNombre4()          #identifiantA
                     self.litNombreSLat()       #identifiantRelC
                 continue
             #c'est le mot cherche
-            identifiantS = self.litNombre3()
+            identifiantS = self.litNombre4()
             if sousMotId == 0: return identifiantS        #identifiant simple trouve
             nbreComposes = self.litNombreULat()
             identifiantC = identifiantS
             for i in range(nbreComposes):
                 #<identifiantA> <identifiantRelC>
-                identifiantA = self.litNombre3()
+                identifiantA = self.litNombre4()
                 identifiantC += self.litNombreSLat()
                 if sousMotId == identifiantA: return identifiantC    #identifiant compose trouve
         #pas trouve
         return 0
+    
+    #trouve l'identifiant du mot fourni sous forme d'une liste de mots simples
+    def donneIdentifiant(self, motsSimples):
+        sousMotId = 0
+        for mot in motsSimples:
+            sousMotId = self.__donneIdentifiantIntermejdiaire(mot, sousMotId)
+            if sousMotId == 0: break
+        return sousMotId
 
     #######################################################################"
     #analyse du fichier
@@ -143,10 +177,10 @@ class NindLexiconindex(NindIndex):
             totalDonnejes = totalExtensions = 0
             nbDonnejes = nbExtensions = 0
             composejs = []
-            for identifiant in range(maxIdent):
+            for index in range(maxIdent):
                 #trouve les donnejes 
-                trouvej, longueurDonnejes, tailleExtension = self.__donneDonnejes(identifiant)
-                if not trouvej: continue      #identifiant pas trouve
+                trouvej, longueurDonnejes, tailleExtension = self.__donneDonnejes(index)
+                if not trouvej: continue      #index pas trouve
                 nbDonnejes +=1
                 totalDonnejes += longueurDonnejes + TAILLE_TESTE_DEJFINITION
                 if tailleExtension > 0: nbExtensions += 1
@@ -156,13 +190,13 @@ class NindLexiconindex(NindIndex):
                 while self.tell() < finDonnejes:
                     #<motSimple> <identifiantS> <nbreComposejs> <composejs>
                     motSimple = self.litString()
-                    identifiantS = self.litNombre3()
+                    identifiantS = self.litNombre4()
                     nbreComposejs = self.litNombreULat()
                     composejs.append(nbreComposejs)
                     identifiantC = identifiantS
                     for i in range(nbreComposejs):
                         #<identifiantA> <identifiantRelC>
-                        identifiantA = self.litNombre3()
+                        identifiantA = self.litNombre4()
                         identifiantC += self.litNombreSLat()
                         
                 total = totalDonnejes + totalExtensions
@@ -209,30 +243,84 @@ class NindLexiconindex(NindIndex):
         nbLignes = 0
         #trouve le max des identifiants
         maxIdent = self.donneMaxIdentifiant()
-        for identifiant in range(maxIdent):
+        for index in range(maxIdent):
             #trouve les donnejes 
-            trouvej, longueurDonnejes, tailleExtension = self.__donneDonnejes(identifiant)
-            if not trouvej: continue      #identifiant pas trouve
+            trouvej, longueurDonnejes, tailleExtension = self.__donneDonnejes(index)
+            if not trouvej: continue      #index pas trouve
             #examine les données
             finDonnejes = self.tell() + longueurDonnejes
             while self.tell() < finDonnejes:
                 #<motSimple> <identifiantS> <nbreComposes> <composes>
                 motSimple = self.litString()
-                identifiantS = self.litNombre3()
+                identifiantS = self.litNombre4()
                 nbreComposes = self.litNombreULat()
                 outFile.write('[%s] %06d (%d) '%(motSimple, identifiantS, nbreComposes))
                 identifiantC = identifiantS
                 composes = []
                 for i in range(nbreComposes):
                     #<identifiantA> <identifiantRelC>
-                    identifiantA = self.litNombre3()
+                    identifiantA = self.litNombre4()
                     identifiantC += self.litNombreSLat()
                     composes.append('%06d %06d'%(identifiantA, identifiantC))
                 outFile.write(' <%s>\n'%(', '.join(composes)))
                 nbLignes +=1
         return nbLignes
-     
+
+    #######################################################################
+    #donne les mots simples enregistrejs sur l'indirection spejcifieje et le nombre de composants
+    def donneCollisions(self, index):
+        rejsultat = []
+        #trouve les donnejes 
+        trouvej, longueurDonnejes, tailleExtension = self.__donneDonnejes(index)
+        if not trouvej: return rejsultat      #index pas trouve
+        #examine les données
+        finDonnejes = self.tell() + longueurDonnejes
+        while self.tell() < finDonnejes:
+            #<motSimple> <identifiantS> <nbreComposes> <composes>
+            motSimple = self.litString()
+            identifiantS = self.litNombre4()
+            nbreComposes = self.litNombreULat()
+            rejsultat.append((motSimple, identifiantS, nbreComposes))
+            for i in range(nbreComposes):
+                #<identifiantA> <identifiantRelC>
+                self.litNombre4()
+                self.litNombreSLat()
+        return rejsultat
+
+    #######################################################################
+    #donne les identifiants des mots composejs qui ont le plus de composants
+    def donneMax(self, taille):
+        #trouve le max des identifiants
+        maxIdent = self.donneMaxIdentifiant()
+        composejs = []
+        for index in range(maxIdent):
+            #trouve les donnejes 
+            trouvej, longueurDonnejes, tailleExtension = self.__donneDonnejes(index)
+            if not trouvej: continue      #index pas trouve
+            #examine les données
+            finDonnejes = self.tell() + longueurDonnejes
+            while self.tell() < finDonnejes:
+                #<motSimple> <identifiantS> <nbreComposejs> <composejs>
+                motSimple = self.litString()
+                identifiantS = self.litNombre4()
+                nbreComposejs = self.litNombreULat()
+                composejs.append((nbreComposejs, identifiantS, index))
+                composejs.sort()
+                composejs.reverse()
+                if len(composejs) > taille: composejs.pop()
+                for i in range(nbreComposejs):
+                    #<identifiantA> <identifiantRelC>
+                    self.litNombre4()
+                    self.litNombreSLat()
+        return composejs
+    
+    #######################################################################
+    #donne la clef d'accehs (pour deboguer)
+    def donneClef(self, mot):
+        clefB = NindLateconFile.clefB(mot)
+        return clefB % self.nombreIndirection
         
+    #######################################################################
         
 if __name__ == '__main__':
     main()

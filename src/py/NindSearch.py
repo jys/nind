@@ -1,5 +1,9 @@
-#!/usr/bin/env python3.5
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+__author__ = "jys"
+__copyright__ = "Copyright (C) 2017 LATEJCON"
+__license__ = "GNU LGPL"
+__version__ = "2.0.1"
 # Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 # Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 # This file is part of NIND (as "nouvelle indexation").
@@ -27,7 +31,7 @@ L'utilisateur indique le terme cherché, simple ou composé.
 Un terme composé a la forme blanc-souligné (ex kyrielle_outil_informatique).
 L'utilisateur indique ensuite le document examiné
 et la localisation du terme cherché est affichée.
-Le format des fichiers est défini dans le document LAT2014.JYS.440.
+Le format des fichiers est défini dans le document LAT2017.JYS.470.
 
 usage   : %s <fichier lexiconindex> <terme cherché>
 exemple : %s FRE.lexiconindex syntagme_nominal
@@ -65,22 +69,18 @@ def main():
         print ("%s NON APAIRÉ : max=%d dateheure=%d (%s)"%(localindexFileName, maxIdentifiant2, dateHeure2, ctime(int(dateHeure2))))  
     
     #2) trouve l'identifiant du terme
-    #trouve la clef des termes simples
-    termesSimples = terme.split('_')
-    sousMotId = 0
-    for mot in termesSimples:
-        sousMotId = nindLexiconindex.donneIdentifiant(mot, sousMotId)
-        if sousMotId == 0: break
-    if sousMotId == 0:
+    motsSimples = terme.split('_')
+    motId = nindLexiconindex.donneIdentifiant(motsSimples)
+    if motId == 0:
         print ('INCONNU')
         sys.exit()
         
     #3) trouve les utilisations du terme dans le fichier inverse et les affiche
-    termesCGList = nindTermindex.donneListeTermesCG(sousMotId)
+    termesCGList = nindTermindex.donneListeTermesCG(motId)
     for (categorie, frequenceTerme, docs) in termesCGList:
         docsListe = []
         for (noDoc, frequenceDoc) in docs: docsListe.append('%d(%d)'%(noDoc, frequenceDoc))
-        print ('%s[%s] %s%s %d fois dans %s'%(RED, sousMotId, NindLateconFile.catNb2Str(categorie), OFF, frequenceTerme, ' '.join(docsListe)))
+        print ('%s[%s] %s%s %d fois dans %s'%(RED, motId, NindLateconFile.catNb2Str(categorie), OFF, frequenceTerme, ' '.join(docsListe)))
 
     #4) choisit un doc et affiche ce qui concerne le terme
     noDocStr = input("%sno doc : %s"%(BLUE, OFF))
@@ -89,7 +89,7 @@ def main():
     termList = nindLocalindex.donneListeTermes(noDoc)
     resultat = []
     for (noTerme, categorie, localisationsList) in termList:
-        if noTerme != sousMotId: continue
+        if noTerme != motId: continue
         locListe = []
         for (localisationAbsolue, longueur) in localisationsList: locListe.append('%d(%d)'%(localisationAbsolue, longueur))
         resultat.append('%s<%s>'%(NindLateconFile.catNb2Str(categorie), ' '.join(locListe)))

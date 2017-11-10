@@ -44,7 +44,7 @@ using namespace std;
 //
 // <blocIdentification>    ::= <flagIdentification=53> <maxIdentifiant> <identifieurUnique> 
 // <flagIdentification=53> ::= <Integer1>
-// <maxIdentifiant>        ::= <Integer3>
+// <maxIdentifiant>        ::= <Integer4>
 // <identifieurUnique>     ::= <dateHeure>
 // <dateHeure >            ::= <Integer4>
 ////////////////////////////////////////////////////////////
@@ -55,8 +55,8 @@ using namespace std;
 #define TAILLE_ENTETE_FIXE 4
 //<flagSpecifique=57>(1)
 #define TAILLE_ENTETE_SPEJCIFIQUE 1
-//<flagIdentification=53>(1) <maxIdentifiant>(3) <identifieurUnique>(4) = 8
-#define TAILLE_IDENTIFICATION 8
+//<flagIdentification=53>(1) <maxIdentifiant>(4) <identifieurUnique>(4) = 9
+#define TAILLE_IDENTIFICATION 9
 ////////////////////////////////////////////////////////////
 //brief Creates NindPadFile with a specified name associated with.
 //param fileName absolute path file name
@@ -245,7 +245,7 @@ void NindPadFile::getFileIdentification(Identification &identification)
     m_file.readBuffer(TAILLE_IDENTIFICATION);
     if (m_file.getInt1() != FLAG_IDENTIFICATION) 
         throw NindPadFileException("NindPadFile::getFileIdentification : " + m_fileName);
-    const unsigned int wordsNb = m_file.getInt3();
+    const unsigned int wordsNb = m_file.getInt4();
     const unsigned int time = m_file.getInt4();
     identification = Identification(wordsNb, time);
 }
@@ -277,7 +277,7 @@ void NindPadFile::writeIdentification(const Identification &fileIdentification)
     //le pointeur d'ejcriture est supposej au bon endroit dans le buffer
     //<flagIdentification=53> <maxIdentifiant> <identifieurUnique> 
     m_file.putInt1(FLAG_IDENTIFICATION);
-    m_file.putInt3(fileIdentification.lexiconWordsNb);
+    m_file.putInt4(fileIdentification.lexiconWordsNb);
     m_file.putInt4(fileIdentification.lexiconTime);
 }   
 ////////////////////////////////////////////////////////////
@@ -337,7 +337,7 @@ void NindPadFile::checkIdentification(const Identification &referenceIdentificat
     m_file.readBuffer(TAILLE_IDENTIFICATION);
     if (m_file.getInt1() != FLAG_IDENTIFICATION) 
         throw NindPadFileException("NindPadFile::checkIdentification : " + m_fileName);
-    const unsigned int maxIdent = m_file.getInt3();
+    const unsigned int maxIdent = m_file.getInt4();
     const unsigned int identification = m_file.getInt4();
     //si la rejfejrence est nulle, pas de comparaison de valeurs
     if (referenceIdentification == Identification(0, 0)) return;

@@ -25,7 +25,7 @@ using namespace std;
 ////////////////////////////////////////////////////////////
 // <dejfinition>           ::= <flagDejfinition=17> <identifiantTerme> <longueurDonnejes> <donnejesTerme>
 // <flagDejfinition=17>    ::= <Integer1>
-// <identifiantTerme>      ::= <Integer3>
+// <identifiantTerme>      ::= <Integer4>
 // <longueurDonnejes>      ::= <Integer3>
 // <donnejesTerme>         ::= { <donnejesCG> }
 // <donnejesCG>            ::= <flagCg=61> <catejgorie> <frejquenceTerme> <nbreDocs> <listeDocuments>
@@ -42,13 +42,14 @@ using namespace std;
 ////////////////////////////////////////////////////////////
 #define FLAG_DEJFINITION 17
 #define FLAG_CG 61
-//<flagDejfinition=17>(1) <identifiantTerme>(3) = 4
-#define OFFSET_LONGUEUR 4
-//<flagDejfinition=17>(1) <identifiantTerme>(3) <longueurDonnejes>(3) = 7
-#define TAILLE_TESTE_DEJFINITION 7
-//<flagDejfinition=17>(1) <identifiantTerme>(3) <longueurDonnejes>(3) <flagCg>(1) <catejgorie>(1) <frejquenceTerme>(1) 
-//<nbreDocs>(1) <identDocRelatif>(3) <frejquenceDoc>(1) = 15
-#define TAILLE_DEJFINITION_MINIMUM 15
+//<flagDejfinition=17>(1) <identifiantTerme>(4) = 5
+#define OFFSET_LONGUEUR 5
+//<flagDejfinition=17>(1) <identifiantTerme>(4) <longueurDonnejes>(3) = 8
+#define TAILLE_TESTE_DEJFINITION 8
+//<flagDejfinition=17>(1) <identifiantTerme>(4) <longueurDonnejes>(3) <flagCg>(1) <catejgorie>(1) <frejquenceTerme>(1) 
+//<nbreDocs>(1) <identDocRelatif>(5) <frejquenceDoc>(1) = 18
+//le minimum doit prendre en compte le maximum dans la numejrotation !
+#define TAILLE_DEJFINITION_MINIMUM 18
 //<flagCg>(1) <catejgorie>(1) <frejquenceTerme>(3) <nbreDocs>(3) = 8
 #define TAILLE_TESTE_DEJFINITION_MAXIMUM 8
 //<identDocRelatif>(3) <frejquenceDoc>(2) = 5
@@ -93,7 +94,7 @@ bool NindTermIndex::getTermDef(const unsigned int ident,
     //<flagDejfinition=17> <identifiantTerme> <longueurDonnejes> <donnees>
     if (m_file.getInt1() != FLAG_DEJFINITION) 
         throw NindTermIndexException("NindTermIndex::getTermDef A : " + m_fileName);
-    const unsigned int identTerme = m_file.getInt3();
+    const unsigned int identTerme = m_file.getInt4();
     if (identTerme != ident) 
         throw NindTermIndexException("NindTermIndex::getTermDef B : " + m_fileName);
     const unsigned int longueurDonnejes = m_file.getInt3();
@@ -171,7 +172,7 @@ void NindTermIndex::setTermDef(const unsigned int ident,
     m_file.createBuffer(tailleMaximum); 
     //<flagDejfinition=17> <identifiantTerme> <longueurDonnejes> <donnejesTerme>
     m_file.putInt1(FLAG_DEJFINITION);
-    m_file.putInt3(ident);
+    m_file.putInt4(ident);
     m_file.putInt3(0);         //la taille des donnees sera ecrite plus tard, quand elle sera connue
     for (list<struct TermCG>::const_iterator it1 = termDef.begin(); it1 != termDef.end(); it1++) {
         //<flagCg> <catejgorie> <frejquenceTerme> <nbreDocs> <listeDocuments>
