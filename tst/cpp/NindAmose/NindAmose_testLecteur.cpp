@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
     
     try {
         //pour calculer le temps consomme
-        clock_t start, end;
+        clock_t start = clock(), end;
         double cpuTimeUsed;
         /////////////////////////////////////
         //le lexique lecteur

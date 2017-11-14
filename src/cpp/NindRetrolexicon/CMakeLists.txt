@@ -9,7 +9,7 @@ SET(NindRetrolexicon_LIB_SRCS
 
 add_library(NindRetrolexicon SHARED ${NindRetrolexicon_LIB_SRCS})
 
-target_link_libraries(NindRetrolexicon)
+target_link_libraries(NindRetrolexicon NindBasics)
 
 set_target_properties(NindRetrolexicon PROPERTIES VERSION 1.1.0 SOVERSION 1)
 install(TARGETS NindRetrolexicon DESTINATION lib)

@@ -11,7 +11,7 @@ SET(NindLexicon_LIB_SRCS
 
 add_library(NindLexicon SHARED ${NindLexicon_LIB_SRCS})
 
-target_link_libraries(NindLexicon)
+target_link_libraries(NindLexicon NindBasics)
 
 set_target_properties(NindLexicon PROPERTIES VERSION 1.1.0 SOVERSION 1)
 install(TARGETS NindLexicon DESTINATION lib)

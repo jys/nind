@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = "jys"
 __copyright__ = "Copyright (C) 2017 LATEJCON"
@@ -171,6 +171,7 @@ class NindRetrolexicon(NindPadFile):
         except Exception as exc: 
             cestBon = False
             if trace: print ('ERREUR :', exc.args[0])
+            raise
         if trace:
             print ("=============")
             print ("%d / %d index utilisés"%(nbreSimples + nbreComposejs, maxIdent))
@@ -194,7 +195,7 @@ class NindRetrolexicon(NindPadFile):
         except Exception as exc: 
             cestBon = False
             if trace: print ('ERREUR :', exc.args[0])
-           
-                       
+            raise
+
 if __name__ == '__main__':
     main()

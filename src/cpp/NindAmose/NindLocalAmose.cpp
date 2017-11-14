@@ -115,10 +115,12 @@ bool NindLocalAmose::getDocTerms(const unsigned int docId,
         string namedEntity;
         const bool trouvej = m_nindLexicon.getWord((*itterm), lemma, type, namedEntity);
         if (!trouvej) throw IncompatibleFileException("Unknown term into lexicon");
-        if (type == termType) 
+        if (type == termType)
+        {
             if (type == NAMED_ENTITY)
                 termsSet.insert(namedEntity + ":" + lemma);
             else termsSet.insert(lemma);
+        }
     }
     return true;
 }
@@ -128,10 +130,10 @@ bool NindLocalAmose::getDocTerms(const unsigned int docId,
 unsigned int NindLocalAmose::getDocLength(const unsigned int docId)
 {
     //les index locaux du document
-    list<NindLocalIndex::Term> localDef;
-    const bool trouvej = NindLocalIndex::getLocalDef(docId, localDef);
+    unsigned int localLength;
+    const bool trouvej = NindLocalIndex::getLocalLength(docId, localLength);
     //si le doc n'existe pas, retour 0
     if (!trouvej) return 0;
-    return localDef.size();
+    return localLength;
 }
 ////////////////////////////////////////////////////////////

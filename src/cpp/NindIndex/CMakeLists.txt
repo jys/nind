@@ -15,7 +15,7 @@ SET(NindIndex_LIB_SRCS
 
 add_library(NindIndex SHARED ${NindIndex_LIB_SRCS})
 
-target_link_libraries(NindIndex)
+target_link_libraries(NindIndex NindBasics NindRetrolexicon)
 
 set_target_properties(NindIndex PROPERTIES VERSION 1.1.0 SOVERSION 1)
 install(TARGETS NindIndex DESTINATION lib)

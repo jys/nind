@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
         //calcule les noms des fichiers lexique, de termes et index locaux
         const string incompleteFileName = docsFileName.substr(0, docsFileName.find('.'));
         //pour calculer le temps consomme
-        clock_t start, end;
+        clock_t start = clock(), end;
         double cpuTimeUsed;
         
         //le lexique lecteur

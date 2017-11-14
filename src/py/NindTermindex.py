@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = "jys"
 __copyright__ = "Copyright (C) 2017 LATEJCON"

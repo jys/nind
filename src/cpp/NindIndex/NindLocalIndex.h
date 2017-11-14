@@ -72,6 +72,13 @@ public:
     bool getLocalDef(const unsigned int ident,
                      std::list<struct Term> &localDef);
 
+    /**\brief Return the length of a full document in term of terms 
+    *\param ident ident of doc
+    *\param localLength the resulting length
+    *\return true if doc was found, false otherwise */
+    bool getLocalLength(const unsigned int ident,
+                     unsigned int &localLength);
+
     /**\brief Return a full document as a list of unique terms ids
     *\param ident ident of doc
     *\param termIdents structure to receive all datas of the specified doc

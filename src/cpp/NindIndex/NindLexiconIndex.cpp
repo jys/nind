@@ -106,7 +106,6 @@ unsigned int NindLexiconIndex::addWord(const list<string> &components)
     //le compteur courant des identifiants du lexique
     unsigned int &currentId = m_identification.lexiconWordsNb;
     for (list<string>::const_iterator swIt = components.begin(); swIt != components.end(); swIt++) {
-        bool estNouveau = false;
         const string &motSimple = *swIt;
         //cherche l'identifiant du mot sur le fichier
         const unsigned int motId = getIdentifiant(motSimple, sousMotId);
@@ -321,7 +320,7 @@ static unsigned int clef(const string &mot)
 {
     unsigned int shiftB = 0;       //nombre de shifts sur la gauche
     unsigned int clefB = 0x55555555;        //0101...
-    for (int i=0; i<mot.length(); i++) {
+    for (std::string::size_type i=0; i<mot.length(); i++) {
         const unsigned int oneChar = (unsigned int) ((unsigned char)mot[i]);
         clefB ^=  (oneChar << (shiftB%23));
         shiftB += 5;
