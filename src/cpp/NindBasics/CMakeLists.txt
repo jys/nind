@@ -17,4 +17,4 @@ set_target_properties(NindBasics PROPERTIES VERSION 1.1.0 SOVERSION 1)
 install(TARGETS NindBasics DESTINATION lib)
 
 ########### install files ###############
-install(FILES NindFile.h DESTINATION include/NindBasics)
+install(FILES NindFile.h NindPadFile.h DESTINATION include/NindBasics)
