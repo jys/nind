@@ -3,9 +3,9 @@
 //
 // Description: un petit moteur de recherche sur un lexique, fichier inverse et fichier des index locaux existants.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2014
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2015 LATECON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -18,7 +18,7 @@
 #include "NindIndex/NindLexiconIndex.h"
 #include "NindIndex/NindTermIndex.h"
 #include "NindIndex/NindLocalIndex.h"
-#include "NindIndex/NindIndexTest.h"
+#include "NindIndex/NindIndex_litDumpS2.h"
 #include "NindIndex/NindDate.h"
 #include "NindExceptions.h"
 #include <time.h>
@@ -56,19 +56,18 @@ int main(int argc, char *argv[]) {
     if (lexiconFileName == "--help") {displayHelp(argv[0]); return true;}
 
     try {
+        const list<unsigned int> spejcifiques;
         //calcule les noms des fichiers lexique et inverse
-        const size_t pos = lexiconFileName.find('.');
-        const string termindexFileName = lexiconFileName.substr(0, pos) + ".termindex";
-        const string localindexFileName = lexiconFileName.substr(0, pos) + ".localindex";
+        const string incompleteFileName = lexiconFileName.substr(0, lexiconFileName.find('.'));
         //le lexique lecteur
-        NindLexiconIndex nindLexicon(lexiconFileName, false);
+        NindLexiconIndex nindLexicon(incompleteFileName, false);
         const NindIndex::Identification identification = nindLexicon.getIdentification();
         //le fichier inverse lecteur
-        NindTermIndex nindTermIndex(termindexFileName, false, identification);
+        NindTermIndex nindTermIndex(incompleteFileName, false, identification, 0);
         //le fichier des index locaux
-        NindLocalIndex nindLocalIndex(localindexFileName, false, identification);
+        NindLocalIndex nindLocalIndex(incompleteFileName, false, identification);
         //la classe d'utilitaires
-        NindIndexTest nindIndexTest;
+        NindIndex_litDumpS2 nindIndex_litDumpS2;
         cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;
         cout<<" ("<<NindDate::date(identification.lexiconTime)<<")"<<endl;
         
@@ -80,7 +79,7 @@ int main(int argc, char *argv[]) {
             if (word.empty()) break;
             //le terme
             list<string> componants;
-            nindIndexTest.split(word, componants);
+            NindIndex_litDumpS2::split(word, componants);
             //trouve son identifiant
             const unsigned int ident = nindLexicon.getWordId(componants);
             if (ident == 0) {
@@ -94,7 +93,7 @@ int main(int argc, char *argv[]) {
             for (list<NindTermIndex::TermCG>::const_iterator it1 = termDef.begin(); 
                  it1 != termDef.end(); it1++) {
                 const NindTermIndex::TermCG &termCG = (*it1);
-                cout<<BOLD<<"["<<ident<<"] "<<nindIndexTest.getCgStr(termCG.cg)<<OFF,
+                cout<<BOLD<<"["<<ident<<"] "<<nindIndex_litDumpS2.getCgStr(termCG.cg)<<OFF,
                 cout<<" "<<termCG.frequency<<" fois dans ";
                 const list<NindTermIndex::Document> &documents = termCG.documents;
                 for (list<NindTermIndex::Document>::const_iterator it2 = documents.begin(); 
@@ -115,7 +114,7 @@ int main(int argc, char *argv[]) {
                     it3 != localDef.end(); it3++) {
                 const NindLocalIndex::Term &term = (*it3);
                 if (term.term == ident) {
-                    cout<<nindIndexTest.getCgStr(term.cg)<<"<";
+                    cout<<nindIndex_litDumpS2.getCgStr(term.cg)<<"<";
                     const list<NindLocalIndex::Localisation> &localisation = term.localisation;
                     string sep = "";
                     for (list<NindLocalIndex::Localisation>::const_iterator it4 = localisation.begin();

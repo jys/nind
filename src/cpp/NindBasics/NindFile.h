@@ -3,9 +3,9 @@
 //
 // Description: Les acces basiques a un fichier binaire sequentiel avec possibilites de bufferisation
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2014
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2015 LATECON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -27,7 +27,6 @@ namespace latecon {
 ////////////////////////////////////////////////////////////
 class DLLExportLexicon NindFile {
 public:
-
     /**\brief Creates NindFile with a specified name associated with.
     *\param fileName absolute path file name */
     NindFile(const std::string &fileName);
@@ -49,6 +48,14 @@ public:
     /**\brief get current size of file
     *\return current size of file */
     inline long int getFileSize() const;
+
+    /**\brief get unique identifiant of file
+    *\return identifiant of file */
+    inline long int getFileIdent() const;
+
+    /**\brief Return the effective size of read buffer 
+    *\return the effective actual size */
+    inline unsigned int getInBufferSize();
 
     /**\brief Set file on relative position
     *\param offset Number of bytes to offset from origin
@@ -85,14 +92,26 @@ public:
     *\param bytesNb size of internal buffer to receive read datas */
     void readBuffer(const unsigned int bytesNb);
         
-    /**\brief Reduce effective buffer data specifying amount of unread datas
-    *\param bytesNb size of effective unread datas */
+    /**\brief Set logical end of read buffer specifying offset from current read pointer
+    *\param bytesNb offset from current read pointer */
     void setEndInBuffer(const unsigned int bytesNb);
+
+    /**\brief Set logical end of read buffer specifying offset from head of buffer
+    *\param bytesNb offset from head of buffer */
+    void setAbsEndInBuffer(const unsigned int bytesNb);
 
     /**\brief Test if effective buffer was entirely read
     *\return true if effective buffer was entirely read */
     inline bool endOfInBuffer();
+    
+    /**\brief Set pointer in read buffer
+    *\param offset from buffer head where to read next time */
+    inline void setInBufferPtr(const unsigned int offset);
         
+    /**\brief Set pointer in read buffer
+    *\param offset from actual read pointer where to read next time */
+    inline void setRelInBufferPtr(const unsigned int offset);
+
     /**\brief Get a 1-bytes integer from internal buffer
     *\return 4-bytes integer */
     unsigned int getInt1();
@@ -112,6 +131,10 @@ public:
     /**\brief Get a 4-bytes integer from internal buffer
     *\return 4-bytes integer */
     unsigned int getInt4();
+
+    /**\brief Get a 4-bytes integer from internal buffer
+    *\return 4-bytes integer */
+    signed int getSInt4();
 
     /**\brief Get a 5-bytes integer from internal buffer
     *\return 8-bytes integer */
@@ -143,6 +166,10 @@ public:
      * \return the effective actual size */
     inline unsigned int getOutBufferSize();
 
+    /**\brief Set pointer in write buffer
+    *\param offset from buffer head where to write next time */
+    inline void setOutBufferPtr(const unsigned int offset);
+        
     /**\brief Put padding into the internal buffer
     *\param bytesNb number of padding bytes to write */
     void putPad(const unsigned int bytesNb);
@@ -189,8 +216,11 @@ public:
     *\param str string to write  */
     void putStringAsBytes(const std::string &str);
 
-    /**\brief Write intermediate buffer to the file */
-    void writeBuffer();
+    /**\brief Write intermediate buffer to the file 
+    *\param position offset into buffer of first byte to write
+    *\param length length to write */
+    void writeBuffer(const unsigned int position = 0,
+                     const unsigned int length = 0);
         
     /**\brief Write byte value to the file
     *\param value value to write
@@ -209,7 +239,8 @@ private:
     unsigned char *m_wbufferEnd;     //fin buffer d'ecriture
     unsigned char *m_wPtr;           //pointeur buffer d'ecriture
     unsigned char *m_rbuffer;        //buffer de lecture
-    unsigned char *m_rbufferEnd;     //fin buffer de lecture
+    unsigned char *m_rbufferAbsEnd;  //fin buffer de lecture absolue
+    unsigned char *m_rbufferEnd;     //fin buffer de lecture ajustable
     unsigned char *m_rPtr;           //pointeur buffer de lecture
     long int m_fileSize;             //taille du fichier
     bool m_isLittleEndian;
@@ -227,6 +258,20 @@ inline long int NindFile::getPos() const
 inline long int NindFile::getFileSize() const
 {
     return m_fileSize;
+}
+////////////////////////////////////////////////////////////
+//brief get unique identifiant of file
+//return identifiant of file */
+inline long int NindFile::getFileIdent() const
+{
+    return (long int)m_file;
+}
+////////////////////////////////////////////////////////////
+//brief Return the effective size of read buffer 
+//return the effective actual size */
+inline unsigned int NindFile::getInBufferSize()
+{
+    return (m_rbufferEnd - m_rbuffer);
 }
 ////////////////////////////////////////////////////////////
 //brief Set file on relative position
@@ -254,11 +299,32 @@ inline bool NindFile::endOfInBuffer()
     return (m_rPtr >= m_rbufferEnd);
 }
 ////////////////////////////////////////////////////////////
+//brief Set pointer in read buffer
+//param offset from buffer head where to read next time */
+inline void NindFile::setInBufferPtr(const unsigned int offset)
+{
+    m_rPtr = m_rbuffer + offset;
+}
+////////////////////////////////////////////////////////////
+//brief Set pointer in read buffer
+//param offset from actual read pointer where to read next time */
+inline void NindFile::setRelInBufferPtr(const unsigned int offset)
+{
+    m_rPtr += offset;
+}
+////////////////////////////////////////////////////////////
 //brief Return the effective size of buffer for writing
 //return the effective actual size */
 inline unsigned int NindFile::getOutBufferSize()
 {
     return (m_wPtr - m_wbuffer);
+}
+////////////////////////////////////////////////////////////
+//\brief Set pointer in write buffer
+//param offset from buffer head where to write next time */
+inline void NindFile::setOutBufferPtr(const unsigned int offset)
+{
+    m_wPtr = m_wbuffer + offset;
 }
 ////////////////////////////////////////////////////////////
     } // end namespace

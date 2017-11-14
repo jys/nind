@@ -9,7 +9,7 @@
 //
 // Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2016 LATEJCON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -19,22 +19,18 @@
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
 #include "NindRetrolexicon.h"
-#include <iostream>
+//#include <iostream>
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
-// <fichier>               ::= { <blocDejfinition> <blocUtf8> } <blocIdentification> 
-//
-// <blocDejfinition>       ::= <flagDejfinition=43> <addrBlocSuivant> <nombreDejfinitions> { <dejfinitionMot> }
-// <flagDejfinition=43>    ::= <Integer1>
-// <addrBlocSuivant>       ::= <Integer5>
-// <nombreDejfinitions>    ::= <Integer3>
+// <donnejesIndexejes>     ::= <dejfinitionMot>
+// <blocEnVrac>            ::= <blocUtf8>
 //
 // <dejfinitionMot>        ::= <motComposej> | <motSimple>
 // <motComposej>           ::= <flagComposej=31> <identifiantA> <identifiantS>
 // <flagComposej=31>       ::= <Integer1>
-// <identifiantA>          ::= <Integer3>
-// <identifiantS>          ::= <Integer3>
+// <identifiantA>          ::= <Integer4>
+// <identifiantS>          ::= <Integer4>
 // <motSimple>             ::= <flagSimple=37> <longueurMotUtf8> <adresseMotUtf8>
 // <flagSimple=37>         ::= <Integer1>
 // <longueurMotUtf8>       ::= <Integer1>
@@ -43,84 +39,37 @@ using namespace std;
 // <blocUtf8>              ::= { <motUtf8> }
 // <motUtf8>               ::= { <Octet> }
 //
-// <blocIdentification>    ::= <flagIdentification=53> <maxIdentifiant> <identifieurUnique>
-// <flagIdentification=53> ::= <Integer1>
-// <maxIdentifiant>        ::= <Integer3>
-// <identifieurUnique>     ::= <dateHeure>
-// <dateHeure >            ::= <Integer4>
+// <blocEnVrac>            ::= { <Octet> }
 ////////////////////////////////////////////////////////////
-#define FLAG_DEJFINITION 43
+// <spejcifique>           ::= <vide>
+////////////////////////////////////////////////////////////
 #define FLAG_COMPOSEJ 31
 #define FLAG_SIMPLE 37
-#define FLAG_IDENTIFICATION 53
-//<flagDejfinition=43>(1) <addrBlocSuivant>(5) <nombreDejfinitions>(3) = 9
-#define TETE_DEJFINITION 9
-//<flagComposej=31>(1) <identifiantA>(3) <identifiantS>(3) = 7
+//<flagComposej=31>(1) <identifiantA>(4) <identifiantS>(4) = 9
 //<flagSimple=37>(1) <longueurMotUtf8>(1) <adresseMotUtf8>(5) = 7
-#define TAILLE_DEJFINITION 7
+#define TAILLE_DEJFINITION 9
 // //<motUtf8>(255) + TAILLE_IDENTIFICATION (12) = 268
 #define TAILLE_DEJFINITION_MAXIMUM 268
 // //taille maximum d'un mot compose (pour detecter les bouclages)
-#define TAILLE_COMPOSE_MAXIMUM 30
+#define TAILLE_COMPOSEJ_MAXIMUM 30
+//taille des spejcifiques
+#define TAILLE_SPEJCIFIQUES 0
 ////////////////////////////////////////////////////////////
 //brief Creates NindRetrolexicon.
-//param fileName absolute path file name
+//param fileNameExtensionLess absolute path file name without extension
 //param isLexiconWriter true if lexicon writer, false if lexicon reader  
 //param definitionBlocSize number of entries in a single definition block */
-NindRetrolexicon::NindRetrolexicon(const string &fileName,
+NindRetrolexicon::NindRetrolexicon(const string &fileNameExtensionLess,
                                    const bool isLexiconWriter,
-                                   const NindIndex::Identification &lexiconIdentification,
+                                   const Identification &lexiconIdentification,
                                    const unsigned int definitionBlocSize):
-    m_file(fileName),
-    m_fileName(fileName),
-    m_isWriter(isLexiconWriter),
-    m_dejfinitionBlocSize(definitionBlocSize),
-    m_dejfinitionMapping()
+    NindPadFile(fileNameExtensionLess + ".nindretrolexicon", 
+                isLexiconWriter, 
+                lexiconIdentification, 
+                TAILLE_SPEJCIFIQUES, 
+                TAILLE_DEJFINITION, 
+                definitionBlocSize)
 {
-    try {
-        if (m_isWriter) {
-            //si fichier ecrivain, ouvre en ecriture + lecture
-            bool isOpened = m_file.open("r+b");
-            if (isOpened) {
-                //si le fichier existe, l'analyse pour trouver les dejfinitions et l'identification
-                //ejtablit la carte des dejfinitions       
-                mapDejfinition();
-                //verifie l'apairage avec le lexique
-                checkIdentification(lexiconIdentification); 
-            }
-            else {
-                //si le fichier n'existe pas, le creje vide en ejcriture + lecture
-                //la taille du bloc de dejfinitions doit estre spejcifieje diffejrente de 0
-                if (m_dejfinitionBlocSize == 0) 
-                {
-                  string errorString = 
-                    string("NindRetrolexicon. In write mode, definitionBlocSize "
-                                "must be non null. ") + m_fileName;
-                  cerr << errorString << endl;
-                  throw BadUseException(errorString);
-                }
-                isOpened = m_file.open("w+b");
-                if (!isOpened) throw OpenFileException(m_fileName);
-                //lui colle l'identification du lexique en teste
-                addIdentification(lexiconIdentification);
-                //ajoute un bloc de dejfinition
-                addBlocDejfinition(lexiconIdentification);
-            }
-        }
-        else {
-            //si fichier lecteur, ouvre en lecture seule
-            bool isOpened = m_file.open("rb");
-            if (!isOpened) throw OpenFileException(m_fileName);
-            //ejtablit la carte des dejfinitions       
-            mapDejfinition();
-            //verifie l'apairage avec le lexique
-            checkIdentification(lexiconIdentification); 
-        }
-    }
-    catch (FileException &exc) {
-        cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
-        throw NindIndexException(m_fileName);
-    }
 }
 ////////////////////////////////////////////////////////////
 NindRetrolexicon::~NindRetrolexicon()
@@ -132,58 +81,65 @@ NindRetrolexicon::~NindRetrolexicon()
 //param lexiconWordsNb number of words contained in lexicon 
 //param lexiconIdentification unique identification of lexicon */
 void NindRetrolexicon::addRetroWords(const list<struct RetroWord> &retroWords,
-                                     const NindIndex::Identification &lexiconIdentification)
+                                     const Identification &lexiconIdentification)
 {
-    try {
-        if (!m_isWriter) throw BadUseException("retro lexicon is not writable");
-        //il y a autant d'ajout au fichier qu'il y a de nouveaux identifiants
-        for (list<struct RetroWord>::const_iterator it1 = retroWords.begin(); it1 != retroWords.end(); it1++) {
-            const struct RetroWord &retroWord = (*it1);
-            //1) rejcupehre l'adresse de la dejfinition
-            unsigned long int dejfinition = getDejfinitionPos(retroWord.identifiant);
-            //2) si hors limite, ajoute un bloc de dejfinitions
-            if (dejfinition == 0) addBlocDejfinition(lexiconIdentification);
-            //et rejcupehre l'adresse de la dejfinition
-            dejfinition = getDejfinitionPos(retroWord.identifiant);
-            if (dejfinition == 0) throw OutOfBoundException("NindRetrolexicon::addRetroWords : " + m_fileName);
-            //3) si mot simple, ejcrit d'abord l'utf8 puis la dejfinition
-            if (retroWord.identifiantA == 0) {
-                //se positionne ah la fin (sur l'identification)
-                m_file.setPos(-TAILLE_IDENTIFICATION, SEEK_END);       
-                const unsigned long int utf8Pos = m_file.getPos();
-                m_file.createBuffer(TAILLE_DEJFINITION_MAXIMUM);
-                m_file.putStringAsBytes(retroWord.motSimple);
-                //ajoute la taille de l'identification
-                m_file.putPad(TAILLE_IDENTIFICATION);
-                m_file.writeBuffer();
-                //se positionne sur la dejfinition
-                m_file.setPos(dejfinition, SEEK_SET);
-                m_file.createBuffer(TAILLE_DEJFINITION);
-                //<flagSimple=37> <longueurMotUtf8> <adresseMotUtf8>
-                m_file.putInt1(FLAG_SIMPLE);
-                m_file.putInt1(retroWord.motSimple.length());
-                m_file.putInt5(utf8Pos);
-                m_file.writeBuffer();
-            }
-            //si mot composej, ejcrit la dejfinition
-            else {
-                //se positionne sur la dejfinition
-                m_file.setPos(dejfinition, SEEK_SET);
-                m_file.createBuffer(TAILLE_DEJFINITION);
-                //<flagComposej=31> <identifiantA> <identifiantS>
-                m_file.putInt1(FLAG_COMPOSEJ);
-                m_file.putInt3(retroWord.identifiantA);
-                m_file.putInt3(retroWord.identifiantS - retroWord.identifiant);
-                m_file.writeBuffer();
-            }
+    if (!m_isWriter) 
+        throw NindRetrolexiconException("NindRetrolexicon::addRetroWords retro lexicon is not writable" + m_fileName);
+    //taille des spejcifiques et de l'identification qui sont en queue de buffer
+    const int tailleQueue = getSpecificsAndIdentificationSize();
+    //pour savoir si l'identification a ejtej ejcrite
+    bool identOk = false;
+    //il y a autant d'ajout au fichier qu'il y a de nouveaux identifiants
+    for (list<struct RetroWord>::const_iterator it1 = retroWords.begin(); it1 != retroWords.end(); it1++) {
+        const struct RetroWord &retroWord = (*it1);
+        //1) rejcupehre l'adresse de la dejfinition
+        unsigned long int dejfinition = getEntryPos(retroWord.identifiant);
+        //2) si hors limite, ajoute un bloc de dejfinitions
+        if (dejfinition == 0) addEntriesBlock(lexiconIdentification);
+        //et rejcupehre l'adresse de la dejfinition
+        dejfinition = getEntryPos(retroWord.identifiant);
+        if (dejfinition == 0) throw NindRetrolexiconException("NindRetrolexicon::addRetroWords : " + m_fileName);
+        //3) si mot simple, ejcrit d'abord l'utf8 puis la dejfinition
+        if (retroWord.identifiantA == 0) {
+            identOk = true;
+            //se positionne ah la fin (sur les spejcifiques)
+            m_file.setPos(-tailleQueue, SEEK_END);       
+            const unsigned long int utf8Pos = m_file.getPos();
+            m_file.createBuffer(TAILLE_DEJFINITION_MAXIMUM + tailleQueue);
+            m_file.putStringAsBytes(retroWord.motSimple);
+            //ajoute les spejcifiques et l'identification
+            writeSpecificsHeader();
+            writeIdentification(lexiconIdentification);
+            m_file.writeBuffer();
+            //se positionne sur la dejfinition
+            m_file.setPos(dejfinition, SEEK_SET);
+            m_file.createBuffer(TAILLE_DEJFINITION);
+            //<flagSimple=37> <longueurMotUtf8> <adresseMotUtf8>
+            m_file.putInt1(FLAG_SIMPLE);
+            m_file.putInt1(retroWord.motSimple.length());
+            m_file.putInt5(utf8Pos);
+            m_file.writeBuffer();
         }
-        //ejcrit l'identification
-        m_file.setPos(-TAILLE_IDENTIFICATION, SEEK_END); 
-        addIdentification(lexiconIdentification);
+        //si mot composej, ejcrit la dejfinition
+        else {
+            //se positionne sur la dejfinition
+            m_file.setPos(dejfinition, SEEK_SET);
+            m_file.createBuffer(TAILLE_DEJFINITION);
+            //<flagComposej=31> <identifiantA> <identifiantS>
+            m_file.putInt1(FLAG_COMPOSEJ);
+            m_file.putInt4(retroWord.identifiantA);
+            //m_file.putInt4(retroWord.identifiantS - retroWord.identifiant);
+            m_file.putInt4(retroWord.identifiantS);
+            m_file.writeBuffer();
+        }
     }
-    catch (FileException &exc) {
-        cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
-        throw NindRetrolexiconException(m_fileName);
+    //ejcrit l'identification si elle n'a pas dejjah ejtej ejcrite
+    if (!identOk) {
+        m_file.setPos(-tailleQueue, SEEK_END); 
+        m_file.createBuffer(tailleQueue);
+        writeSpecificsHeader();
+        writeIdentification(lexiconIdentification);
+        m_file.writeBuffer();
     }
 }
 ////////////////////////////////////////////////////////////
@@ -213,14 +169,15 @@ bool NindRetrolexicon::getComponents(const unsigned int ident,
         //recupere le mot simple du couple
         struct RetroWord retroWordS;
         existe = getRetroWord(retroWord.identifiantS, retroWordS);
-        if (!existe) throw InvalidFileException("NindRetrolexicon::getComponents A : " + m_fileName);
-        if (retroWordS.identifiantA != 0) InvalidFileException("NindRetrolexicon::getComponents B : " + m_fileName);
+        if (!existe) throw NindRetrolexiconException("NindRetrolexicon::getComponents A : " + m_fileName);
+        if (retroWordS.identifiantA != 0) NindRetrolexiconException("NindRetrolexicon::getComponents B : " + m_fileName);
         components.push_front(retroWordS.motSimple);
         //recupere l'autre mot du couple
         existe = getRetroWord(retroWord.identifiantA, retroWord);
-        if (!existe) throw InvalidFileException("NindRetrolexicon::getComponents C : " + m_fileName);  
+        if (!existe) throw NindRetrolexiconException("NindRetrolexicon::getComponents C : " + m_fileName);  
         //pour detecter les bouclages induits par un fichier bouclant
-        if (components.size() == TAILLE_COMPOSE_MAXIMUM) throw InvalidFileException("NindRetrolexicon::getComponents D : " + m_fileName);  
+        if (components.size() == TAILLE_COMPOSEJ_MAXIMUM) 
+            throw NindRetrolexiconException("NindRetrolexicon::getComponents D : " + m_fileName);  
     }    
 }    
 ////////////////////////////////////////////////////////////
@@ -231,69 +188,30 @@ bool NindRetrolexicon::getComponents(const unsigned int ident,
 bool NindRetrolexicon::getRetroWord(const unsigned int ident,
                                     struct RetroWord &retroWord)   
 {
-    try {
-        const bool existe = getDejfinition(ident);
-        if (!existe) return false;
-        const unsigned char flag = m_file.getInt1();
-        if (flag == 0) return false;
-        //<flagSimple=37> <longueurMotUtf8> <adresseMotUtf8>
-        else if (flag == FLAG_SIMPLE) {
-            const unsigned char longueurMotUtf8 = m_file.getInt1();
-            const unsigned long adresseMotUtf8 = m_file.getInt5();
-            //se positionne sur la definition
-            m_file.setPos(adresseMotUtf8, SEEK_SET);    
-            m_file.readBuffer(longueurMotUtf8);
-            const string motUtf8 = m_file.getStringAsBytes(longueurMotUtf8);
-            retroWord = RetroWord(ident, motUtf8);
-        }
-        //<flagComposej=31> <identifiantA> <identifiantS>
-        else if (flag == FLAG_COMPOSEJ) {
-            const unsigned int identifiantA = m_file.getInt3();
-            const unsigned int identifiantS = ident + m_file.getSInt3();
-            retroWord = RetroWord(ident, identifiantA, identifiantS);
-        }
-        else throw InvalidFileException("NindRetrolexicon::getRetroWord : " + m_fileName);
+    const bool existe = getDejfinition(ident);
+    if (!existe) return false;
+    const unsigned char flag = m_file.getInt1();
+    if (flag == 0) return false;
+    //<flagSimple=37> <longueurMotUtf8> <adresseMotUtf8>
+    else if (flag == FLAG_SIMPLE) {
+        const unsigned char longueurMotUtf8 = m_file.getInt1();
+        const unsigned long adresseMotUtf8 = m_file.getInt5();
+        //se positionne sur la definition
+        m_file.setPos(adresseMotUtf8, SEEK_SET);    
+        m_file.readBuffer(longueurMotUtf8);
+        const string motUtf8 = m_file.getStringAsBytes(longueurMotUtf8);
+        retroWord = RetroWord(ident, motUtf8);
+        return true;
     }
-    catch (FileException &exc) {
-        cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
-        throw NindRetrolexiconException(m_fileName);
+    //<flagComposej=31> <identifiantA> <identifiantS>
+    else if (flag == FLAG_COMPOSEJ) {
+        const unsigned int identifiantA = m_file.getInt4();
+        //const unsigned int identifiantS = ident + m_file.getSInt4();
+        const unsigned int identifiantS = m_file.getInt4();
+        retroWord = RetroWord(ident, identifiantA, identifiantS);
+        return true;
     }
-    return true;
-}
-////////////////////////////////////////////////////////////
-//ejtablit la carte des dejfinitions  
-void NindRetrolexicon::mapDejfinition()
-{
-    m_file.setPos(0, SEEK_SET);  //positionne en tete du fichier
-    while (true) {
-        //<flagDejfinition=43> <addrBlocSuivant> <nombreDejfinitions>
-        m_file.readBuffer(TETE_DEJFINITION);
-        if (m_file.getInt1() != FLAG_DEJFINITION) 
-            throw InvalidFileException("NindRetrolexicon::mapDejfinition : " + m_fileName);
-        const unsigned long int addrBlocSuivant = m_file.getInt5();
-        const unsigned int nombreDejfinitions = m_file.getInt3();
-        const unsigned long pos = m_file.getPos(); 
-        const pair<unsigned int, unsigned long int> dejfinition(pos, nombreDejfinitions);
-        m_dejfinitionMapping.push_back(dejfinition);
-        if (addrBlocSuivant == 0) break;        //si pas d'extension, termine
-        //saute au bloc d'indirection suivant
-        m_file.setPos(addrBlocSuivant, SEEK_SET);    //pour aller au suivant
-    }
-}
-////////////////////////////////////////////////////////////
-//return l'offset de l'indirection de la dejfinition specifiej, 0 si hors limite
-unsigned long int NindRetrolexicon::getDejfinitionPos(const unsigned int ident)
-{
-    //trouve la dejfinition
-    unsigned int firstIdent = 0;
-    list<pair<unsigned long int, unsigned int> >::const_iterator it = m_dejfinitionMapping.begin(); 
-    while (it != m_dejfinitionMapping.end()) {
-        if (ident < firstIdent + (*it).second) return (ident - firstIdent) * TAILLE_DEJFINITION + (*it).first;
-        firstIdent += (*it).second;
-        it++;
-    }
-    //si la dejfinition chercheje n'existe pas, retourne 0
-    return 0;
+    else throw NindRetrolexiconException("NindRetrolexicon::getRetroWord : " + m_fileName);
 }
 ////////////////////////////////////////////////////////////
 //brief Read from file datas of a specified definition and leave result into read buffer 
@@ -301,79 +219,12 @@ unsigned long int NindRetrolexicon::getDejfinitionPos(const unsigned int ident)
 //return true if ident was found, false otherwise */
 bool NindRetrolexicon::getDejfinition(const unsigned int ident)
 {
-    const unsigned long int dejfinitionPos = getDejfinitionPos(ident);
+    unsigned long int dejfinitionPos = getEntryPos(ident);
     if (dejfinitionPos == 0) return false;
     m_file.flush();
     //se positionne sur la definition
     m_file.setPos(dejfinitionPos, SEEK_SET);    
     m_file.readBuffer(TAILLE_DEJFINITION);
     return true;
-}
-////////////////////////////////////////////////////////////
-//ajoute un bloc de dejfinitions vides suivi d'une identification ah la position courante du fichier
-void NindRetrolexicon::addBlocDejfinition(const NindIndex::Identification &lexiconIdentification)
-{
-    //se positionne sur l'identification
-    m_file.setPos(-TAILLE_IDENTIFICATION, SEEK_END);       
-    const unsigned long int blocDejfinition = m_file.getPos();
-    m_file.createBuffer(TETE_DEJFINITION);
-    //<flagDejfinition=43> <addrBlocSuivant> <nombreDejfinitions>
-    m_file.putInt1(FLAG_DEJFINITION);
-    m_file.putInt5(0);
-    m_file.putInt3(m_dejfinitionBlocSize);
-    m_file.writeBuffer();                               //ecriture effective sur le fichier   
-    //remplit la zone d'indirection avec des 0
-    m_file.writeValue(0, m_dejfinitionBlocSize*TAILLE_DEJFINITION);
-    //lui colle l'identification du lexique a suivre
-    addIdentification(lexiconIdentification);
-    //si ce n'est pas le premier bloc, il faut chaisner dans le fichier
-    if (m_dejfinitionMapping.size() != 0) {
-        pair<unsigned long int, unsigned int> &indirectionBlocPrec = m_dejfinitionMapping.back();
-        //se positionne sur le <addrBlocSuivant> du dernier bloc
-        //<flagDejfinition=43> <addrBlocSuivant> <nombreDejfinitions> { <dejfinitionMot> }
-        m_file.setPos(indirectionBlocPrec.first -8, SEEK_SET);   //pour pointer <addrBlocSuivant>
-        m_file.createBuffer(5);
-        m_file.putInt5(blocDejfinition);
-        m_file.writeBuffer();
-    }
-    //met ah jour la carte des dejfinitions
-    const pair<unsigned long int, unsigned int> dejfinitions(blocDejfinition + TETE_DEJFINITION, m_dejfinitionBlocSize);
-    m_dejfinitionMapping.push_back(dejfinitions);
-}
-////////////////////////////////////////////////////////////
-//ejcrit l'identification du fichier ah l'adresse courente du fichier
-void NindRetrolexicon::addIdentification(const NindIndex::Identification &lexiconIdentification)
-{
-    //le pointeur est censej estre au bon endroit
-    m_file.createBuffer(TAILLE_IDENTIFICATION);
-    //<flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
-    m_file.putInt1(FLAG_IDENTIFICATION);
-    m_file.putInt3(lexiconIdentification.lexiconWordsNb);
-    m_file.putInt4(lexiconIdentification.lexiconTime);
-    m_file.putInt4(lexiconIdentification.specificFileIdent);
-    m_file.writeBuffer();                               //ecriture effective sur le fichier
-}
-////////////////////////////////////////////////////////////
-//verifie l'apairage avec le lexique
-void NindRetrolexicon::checkIdentification(const NindIndex::Identification &lexiconIdentification)
-{
-    m_file.setPos(-TAILLE_IDENTIFICATION, SEEK_END);       //se positionne sur l'identification
-    //<flagIdentification=53> <maxIdentifiant> <identifieurUnique> <identifieurSpecifique>
-    m_file.readBuffer(TAILLE_IDENTIFICATION);
-    if (m_file.getInt1() != FLAG_IDENTIFICATION) 
-        throw InvalidFileException("NindIndex::checkIdentification : " + m_fileName);
-    const unsigned int maxIdent = m_file.getInt3();
-    const unsigned int identification = m_file.getInt4();
-    //si c'est le fichier lexique qui est verifiej, pas de comparaison de valeurs
-    if (lexiconIdentification == NindIndex::Identification(0, 0, 0)) return;
-    //si ce n'est pas le fichier lexique qui est verifiej, comparaison de valeurs non spejcifiques
-    if (NindIndex::Identification(maxIdent, identification, 0) != lexiconIdentification) {
-        std::cerr << "NindRetrolexicon::checkIdentification failed "
-                  << m_fileName << " : "
-                  << maxIdent << "/" << lexiconIdentification.lexiconWordsNb
-                  << " ; " << identification << "/" << lexiconIdentification.lexiconTime
-                  << std::endl;
-        throw IncompatibleFileException(m_fileName); 
-    }
 }
 ////////////////////////////////////////////////////////////

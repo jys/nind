@@ -1,7 +1,7 @@
 //
-// C++ Interface: NindCommonExport
+// C++ Interface: NindFichiers
 //
-// Description: pour compiler en DLL windows
+// Description: Utilitaires pour afficher les dates en clair
 //
 // Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
@@ -14,22 +14,29 @@
 // even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
-#ifndef NindCommonExport_H
-#define NindCommonExport_H
+#ifndef NindFichiers_H
+#define NindFichiers_H
 ////////////////////////////////////////////////////////////
-#ifdef _MSC_VER
-
-#ifdef NindLexicon_EXPORTS
-#define DLLExportLexicon _declspec (dllexport)
-#else
-#define DLLExportLexicon _declspec (dllimport)
-#endif
+#include "NindCommonExport.h"
+#include <list>
+#include <string>
 ////////////////////////////////////////////////////////////
-#else /* Pas _MSC_VER*/
-
-#define DLLExportLexicon
-
-#endif /* _MSC_VER*/
+namespace latecon {
+    namespace nindex {
 ////////////////////////////////////////////////////////////
+class DLLExportLexicon NindFichiers {
+public:
+    /**\brief Teste le systehme de fichiers
+    *\param fileNameExtensionLess absolute path file name without extension
+    *\param avecRetrolexicon vrai si le retrolexicon fait partie des fichiers
+    *\param tousAbsents vrai si les fichiers doivent estre tous absents
+    *\return vrai si le systehme est cohejrent, sinon faux */
+    static bool fichiersCohejrents(const std::string &fileNameExtensionLess, 
+                                   const bool avecRetrolexicon,
+                                   const bool tousAbsents);
+};
+////////////////////////////////////////////////////////////
+    } // end namespace
+} // end namespace
 #endif
 ////////////////////////////////////////////////////////////

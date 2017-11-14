@@ -5,6 +5,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/cpp )
 SET(NindBasics_LIB_SRCS
   NindFile.h
   NindFile.cpp
+  NindPadFile.h
+  NindPadFile.cpp
 )
 
 add_library(NindBasics SHARED ${NindBasics_LIB_SRCS})

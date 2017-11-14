@@ -7,9 +7,9 @@
 // Cette classe gere la complexite du lexique qui doit rester coherent pour ses lecteurs
 // pendant que son ecrivain l'enrichit en fonction des nouvelles indexations.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2014
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2015 LATECON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -37,12 +37,12 @@ class NindRetrolexicon;
 class DLLExportLexicon NindLexiconIndex : public NindIndex {
 public:
     /**\brief Creates NindLexiconIndex.
-    *\param fileName absolute path file name. Lexicon is identified by its file name
+    *\param fileNameExtensionLess absolute path file name without extension
     *\param isLexiconWriter true if lexicon writer, false if lexicon reader  
     *\param withRetrolexicon true if retro lexicon 
     *\param indirectionBlocSize number of entries in a lexicon single indirection block (for first writer only)
     *\param retroIndirectionBlocSize number of entries in a retro lexicon single indirection block (for first writer only)*/
-    NindLexiconIndex(const std::string &fileName,
+    NindLexiconIndex(const std::string &fileNameExtensionLess,
                      const bool isLexiconWriter,
                      const bool withRetrolexicon = false,
                      const unsigned int indirectionBlocSize = 0,
@@ -77,24 +77,28 @@ public:
     * \return true if word was found, false otherwise */
     bool getComponents(const unsigned int ident,
                        std::list<std::string> &components);
-
+    
+    /**\brief get retrolexicon file name
+    * \return file name of retrolexicon */
+    std::string getRetrolexiconFileName();
+    
 private:
     //<identifiantA> <identifiantRelC>
-    struct Compose {
+    struct Composej {
         unsigned int identA;
         unsigned int identComp;
-        Compose(): identA(0), identComp(0) {}
-        Compose(const unsigned int idA, const unsigned int idC): identA(idA), identComp(idC) {}
-        ~Compose() {}
+        Composej(): identA(0), identComp(0) {}
+        Composej(const unsigned int idA, const unsigned int idC): identA(idA), identComp(idC) {}
+        ~Composej() {}
     };
     //<motSimple> <identifiantS> <nbreComposes> <composes>
     struct Mot {
         std::string motSimple;
         unsigned int identifiantS;
-        std::list<Compose> composes;
-        Mot(): motSimple(), identifiantS(0), composes() {}
+        std::list<Composej> composejs;
+        Mot(): motSimple(), identifiantS(0), composejs() {}
         Mot(const std::string terS, const unsigned int idS): 
-            motSimple(terS), identifiantS(idS), composes() {}
+            motSimple(terS), identifiantS(idS), composejs() {}
         ~Mot() {}
     };
     
@@ -104,12 +108,10 @@ private:
                                 const unsigned int sousMotId);
 
     //recupere les donnees de tous les mots qui ont la meme clef modulo 
-    //retourne l'identifiant du mot s'il existe, sinon retourne 0
-    //si le mot n'existe pas, la structure retournée est valide, sinon elle ne l'est pas
-    unsigned int getDefinitionWords(const std::string &motSimple,
-                                     const unsigned int sousMotId,
-                                     std::list<Mot> &mots,
-                                     std::list<Mot>::iterator &motIt);
+    //les donnejes ont dejjah ejtej lue par getIdentifiant
+    void getDefinitionWords(const std::string &motSimple,
+                            std::list<Mot> &mots,
+                            std::list<Mot>::iterator &motIt);
         
     //Ecrit les donnees de tous les mots qui ont la meme clef modulo 
     void setDefinitionWords(const std::list<Mot> &definition,

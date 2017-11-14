@@ -7,9 +7,9 @@
 // Cette classe gere la complexite du fichier inverse qui doit rester coherent pour ses lecteurs
 // pendant que son ecrivain l'enrichit en fonction des nouvelles indexations.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2014
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2015 LATECON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -35,13 +35,15 @@ class DLLExportLexicon NindTermIndex : public NindIndex {
 public:
 
     /**\brief Creates NindTermIndex with a specified name associated with.
-    *\param fileName absolute path file name
+    *\param fileNameExtensionLess absolute path file name without extension
     *\param isTermIndexWriter true if termIndex writer, false if termIndex reader  
+    *\param specificsNumber number of specific unsigned int
     *\param lexiconIdentification unique identification of lexicon 
     *\param indirectionBlocSize number of entries in a single indirection block */
-    NindTermIndex(const std::string &fileName,
+    NindTermIndex(const std::string &fileNameExtensionLess,
                   const bool isTermIndexWriter,
                   const Identification &lexiconIdentification,
+                  const unsigned int specificsNumber,
                   const unsigned int indirectionBlocSize = 0);
 
     virtual ~NindTermIndex();
@@ -71,15 +73,29 @@ public:
     bool getTermDef(const unsigned int ident,
                     std::list<struct TermCG> &termDef);
 
+    /**\brief Read specifics as a list of words
+    *\param specifics list to receive all specifics */
+    void getSpecificWords(std::list<unsigned int> &specifics);
+
     /**\brief Write a full term definition as a list of structures
     *\param ident ident of term
     *\param termDef structure containing all datas of the specified term 
-    *\param lexiconIdentification unique identification of lexicon */
+    *\param specifics list of specific unsigned int
+    *\param fileIdentification unique identification of lexicon */
     void setTermDef(const unsigned int ident,
                     const std::list<struct TermCG> &termDef,
-                    const Identification &lexiconIdentification);
+                    const Identification &fileIdentification,
+                    const std::list<unsigned int> &specifics);
         
 private:
+    unsigned int m_specificsNumber;
+    
+    //brief write specifics footer and identification into write buffer
+    //param specifics list of specific unsigned int
+    //param fileIdentification unique identification of file */
+    void writeSpecificsAndIdentification(const std::list<unsigned int> &specifics,
+                                         const Identification &fileIdentification);
+
 };
 ////////////////////////////////////////////////////////////
     } // end namespace

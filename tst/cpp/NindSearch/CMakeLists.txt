@@ -8,7 +8,7 @@ SET(NindSearch_SRCS
 
 add_executable(NindSearch ${NindSearch_SRCS})
 
-target_link_libraries(NindSearch NindIndexTest NindIndex NindRetrolexicon NindBasics)
+target_link_libraries(NindSearch NindIndex_litDumpS2 NindIndexTest NindIndex NindRetrolexicon NindBasics)
 
 install(TARGETS NindSearch DESTINATION bin)
 

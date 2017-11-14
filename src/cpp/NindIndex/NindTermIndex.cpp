@@ -7,9 +7,9 @@
 // Cette classe gere la complexite du fichier inverse qui doit rester coherent pour ses lecteurs
 // pendant que son ecrivain l'enrichit en fonction des nouvelles indexations.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2014
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2015 LATECON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -19,54 +19,62 @@
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
 #include "NindTermIndex.h"
-#include <iostream>
+//#include <iostream>
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
-// <definition>            ::= <flagDefinition=17> <identifiantTerme> <longueurDonnees> <donneesTerme>
-// <flagDefinition=17>     ::= <Integer1>
-// <identifiantTerme>      ::= <Integer3>
-// <longueurDonnees>       ::= <Integer3>
-// <donneesTerme>          ::= { <donneesCG> }
-// <donneesCG>             ::= <flagCg=61> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
+// <dejfinition>           ::= <flagDejfinition=17> <identifiantTerme> <longueurDonnejes> <donnejesTerme>
+// <flagDejfinition=17>    ::= <Integer1>
+// <identifiantTerme>      ::= <Integer4>
+// <longueurDonnejes>      ::= <Integer3>
+// <donnejesTerme>         ::= { <donnejesCG> }
+// <donnejesCG>            ::= <flagCg=61> <catejgorie> <frejquenceTerme> <nbreDocs> <listeDocuments>
 // <flagCg=61>             ::= <Integer1>
-// <categorie>             ::= <Integer1>
-// <frequenceTerme>        ::= <IntegerULat>
+// <catejgorie>            ::= <Integer1>
+// <frejquenceTerme>       ::= <IntegerULat>
 // <nbreDocs>              ::= <IntegerULat>
-// <listeDocuments>        ::= { <identDocRelatif> <frequenceDoc> }
+// <listeDocuments>        ::= { <identDocRelatif> <frejquenceDoc> }
 // <identDocRelatif>       ::= <IntegerULat>
-// <frequenceDoc>          ::= <IntegerULat>
+// <frejquenceDoc>         ::= <IntegerULat>
 ////////////////////////////////////////////////////////////
-#define FLAG_DEFINITION 17
+// <spejcifique>           ::= { <valeur> }
+// <valeur>                ::= <Integer4>
+////////////////////////////////////////////////////////////
+#define FLAG_DEJFINITION 17
 #define FLAG_CG 61
-//<flagDefinition=17>(1) <identifiantTerme>(3) = 4
-#define OFFSET_LONGUEUR 4
-//<flagDefinition=17>(1) <identifiantTerme>(3) <longueurDonnees>(3) = 7
-#define TETE_DEFINITION 7
-//<flagDefinition=17>(1) <identifiantTerme>(3) <longueurDonnees>(3) <flagCg>(1) <categorie>(1) <frequenceTerme>(1) 
-//<nbreDocs>(1) <identDocRelatif>(3) <frequenceDoc>(1) = 15
-#define TAILLE_DEFINITION_MINIMUM 15
-//<flagCg>(1) <categorie>(1) <frequenceTerme>(3) <nbreDocs>(3) = 8
-#define TETE_DEFINITION_MAXIMUM 8
-//<identDocRelatif>(3) <frequenceDoc>(2) = 5
+//<flagDejfinition=17>(1) <identifiantTerme>(4) = 5
+#define OFFSET_LONGUEUR 5
+//<flagDejfinition=17>(1) <identifiantTerme>(4) <longueurDonnejes>(3) = 8
+#define TAILLE_TESTE_DEJFINITION 8
+//<flagDejfinition=17>(1) <identifiantTerme>(4) <longueurDonnejes>(3) <flagCg>(1) <catejgorie>(1) <frejquenceTerme>(1) 
+//<nbreDocs>(1) <identDocRelatif>(5) <frejquenceDoc>(1) = 18
+//le minimum doit prendre en compte le maximum dans la numejrotation !
+#define TAILLE_DEJFINITION_MINIMUM 18
+//<flagCg>(1) <catejgorie>(1) <frejquenceTerme>(3) <nbreDocs>(3) = 8
+#define TAILLE_TESTE_DEJFINITION_MAXIMUM 8
+//<identDocRelatif>(3) <frejquenceDoc>(2) = 5
 #define TAILLE_DOC_MAXIMUM 5
 //taille minimum du buffer d'ecriture
 #define TAILLE_BUFFER_MINIMUM 128
 ////////////////////////////////////////////////////////////
 //brief Creates NindTermIndex with a specified name associated with.
-//param fileName absolute path file name
+//param fileNameExtensionLess absolute path file name without extension
 //param isTermIndexWriter true if termIndex writer, false if termIndex reader  */
 //param lexiconIdentification unique identification of lexicon */
+//param specificsNumber number of specific unsigned int
 //param indirectionBlocSize number of entries in a single indirection block */
-NindTermIndex::NindTermIndex(const std::string &fileName,
+NindTermIndex::NindTermIndex(const std::string &fileNameExtensionLess,
                              const bool isTermIndexWriter,
                              const Identification &lexiconIdentification,
+                             const unsigned int specificsNumber,
                              const unsigned int indirectionBlocSize):
-    NindIndex(fileName, 
+    NindIndex(fileNameExtensionLess + ".nindtermindex", 
               isTermIndexWriter, 
               lexiconIdentification, 
-              TAILLE_DEFINITION_MINIMUM, 
-              indirectionBlocSize)
+              specificsNumber * 4,
+              TAILLE_DEJFINITION_MINIMUM, 
+              indirectionBlocSize),
+    m_specificsNumber(specificsNumber)
 {
 }
 ////////////////////////////////////////////////////////////
@@ -81,102 +89,130 @@ NindTermIndex::~NindTermIndex()
 bool NindTermIndex::getTermDef(const unsigned int ident,
                                list<struct TermCG> &termDef)
 {
-    try {
-        const bool existe = getDefinition(ident);
-        if (!existe) return false;
-        //<flagDefinition=17> <identifiantTerme> <longueurDonnees> <donnees>
-        if (m_file.getInt1() != FLAG_DEFINITION) throw InvalidFileException("NindTermIndex::getTermIndex A : " + m_fileName);
-        const unsigned int identTerme = m_file.getInt3();
-        if (identTerme != ident) throw InvalidFileException("NindTermIndex::getTermIndex B : " + m_fileName);
-        const unsigned int longueurDonnees = m_file.getInt3();
-        //positionne la fin de buffer en fonction de la longueur effective des donneesTerme
-        m_file.setEndInBuffer(longueurDonnees);
-        //<flagCg> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
-        while (!m_file.endOfInBuffer()) {
-            if (m_file.getInt1() != FLAG_CG) throw InvalidFileException("NindTermIndex::getTermIndex C : " + m_fileName);
-            const unsigned char categorie = m_file.getInt1();
-            const unsigned int frequenceTerme = m_file.getUIntLat();
-            const unsigned int nbreDocs = m_file.getUIntLat();
-            termDef.push_back(TermCG(categorie, frequenceTerme));
-            struct TermCG &termCG = termDef.back();
-            list<Document> &documents = termCG.documents;
-            unsigned int identDocument = 0;         //pour calculer le no de doc absolu avec la numerotation relative
-            for (unsigned int it = 0; it != nbreDocs; it++) {
-                //<identDocRelatif> <frequenceDoc>
-                identDocument += m_file.getUIntLat();
-                const unsigned int frequenceDoc = m_file.getUIntLat();
-                documents.push_back(Document(identDocument, frequenceDoc));
-            }
+    const bool existe = getDefinition(ident);
+    if (!existe) return false;
+    //<flagDejfinition=17> <identifiantTerme> <longueurDonnejes> <donnees>
+    if (m_file.getInt1() != FLAG_DEJFINITION) 
+        throw NindTermIndexException("NindTermIndex::getTermDef A : " + m_fileName);
+    const unsigned int identTerme = m_file.getInt4();
+    if (identTerme != ident) 
+        throw NindTermIndexException("NindTermIndex::getTermDef B : " + m_fileName);
+    const unsigned int longueurDonnejes = m_file.getInt3();
+    //positionne la fin de buffer en fonction de la longueur effective des donnejesTerme
+    m_file.setEndInBuffer(longueurDonnejes);
+    //<flagCg> <catejgorie> <frejquenceTerme> <nbreDocs> <listeDocuments>
+    while (!m_file.endOfInBuffer()) {
+        if (m_file.getInt1() != FLAG_CG) 
+            throw NindTermIndexException("NindTermIndex::getTermDef C : " + m_fileName);
+        const unsigned char catejgorie = m_file.getInt1();
+        const unsigned int frejquenceTerme = m_file.getUIntLat();
+        const unsigned int nbreDocs = m_file.getUIntLat();
+        termDef.push_back(TermCG(catejgorie, frejquenceTerme));
+        struct TermCG &termCG = termDef.back();
+        list<Document> &documents = termCG.documents;
+        unsigned int identDocument = 0;         //pour calculer le no de doc absolu avec la numerotation relative
+        for (unsigned int it = 0; it != nbreDocs; it++) {
+            //<identDocRelatif> <frejquenceDoc>
+            identDocument += m_file.getUIntLat();
+            const unsigned int frejquenceDoc = m_file.getUIntLat();
+            documents.push_back(Document(identDocument, frejquenceDoc));
         }
-        return true;
     }
-    catch (FileException &exc) {
-        cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
-        throw NindTermIndexException(m_fileName);
-    }
+    return true;
+}
+////////////////////////////////////////////////////////////
+//brief Read specifics as a list of words
+//param specifics list to receive all specifics */
+void NindTermIndex::getSpecificWords(list<unsigned int> &specifics)
+{
+    //raz
+    specifics.clear();
+    //lit les spejcifiques sur le fichier
+    getSpecifics();
+    for (unsigned int count = 0; count != m_specificsNumber; count++)
+        specifics.push_back(m_file.getInt4());  
 }
 ////////////////////////////////////////////////////////////
 //brief Write a full term definition as as a list of structures
 //param ident ident of term
 //param termDef structure containing all datas of the specified term */
-//param lexiconIdentification unique identification of lexicon */
+//param specifics list of specific unsigned int
+//param fileIdentification unique identification of lexicon */
 void NindTermIndex::setTermDef(const unsigned int ident,
                                const list<struct TermCG> &termDef,
-                               const Identification &lexiconIdentification)
+                               const Identification &fileIdentification,
+                               const list<unsigned int> &specifics)
 {
-    try {
-        //1) verifie que le terme n'est pas en dehors du dernier bloc d'indirection
-        //il faut le faire maintenant parce que le buffer d'ecriture est unique
-        checkExtendIndirection(ident, lexiconIdentification);
-        
-        //effacement ?
-        if (termDef.size() == 0) {
-            //efface dans le fichier
-            m_file.createBuffer(0); 
-            setDefinition(ident, lexiconIdentification);
-            return;
-        }       
-        //2) calcule la taille maximum du buffer d'ecriture
-        //<flagDefinition=17> <identifiantTerme> <longueurDonnees> <donneesTerme>
-        unsigned int tailleMaximum = TETE_DEFINITION;   
-        for (list<struct TermCG>::const_iterator it1 = termDef.begin(); it1 != termDef.end(); it1++) {
-            //<flagCg> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
-            //<identDocRelatif> <frequenceDoc>
-            //le buffer est maximise pour écrire l'identification a la fin
-            tailleMaximum += TETE_DEFINITION_MAXIMUM + (*it1).documents.size()*TAILLE_DOC_MAXIMUM + TAILLE_IDENTIFICATION;        
-            //il ne doit pas etre plus petit que le minimum 
-            if (tailleMaximum < TAILLE_BUFFER_MINIMUM) tailleMaximum = TAILLE_BUFFER_MINIMUM;
-        }
-        //3) forme le buffer a ecrire sur le fichier
-        m_file.createBuffer(tailleMaximum); 
-        //<flagDefinition=17> <identifiantTerme> <longueurDonnees> <donneesTerme>
-        m_file.putInt1(FLAG_DEFINITION);
-        m_file.putInt3(ident);
-        m_file.putInt3(0);         //la taille des donnees sera ecrite plus tard, quand elle sera connue
-        for (list<struct TermCG>::const_iterator it1 = termDef.begin(); it1 != termDef.end(); it1++) {
-            //<flagCg> <categorie> <frequenceTerme> <nbreDocs> <listeDocuments>
-            m_file.putInt1(FLAG_CG);
-            m_file.putInt1((*it1).cg);
-            m_file.putUIntLat((*it1).frequency);
-            const list<struct Document> &documents = (*it1).documents;
-            m_file.putUIntLat(documents.size());
-            unsigned int identPrec = 0;             //pour mettre les identifiants de documents en relatif
-            for (list<struct Document>::const_iterator it2 = documents.begin(); it2 != documents.end(); it2++) {
-                //<identDocRelatif> <frequenceDoc>
-                m_file.putUIntLat((*it2).ident - identPrec);
-                m_file.putUIntLat((*it2).frequency);
-                identPrec = (*it2).ident;
-            }
-        }
-        //ecrit la taille reelle du buffer
-        const unsigned int longueurDonnees = m_file.getOutBufferSize() - TETE_DEFINITION;
-        m_file.putInt3(longueurDonnees, OFFSET_LONGUEUR);  //la taille dans la trame
-        //4) ecrit la definition du terme et gere le fichier
-        setDefinition(ident, lexiconIdentification);
+    //1) verifie que le terme n'est pas en dehors du dernier bloc d'indirection
+    //il faut le faire maintenant parce que le buffer d'ecriture est unique
+    checkExtendIndirection(ident, fileIdentification);
+    
+    //effacement ?
+    if (termDef.size() == 0) {
+        //efface dans le fichier en l'ejcrivant vide
+        m_file.createBuffer(getSpecificsAndIdentificationSize()); 
+        //ejcrit les spejcifiques et l'identification
+        writeSpecificsAndIdentification(specifics, fileIdentification);
+        setDefinition(ident);
+        return;
+    }       
+    //2) calcule la taille maximum du buffer d'ecriture
+    //<flagDejfinition=17> <identifiantTerme> <longueurDonnejes> <donnejesTerme>
+    unsigned int tailleMaximum = TAILLE_TESTE_DEJFINITION + getSpecificsAndIdentificationSize();    
+    for (list<struct TermCG>::const_iterator it1 = termDef.begin(); it1 != termDef.end(); it1++) {
+        //<flagCg> <catejgorie> <frejquenceTerme> <nbreDocs> <listeDocuments>
+        //<identDocRelatif> <frejquenceDoc>
+        //le buffer est maximise pour écrire l'identification a la fin
+        tailleMaximum += TAILLE_TESTE_DEJFINITION_MAXIMUM + 
+                            (*it1).documents.size()*TAILLE_DOC_MAXIMUM;
+        //il ne doit pas etre plus petit que le minimum 
+        if (tailleMaximum < TAILLE_BUFFER_MINIMUM) tailleMaximum = TAILLE_BUFFER_MINIMUM;
     }
-    catch (FileException &exc) {
-        cerr<<"EXCEPTION :"<<exc.m_fileName<<" "<<exc.what()<<endl; 
-        throw NindTermIndexException(m_fileName);
+    //3) forme le buffer a ecrire sur le fichier
+    m_file.createBuffer(tailleMaximum); 
+    //<flagDejfinition=17> <identifiantTerme> <longueurDonnejes> <donnejesTerme>
+    m_file.putInt1(FLAG_DEJFINITION);
+    m_file.putInt4(ident);
+    m_file.putInt3(0);         //la taille des donnees sera ecrite plus tard, quand elle sera connue
+    for (list<struct TermCG>::const_iterator it1 = termDef.begin(); it1 != termDef.end(); it1++) {
+        //<flagCg> <catejgorie> <frejquenceTerme> <nbreDocs> <listeDocuments>
+        m_file.putInt1(FLAG_CG);
+        m_file.putInt1((*it1).cg);
+        m_file.putUIntLat((*it1).frequency);
+        const list<struct Document> &documents = (*it1).documents;
+        m_file.putUIntLat(documents.size());
+        unsigned int identPrec = 0;             //pour mettre les identifiants de documents en relatif
+        for (list<struct Document>::const_iterator it2 = documents.begin(); it2 != documents.end(); it2++) {
+            //<identDocRelatif> <frejquenceDoc>
+            m_file.putUIntLat((*it2).ident - identPrec);
+            m_file.putUIntLat((*it2).frequency);
+            identPrec = (*it2).ident;
+        }
     }
+    //ecrit la taille reelle du buffer
+    const unsigned int longueurDonnejes = m_file.getOutBufferSize() - TAILLE_TESTE_DEJFINITION;
+    m_file.putInt3(longueurDonnejes, OFFSET_LONGUEUR);  //la taille dans la trame
+    //calcule le nombre d'extra octets ah mettre dans le buffer pour atteindre la taille minimum
+    int extra = m_file.getOutBufferSize() - TAILLE_DEJFINITION_MINIMUM;
+    while (extra++ < 0) m_file.putInt1(0);
+    //4) ejcrit les spejcifiques et l'identification
+    writeSpecificsAndIdentification(specifics, fileIdentification);
+    setDefinition(ident);
+}
+////////////////////////////////////////////////////////////
+//brief write specifics footer and identification into write buffer
+//param specifics list of specific unsigned int
+//param fileIdentification unique identification of file */
+void NindTermIndex::writeSpecificsAndIdentification(const list<unsigned int> &specifics,
+                                                    const Identification &fileIdentification)
+{
+    //controsle de la taille des spejcifiques
+    if (specifics.size() != m_specificsNumber) 
+        throw NindTermIndexException("NindTermIndex::writeSpecificsAndIdentification" + m_fileName);
+    writeSpecificsHeader();
+    //{ <valeur> }
+    for(list<unsigned int>::const_iterator specIt = specifics.begin(); specIt != specifics.end(); specIt++)
+        m_file.putInt4(*specIt);
+    writeIdentification(fileIdentification);
 }
 ////////////////////////////////////////////////////////////

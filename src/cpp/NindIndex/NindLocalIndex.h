@@ -7,9 +7,9 @@
 // Cette classe gere la complexite du fichier des index locaux qui doit rester coherent pour ses lecteurs
 // pendant que son ecrivain l'enrichit en fonction des nouvelles indexations.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2014
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2015 LATECON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -37,11 +37,11 @@ class DLLExportLexicon NindLocalIndex : public NindIndex {
 public:
 
     /**\brief Creates NindTermIndex with a specified name associated with.
-    *\param fileName absolute path file name
+    *\param fileNameExtensionLess absolute path file name without extension
     *\param isLocalIndexWriter true if localIndex writer, false if localIndex reader  
     *\param lexiconIdentification unique identification of lexicon 
     *\param indirectionBlocSize number of entries in a single indirection block */
-    NindLocalIndex(const std::string &fileName,
+    NindLocalIndex(const std::string &fileNameExtensionLess,
                    const bool isLocalIndexWriter,
                    const Identification &lexiconIdentification,
                    const unsigned int indirectionBlocSize = 0);
@@ -89,20 +89,21 @@ public:
     /**\brief Write a full document as a list of terms whith their localisations
     *\param ident ident of doc
     *\param localDef structure containing all datas of the specified doc . empty when deletion
-    *\param lexiconIdentification unique identification of lexicon */
+    *\param fileIdentification unique identification of lexicon */
     void setLocalDef(const unsigned int ident,
                      const std::list<struct Term> &localDef,
-                     const Identification &lexiconIdentification);
+                     const Identification &fileIdentification);
     
     /**\brief number of documents in the collection 
      * \return number of documents in the collection */
-    unsigned int getDocCount(); 
+    unsigned int getDocCount() ; 
+    
 
 private:
-    /**\brief read specific counts from termindex file. 
-     * Synchronization between writer and readers is up to application */
-    void synchronizeInternalCounts();
-    
+    //brief write specifics footer and identification into write buffer
+    //param fileIdentification unique identification of file */
+    void writeSpecificsAndIdentification(const Identification &fileIdentification);
+
     //Rejcupehre l'identifiant interne 
     unsigned int getInternalIdent(const unsigned int ident);
     
@@ -110,8 +111,6 @@ private:
     void fillDocIdTradExtInt(const unsigned int intIdMin,
                              const unsigned int intIdMax);
    
-    //mejmorisation identification fichier
-    Identification m_identification;
     //map de traduction des identifiants externes vers les identifiants internes
     std::map<unsigned int, unsigned int> m_docIdTradExtInt;
     //max des identifiants internes, pour la numejrotation

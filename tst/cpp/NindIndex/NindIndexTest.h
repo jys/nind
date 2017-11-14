@@ -40,14 +40,12 @@ public:
     /**\brief Get ident number of supplied cg string
     *\param cg grammatical category as string
     *\return ident number */
-    unsigned char getCgIdent(const std::string &cg)
-        throw(EncodeErrorException);
+    unsigned char getCgIdent(const std::string &cg);
 
     /**\brief Get cg string of supplied ident number
     *\param ident ident number
     *\return grammatical category as string */
-    std::string getCgStr(const unsigned char ident)
-        throw(DecodeErrorException);
+    std::string getCgStr(const unsigned char ident);
         
     /**\brief structure of a word */
     struct WordDesc {
@@ -66,7 +64,6 @@ public:
     static void getWords(const std::string &dumpLine, 
                          unsigned int &noDoc, 
                          std::list<struct WordDesc> &wordsList);
-//                         std::list<std::pair<std::string, std::string> > &wordsList);
     
     /**\brief split words into single words
      * \param word composed word with "#"

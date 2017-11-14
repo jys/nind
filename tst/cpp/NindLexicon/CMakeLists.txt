@@ -8,7 +8,7 @@ SET(NindLexicon_testEcrivain_SRCS
 
 add_executable(NindLexicon_testEcrivain ${NindLexicon_testEcrivain_SRCS})
 
-target_link_libraries(NindLexicon_testEcrivain NindIndexTest NindLexicon NindBasics)
+target_link_libraries(NindLexicon_testEcrivain NindIndex_litDumpS2 NindIndexTest NindLexicon NindBasics)
 
 install(TARGETS NindLexicon_testEcrivain DESTINATION bin)
 

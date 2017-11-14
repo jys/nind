@@ -6,9 +6,9 @@
 // Cette classe gere les comptages necessaires a Amose ainsi que les caches pour les acces
 // multiples au meme terme du fichier inverse.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2015
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -22,24 +22,27 @@
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
+#define NOMBRE_COMPTEURS 8
+////////////////////////////////////////////////////////////
 //brief Creates NindTermAmose with a specified name associated with.
-//param fileName absolute path file name
+//param fileNameExtensionLess absolute path file name without extension
 //param isTermIndexWriter true if termIndex writer, false if termIndex reader  */
 //param lexiconIdentification unique identification of lexicon */
 //param indirectionBlocSize number of entries in a single indirection block */
-NindTermAmose::NindTermAmose(const string &fileName,
+NindTermAmose::NindTermAmose(const string &fileNameExtensionLess,
                              const bool isTermIndexWriter,
                              const Identification &lexiconIdentification,
                              const unsigned int indirectionBlocSize):
-    NindTermIndex(fileName, 
+    NindTermIndex(fileNameExtensionLess, 
                   isTermIndexWriter, 
                   lexiconIdentification,
+                  NOMBRE_COMPTEURS,
                   indirectionBlocSize),
     m_uniqueTermCount({0, 0, 0, 0}),
     m_termOccurrences({0, 0, 0, 0})
 {
     //commence par restaurer les compteurs s'ils existent sur le fichier termindex
-    synchronizeInternalCounts();
+    readCounts();
 }
 ////////////////////////////////////////////////////////////
 NindTermAmose::~NindTermAmose()
@@ -50,11 +53,11 @@ NindTermAmose::~NindTermAmose()
 //param ident ident of term
 //param type type of term (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY) 
 //param newDocuments list of documents ids + frequencies where term is in 
-//param lexiconIdentification unique identification of lexicon */
+//param fileIdentification unique identification of file */
 void NindTermAmose::addDocsToTerm(const unsigned int ident,
                                   const AmoseTypes type,
                                   const list<Document> &newDocuments,
-                                  const Identification &lexiconIdentification)
+                                  const Identification &fileIdentification)
 {
     //rejcupehre la dejfinition de ce terme
     list<TermCG> termDef;
@@ -69,19 +72,17 @@ void NindTermAmose::addDocsToTerm(const unsigned int ident,
     }
     //travaille sur l'unique ejlejment
     TermCG &termcg = termDef.front();
-    list<Document> &documents = termcg.documents;
+    list<Document> &documents = termcg.documents;       //documents dejjah lah
     //ajoute tous les documents
     for (list<Document>::const_iterator itdoc = newDocuments.begin(); itdoc != newDocuments.end(); itdoc++) {
-        const Document &document = (*itdoc);
-        //la frejquence
-        unsigned int frequency = document.frequency;
+        const Document &document = (*itdoc);            //document ah ajouter
+        unsigned int frequency = document.frequency;    //sa frejquence
         //trouve la place dans la liste ordonnee
         list<NindTermIndex::Document>::iterator it2 = documents.begin(); 
         while (it2 != documents.end()) {
             //deja dans la liste, met ah jour la frejquence
             if ((*it2).ident == document.ident) {
-                frequency -= (*it2).frequency;
-                (*it2).frequency = document.frequency;
+                (*it2).frequency += frequency;
                 break;
             }
             //insere a l'interieur de la liste
@@ -100,20 +101,18 @@ void NindTermAmose::addDocsToTerm(const unsigned int ident,
         termcg.frequency += frequency;
     }
     //ejcrit le rejsultat sur le fichier
-    setTermDef(ident, termDef, lexiconIdentification);  
-    //ejcrit les novelles valeurs des compteurs
-    saveInternalCounts(lexiconIdentification);
+    setTermDef(ident, termDef, fileIdentification, setCountsAsList());  
 }
 ////////////////////////////////////////////////////////////
 //brief remove doc reference from the specified term
 //param ident ident of term
 //param type type of term (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY) 
 //param documentId id of document to remove
-//param lexiconIdentification unique identification of lexicon */
+//param fileIdentification unique identification of file */
 void NindTermAmose::removeDocFromTerm(const unsigned int ident,
                                       const AmoseTypes type,
                                       const unsigned int documentId,
-                                      const Identification &lexiconIdentification)
+                                      const Identification &fileIdentification)
 {
     //rejcupehre la dejfinition de ce terme
     list<TermCG> termDef;
@@ -142,37 +141,11 @@ void NindTermAmose::removeDocFromTerm(const unsigned int ident,
             termDef.clear();        
         }
         //terminej, ejcrit la nouvelle dejfinition
-        setTermDef(ident, termDef, lexiconIdentification);  
-        //ejcrit les novelles valeurs des compteurs
-        saveInternalCounts(lexiconIdentification);
-        return;
+        setTermDef(ident, termDef, fileIdentification, setCountsAsList());  
+        break;
     }
     //si document pas trouvej, rien n'est fait
 }   
-////////////////////////////////////////////////////////////
-//brief read specific counts from termindex file. 
-//Synchronization between writer and readers is up to application */
-void NindTermAmose::synchronizeInternalCounts()
-{
-    //rejcupehre la dejfinition de ce terme
-    list<TermCG> termDef;
-    getTermDef(0, termDef);
-    //si le terme n'existe pas, on ne fait rien
-    if (termDef.size() == 0) return;
-    //travaille sur l'unique ejlejment
-    CountsStruct &countsStruct = termDef.front();
-    list<Counts> &counts = countsStruct.documents;
-    //remplit les compteurs avec la structure
-    list<Counts>::const_iterator itcount = counts.begin();
-    m_uniqueTermCount[ALL] = (*itcount).ident;
-    m_termOccurrences[ALL] = (*itcount++).frequency;
-    m_uniqueTermCount[SIMPLE_TERM] = (*itcount).ident;
-    m_termOccurrences[SIMPLE_TERM] = (*itcount++).frequency;
-    m_uniqueTermCount[MULTI_TERM] = (*itcount).ident;
-    m_termOccurrences[MULTI_TERM] = (*itcount++).frequency;
-    m_uniqueTermCount[NAMED_ENTITY] = (*itcount).ident;
-    m_termOccurrences[NAMED_ENTITY] = (*itcount++).frequency;
-}
 ////////////////////////////////////////////////////////////
 //brief Read the list of documents where term is indexed
 //frequencies are not returned
@@ -214,6 +187,7 @@ unsigned int NindTermAmose::getDocFreq(const unsigned int termId)
 //return number of unique terms of specified type into the base */
 unsigned int NindTermAmose::getUniqueTermCount(const AmoseTypes type)
 {
+    synchronizeCounts();
     return m_uniqueTermCount[type];
 }
 ////////////////////////////////////////////////////////////
@@ -222,27 +196,53 @@ unsigned int NindTermAmose::getUniqueTermCount(const AmoseTypes type)
 //return number  of terms of specified type into the base */
 unsigned int NindTermAmose::getTermOccurrences(const AmoseTypes type)
 {
-    synchronizeInternalCounts();
+    synchronizeCounts();
     return m_termOccurrences[type];
 }
 ////////////////////////////////////////////////////////////
-//brief write specific counts on termindex file
-//synchronization between writer and readers is up to application */
-    void NindTermAmose::saveInternalCounts(const Identification &lexiconIdentification)
+//brief read specific counts from termindex file if needed. 
+    void NindTermAmose::synchronizeCounts()
 {
-    //les compteurs sont sauvegardejs sur le fichier termindex comme des termes
-    list<CountsStruct> termDef;
-    //creje un ejlejment vide
-    termDef.push_back(CountsStruct());
-    //travaille sur l'unique ejlejment
-    CountsStruct &countsStruct = termDef.front();
-    list<Counts> &counts = countsStruct.documents;
-    //remplit la structure avec les compteurs
-    counts.push_back(Counts(m_uniqueTermCount[ALL], m_termOccurrences[ALL]));
-    counts.push_back(Counts(m_uniqueTermCount[SIMPLE_TERM], m_termOccurrences[SIMPLE_TERM]));
-    counts.push_back(Counts(m_uniqueTermCount[MULTI_TERM], m_termOccurrences[MULTI_TERM]));
-    counts.push_back(Counts(m_uniqueTermCount[NAMED_ENTITY], m_termOccurrences[NAMED_ENTITY]));
-    //ejcrit comme term 0
-    setTermDef(0, termDef, lexiconIdentification);
+    //l'ejcrivain est par dejfinition dejjah synchronisej
+    if (m_isWriter) return;
+    //pour le lecteur, lit systejmatiquement sur le fichier
+    readCounts();
+}
+
+////////////////////////////////////////////////////////////
+//brief read specific counts from termindex file. 
+    void NindTermAmose::readCounts()
+{
+    //rejcupehre la liste des spejcifiques
+    list<unsigned int> spejcifiques;
+    getSpecificWords(spejcifiques);
+    //charge les compteurs
+    list<unsigned int>::const_iterator specIt = spejcifiques.begin();
+    m_uniqueTermCount[ALL] = *specIt++;
+    m_termOccurrences[ALL] = *specIt++;
+    m_uniqueTermCount[SIMPLE_TERM] = *specIt++;
+    m_termOccurrences[SIMPLE_TERM] = *specIt++;
+    m_uniqueTermCount[MULTI_TERM] = *specIt++;
+    m_termOccurrences[MULTI_TERM] = *specIt++;
+    m_uniqueTermCount[NAMED_ENTITY] = *specIt++;
+    m_termOccurrences[NAMED_ENTITY] = *specIt++;
 }
 ////////////////////////////////////////////////////////////
+//brief set specific counts as list 
+//return counts as a list of words */
+    list<unsigned int> NindTermAmose::setCountsAsList()
+{
+    list<unsigned int> result;
+    result.push_back(m_uniqueTermCount[ALL]);
+    result.push_back(m_termOccurrences[ALL]);
+    result.push_back(m_uniqueTermCount[SIMPLE_TERM]);
+    result.push_back(m_termOccurrences[SIMPLE_TERM]);
+    result.push_back(m_uniqueTermCount[MULTI_TERM]);
+    result.push_back(m_termOccurrences[MULTI_TERM]);
+    result.push_back(m_uniqueTermCount[NAMED_ENTITY]);
+    result.push_back(m_termOccurrences[NAMED_ENTITY]);
+    return result;
+}
+////////////////////////////////////////////////////////////
+    
+    

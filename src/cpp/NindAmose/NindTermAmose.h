@@ -6,9 +6,9 @@
 // Cette classe gere les comptages necessaires a Amose ainsi que les caches pour les acces
 // multiples au meme terme du fichier inverse.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2015
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -35,11 +35,11 @@ class DLLExportLexicon NindTermAmose : public NindTermIndex {
 public:
 
     /** \brief Creates NindTermAmose with a specified name associated with.
-    *\param fileName absolute path file name
+    *\param fileNameExtensionLess absolute path file name without extension
     *\param isTermIndexWriter true if termIndex writer, false if termIndex reader  
     *\param lexiconIdentification unique identification of lexicon 
     *\param indirectionBlocSize number of entries in a single indirection block */
-    NindTermAmose(const std::string &fileName,
+    NindTermAmose(const std::string &fileNameExtensionLess,
                   const bool isTermIndexWriter,
                   const Identification &lexiconIdentification,
                   const unsigned int indirectionBlocSize = 0);
@@ -50,27 +50,22 @@ public:
     *\param ident ident of term
     *\param type type of term (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY)
     *\param newDocuments list of documents ids + frequencies where term is in 
-    *\param lexiconIdentification unique identification of lexicon */
+    *\param fileIdentification unique identification of file */
     void addDocsToTerm(const unsigned int ident,
                        const AmoseTypes type,
                        const std::list<Document> &newDocuments,
-                       const Identification &lexiconIdentification);
+                       const Identification &fileIdentification);
     
     /**\brief remove doc reference from the specified term
     *\param ident ident of term
     *\param type type of term (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY)
     *\param documentId id of document to remove
-    *\param lexiconIdentification unique identification of lexicon */
+    *\param fileIdentification unique identification of file */
     void removeDocFromTerm(const unsigned int ident,
                            const AmoseTypes type,
                            const unsigned int documentId,
-                           const Identification &lexiconIdentification);
+                           const Identification &fileIdentification);
 
-    /**\brief read specific counts from termindex file. 
-     * Synchronization between writer and readers is up to application 
-     *\param none */
-    void synchronizeInternalCounts();
-    
     /** \brief Read the list of documents where term is indexed
     * frequencies are not returned
     *\param termId ident of term
@@ -96,17 +91,21 @@ public:
     unsigned int getTermOccurrences(const AmoseTypes type);
     
 private:
-    /**\brief write specific counts on termindex file
-     * synchronization between writer and readers is up to application 
-    *\param lexiconIdentification unique identification of lexicon */
-    void saveInternalCounts(const Identification &lexiconIdentification);
+    /**\brief read specific counts from termindex file if needed. 
+     *\param none */
+    void synchronizeCounts();
+    
+    /**\brief read specific counts from termindex file. 
+     *\param none */
+    void readCounts();
+    
+    /**\brief set specific counts as list 
+    *\return counts as a list of words */
+    std::list<unsigned int> setCountsAsList();
     
     std::vector<unsigned int> m_uniqueTermCount;
     std::vector<unsigned int> m_termOccurrences;
     
-    //pour utiliser la structure commune pour sauvegarder les compteurs sur le fichier termindex
-    typedef Document Counts;
-    typedef TermCG CountsStruct;
 };
 ////////////////////////////////////////////////////////////
     } // end namespace

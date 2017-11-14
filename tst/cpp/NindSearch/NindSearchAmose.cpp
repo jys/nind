@@ -3,9 +3,9 @@
 //
 // Description: un petit moteur de recherche sur un lexique, fichier inverse et fichier des index locaux existants.
 //
-// Author: jys <jy.sage@orange.fr>, (C) LATECON 2016
+// Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
 //
-// Copyright: 2014-2016 LATECON. See LICENCE.md file that comes with this distribution
+// Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
 // NIND is free software: you can redistribute it and/or modify it under the terms of the 
 // GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -64,15 +64,13 @@ int main(int argc, char *argv[]) {
     try {
         //calcule les noms des fichiers lexique et inverse
         const string incompleteFileName = lexiconFileName.substr(0, lexiconFileName.find('.'));
-        const string termindexFileName = incompleteFileName + ".termindex";
-        const string localindexFileName = incompleteFileName + ".localindex";
         //le lexique lecteur
-        NindLexiconAmose nindLexicon(lexiconFileName, false);
+        NindLexiconAmose nindLexicon(incompleteFileName, false);
         const NindIndex::Identification identification = nindLexicon.getIdentification();
         //le fichier inverse lecteur
-        NindTermAmose nindTermAmose(termindexFileName, false, identification);
+        NindTermAmose nindTermAmose(incompleteFileName, false, identification);
         //le fichier des index locaux
-        NindLocalAmose nindLocalAmose(localindexFileName, false, identification);
+        NindLocalAmose nindLocalAmose(incompleteFileName, false, identification);
         cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;
         cout<<" ("<<NindDate::date(identification.lexiconTime)<<")"<<endl;
         //affiche les mesures globales pour les calculs de pertinence
