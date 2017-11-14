@@ -1,5 +1,5 @@
-add_subdirectory(NindLexicon)
+#add_subdirectory(NindLexicon)
 add_subdirectory(NindIndex)
-add_subdirectory(NindTests)
+#add_subdirectory(NindTests)
 add_subdirectory(NindSearch)
 add_subdirectory(NindAmose)

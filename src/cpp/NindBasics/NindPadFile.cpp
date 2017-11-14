@@ -75,10 +75,10 @@ NindPadFile::NindPadFile(const string &fileName,
     m_fileName(fileName),
     m_isWriter(isWriter),
     m_isExistingWriter(false),
+    m_entriesBlocksMap(),
     m_specificsSize(specificsSize),
     m_dataEntrySize(dataEntrySize),
-    m_dataEntriesBlocSize(dataEntriesBlocSize),
-    m_entriesBlocksMap()
+    m_dataEntriesBlocSize(dataEntriesBlocSize)
 {
     if (m_isWriter) {
         //si fichier ejcrivain, ouvre en ecriture + lecture

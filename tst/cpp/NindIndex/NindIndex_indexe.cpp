@@ -245,7 +245,7 @@ bool NindIndex_indexe::trouveDoc(const unsigned int noDoc,
         }
         it1++;
     }
-    if (it1 == termDef.end()) return false;
+    return false;
 }
 ////////////////////////////////////////////////////////////
 //brief Vejrifie que dans une dejfinition de terme, il y a bien le bon n° de doc avec la bonne cg

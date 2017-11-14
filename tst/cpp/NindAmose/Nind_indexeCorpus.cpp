@@ -54,8 +54,7 @@ static void splitWord(const string &lemma,
                       const unsigned int type,
                       const string &namedEntity,
                       list<string> &simpleWords);
-static void majInverse (const unsigned int id,
-                        const unsigned int noDoc,
+static void majInverse (const unsigned int noDoc,
                         const unsigned int freq,
                         list<NindTermIndex::TermCG> &termIndex);
 ////////////////////////////////////////////////////////////
@@ -145,7 +144,7 @@ int main(int argc, char *argv[]) {
                 //met a jour la definition du terme
                 nindTermIndex.getTermDef(idterm, termIndex);
                 //si le terme n'existe pas encore, la liste reste vide
-                majInverse(idterm, noDoc, freq, termIndex); 
+                majInverse(noDoc, freq, termIndex); 
                 //ecrit sur le fichier inverse
                 nindTermIndex.setTermDef(idterm, termIndex, identification, spejcifiques);
                 nbMajTerm +=1;
@@ -166,8 +165,7 @@ int main(int argc, char *argv[]) {
 }
 ////////////////////////////////////////////////////////////
 //met a jour une definition de fichier inverse
-static void majInverse (const unsigned int id,
-                        const unsigned int noDoc,
+static void majInverse (const unsigned int noDoc,
                         const unsigned int freq,
                         list<NindTermIndex::TermCG> &termIndex) 
 {

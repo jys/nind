@@ -43,7 +43,6 @@ NindAmose_litTexteAnalysej::~NindAmose_litTexteAnalysej()
 bool NindAmose_litTexteAnalysej::documentSuivant(unsigned int &noDoc)
 {
     string ligne;
-    unsigned int noDocB;
     while (getline(m_fichierTexteAnalysej, ligne)) {
         if (m_fichierTexteAnalysej.fail()) throw FormatFileException(m_nomFichierTexteAnalysej);
         if (ligne.empty()) continue;   //evacue ainsi les lignes vides

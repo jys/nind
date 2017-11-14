@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
             //vejrifie que tout est bien ejcrit et immejdiatement disponible
             //recupere l'index local du doc             
             list<NindLocalIndex::Term> localDefLect;
-            const bool trouvej = nindLocalAmoseLect.getLocalDef(noDoc, localDefLect);
+            nindLocalAmoseLect.getLocalDef(noDoc, localDefLect);
             if (localDef.size() == localDefLect.size()) nbLocalOk++;
             else nbLocalNok++;
             if (nindLocalAmose.getDocCount() == nindLocalAmoseLect.getDocCount()) nbNbdocOk++;

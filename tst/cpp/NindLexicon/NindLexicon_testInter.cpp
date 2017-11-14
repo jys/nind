@@ -65,8 +65,6 @@ int main(int argc, char *argv[]) {
         const size_t pos = docsFileName.find('.');
         const string lexiconFileName = docsFileName.substr(0, pos) + ".lexicon";
         //pour calculer le temps consomme
-        clock_t start, end;
-        double cpuTimeUsed;
 
         /////////////////////////////////////
         cout<<"1) vérifie que le fichier "<<lexiconFileName<<" est absent"<<endl;
@@ -138,7 +136,7 @@ int main(int argc, char *argv[]) {
         if (!isOk) return false;
         list<string> componants;
         componants.push_back("toto");
-        unsigned int id = nindLexiconLecteur.getId(componants);
+        nindLexiconLecteur.getId(componants);
         isOk = nindLexiconLecteur.integrityAndCounts(lexiconChar);
         displayChar(lexiconChar, "LECTEUR ");
         if (!isOk) return false;
@@ -161,7 +159,7 @@ int main(int argc, char *argv[]) {
         isOk = nindLexiconLecteur.integrityAndCounts(lexiconChar);
         displayChar(lexiconChar, "LECTEUR ");
         if (!isOk) return false;
-        id = nindLexiconLecteur.getId(componants);
+        nindLexiconLecteur.getId(componants);
         isOk = nindLexiconLecteur.integrityAndCounts(lexiconChar);
         displayChar(lexiconChar, "LECTEUR ");
         if (!isOk) return false;
@@ -172,7 +170,7 @@ int main(int argc, char *argv[]) {
         isOk = nindLexiconLecteur.integrityAndCounts(lexiconChar);
         displayChar(lexiconChar, "LECTEUR ");
         if (!isOk) return false;
-        id = nindLexiconLecteur.getId(componants);
+        nindLexiconLecteur.getId(componants);
         isOk = nindLexiconLecteur.integrityAndCounts(lexiconChar);
         displayChar(lexiconChar, "LECTEUR ");
         if (!isOk) return false;
@@ -194,7 +192,7 @@ int main(int argc, char *argv[]) {
         isOk = nindLexiconLecteur.integrityAndCounts(lexiconChar);
         displayChar(lexiconChar, "LECTEUR ");
         if (!isOk) return false;
-        id = nindLexiconLecteur.getId(componants);
+        nindLexiconLecteur.getId(componants);
         isOk = nindLexiconLecteur.integrityAndCounts(lexiconChar);
         displayChar(lexiconChar, "LECTEUR ");
         if (!isOk) return false;
@@ -229,7 +227,7 @@ static void fillWords(NindLexicon &nindLexiconEcrivain,
         list<string> componants;
         split(*wordsToInsertIt++, componants);
         count--;
-        const unsigned int id = nindLexiconEcrivain.addWord(componants);
+        nindLexiconEcrivain.addWord(componants);
     }
 }
 ////////////////////////////////////////////////////////////

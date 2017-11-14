@@ -48,14 +48,6 @@ static void displayHelp(char* arg0) {
 #define RED "\033[1;31m"
 #define BLA "\033[0m"
 ////////////////////////////////////////////////////////////
-static bool docTrouve(const unsigned int noDoc, 
-                      const unsigned int cg, 
-                      const list<NindTermIndex::TermCG> &termDef);
-static bool termeTrouve(const unsigned int id, 
-                        const unsigned int cg, 
-                        const list<pair<unsigned int, unsigned int> > localisation, 
-                        const list<NindTermIndex::TermCG> &termDef);
-////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
     setlocale( LC_ALL, "French" );
     if (argc<2) {displayHelp(argv[0]); return false;}

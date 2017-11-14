@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
             //rejcupehre le terme en clair pour avoir le type
             string lemma, namedEntity;
             AmoseTypes type;
-            const bool trouvej = nindLexicon.getWord(*itterm, lemma, type, namedEntity);
+            nindLexicon.getWord(*itterm, lemma, type, namedEntity);
             //efface le doc de la dejfinition du terme
             nindTermAmose.removeDocFromTerm(*itterm, type, docIdent, identification);
         }
