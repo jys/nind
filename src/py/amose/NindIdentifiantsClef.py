@@ -22,24 +22,26 @@ def usage():
     script = '$PY/' + path.basename(sys.argv[0])
     print ("""© l'ATEJCON.
 Programme de test de la classe NindIdentifiantsClef.
-Cette classe permet de convertir un identifiant Clef en identifiant nind
-et vice-versa. 
-Le programme de test convertit un fichier d'identifiants Clef en le fichier
-correspondant d'identifiants Nind ou l'inverse.
-Le fichier de sortie est nommé en fonction du fichier d'entrée.
+Cette classe permet de convertir un identifiant CLEF en identifiant NIND
+ou vice-versa. 
+Le programme de test convertit une suite d'identifiants fournis, soit
+à la console, soit dans un fichier, un identifiant par ligne.
+Les identifiants calculés sont affichés à la console. 
 
-usage   : %s <CLEF | NIND> <langue> <fichierEntrée>
+usage   : %s <CLEF | NIND> <langue> [ <fichierEntrée> ]
+exemple : cat ger-identPrpty.txt | %s NIND ger
 exemple : %s NIND ger ger-identPrpty.txt
 exemple : %s CLEF ger ger-identPrpty-NIND.txt
-"""%(script, script, script))
+"""%(script, script, script, script))
 
 
 def main():
     try:
-        if len(sys.argv) < 4 : raise Exception()
+        if len(sys.argv) < 3 : raise Exception()
         clefNind = sys.argv[1].lower()
         langue = sys.argv[2]
-        nomFichierEntreje = path.abspath(sys.argv[3])
+        if len(sys.argv) > 3 : nomFichierEntreje = path.abspath(sys.argv[3])
+        else: nomFichierEntreje = ''
         if clefNind not in ('nind', 'clef') : raise Exception('%s : NIND ou CLEF'%(clefNind))
         if langue not in ('fre', 'eng', 'spa', 'ger'): raise Exception('%s : langue inconnue'%(langue))
         traduit(nomFichierEntreje, langue, clefNind)
@@ -52,24 +54,20 @@ def main():
             raise
 
 def traduit(nomFichierEntreje, langue, clefNind):
-    m = re.match('(.*)(\.[^\.]*)',nomFichierEntreje)
-    if not m: raise Exception('%s : mauvais format de nom'%(nomFichierEntreje))
-    nomFichierSortie = m.group(1) + '-' + clefNind + m.group(2)
     #ouvre les fichiers 
-    fichierEntreje = codecs.open(nomFichierEntreje, 'r', 'utf-8')
-    fichierSortie = codecs.open(nomFichierSortie, 'w', 'utf-8')
+    if nomFichierEntreje == '': fichierEntreje = sys.stdin
+    else: fichierEntreje = codecs.open(nomFichierEntreje, 'r', 'utf-8')
     #init classe
     nindIdentifiantsClef = NindIdentifiantsClef(langue)
     compt = 0
     for ligne in fichierEntreje:
+        ligne = ligne.strip()
         if clefNind == 'nind': 
             num = int(nindIdentifiantsClef.tradVersNind(ligne))
-            fichierSortie.write('%10d\n'%(num))
-        else: fichierSortie.write('%s\n'%(nindIdentifiantsClef.tradVersClef(ligne)))
+            print ('%10d'%(num))
+        else: print ('%s'%(nindIdentifiantsClef.tradVersClef(ligne)))
         compt +=1
     fichierEntreje.close()
-    fichierSortie.close()
-    print ('%d identifiants générés dans %s'%(compt, path.basename(nomFichierSortie)))
     
 class NindIdentifiantsClef:
     def __init__(self, langue):

@@ -28,8 +28,8 @@ using namespace std;
 // <blocEnVrac>            ::= <blocDejfinition>
 //
 // <indirection>           ::= <offsetDejfinition> <longueurDejfinition> 
-// <offsetDejfinition>     ::= <Integer5>
-// <longueurDejfinition>   ::= <Integer3>
+// <offsetDejfinition>     ::= <Entier5>
+// <longueurDejfinition>   ::= <Entier3>
 //
 // <blocDejfinition>       ::= { <dejfinition> | <vide> }
 // <dejfinition>           ::= { <Octet> }

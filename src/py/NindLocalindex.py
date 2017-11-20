@@ -15,7 +15,7 @@ __version__ = "2.0.1"
 # GNU Less General Public License for more details.
 import sys
 from os import getenv, path
-from time import ctime
+from io import StringIO
 import codecs
 from NindPadFile import calculeRejpartition
 from NindIndex import NindIndex
@@ -24,16 +24,19 @@ def usage():
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
     else: script = sys.argv[0]
     print ("""© l'ATEJCON.
-Analyse un fichier localindex du système nind et affiche les stats. 
-Peut dumper nindlocalindex sur <fichier>-dump.txt
-Peut donner la liste des identifiants externes de tous les documents indexés
+o Analyse un fichier nindlocalindex du système nind et affiche les statistiques 
+o Peut dumper nindlocalindex sur <fichier>-dump.txt
+o Peut donner la liste des identifiants externes de tous les documents indexés
+o Peut afficher les données correspondant à un document spécifié par son 
+  identifiant externe
 Le format du fichier est défini dans le document LAT2017.JYS.470.
 
-usage   : %s <fichier> [ <analyse> | <dumpe> | <ident> ]
+usage   : %s <fichier> [ <analyse> | <dumpe> | <ident> | <affiche> <ident> ]
 exemple : %s FRE.nindlocalindex
 exemple : %s FRE.nindlocalindex dump
 exemple : %s FRE.nindlocalindex ident
-"""%(script, script, script, script))
+exemple : %s FRE.nindtermindex affi 3456
+"""%(script, script, script, script, script))
 
 
 def main():
@@ -42,6 +45,8 @@ def main():
         localindexFileName = path.abspath(sys.argv[1])
         action = 'analyse' 
         if len(sys.argv) > 2 : action = sys.argv[2]
+        identExterne = 0
+        if len(sys.argv) > 3 : identExterne = int(sys.argv[3])
         
         #la classe
         nindLocalindex = NindLocalindex(localindexFileName)
@@ -54,8 +59,11 @@ def main():
             print ('%d lignes écrites dans %s'%(nbLignes, outFilename))
         elif action.startswith('id'):
             listeIdentifiants = nindLocalindex.donneidentifiantsExternes()
+            listeIdentifiants.sort()
             #les affiche, un par ligne
-            for ident in listeIdentifiants: print (ident)
+            for (externe, interne) in listeIdentifiants: print (externe, ' <-> ', interne)
+        elif action.startswith('affi'):
+            print (nindLocalindex.afficheDocument(identExterne))
         else: raise Exception()
     except Exception as exc:
         if len(exc.args) == 0: usage()
@@ -68,22 +76,22 @@ def main():
 
 ############################################################
 # <dejfinition>           ::= <flagDejfinition=19> <identifiantDoc> <identifiantExterne> <longueurDonnejes> <donnejesDoc>
-# <flagDejfinition=19>    ::= <Integer1>
-# <identifiantDoc>        ::= <Integer3>
-# <identifiantExterne>    ::= <Integer4>
-# <longueurDonnejes>      ::= <Integer3>
+# <flagDejfinition=19>    ::= <Entier1>
+# <identifiantDoc>        ::= <Entier3>
+# <identifiantExterne>    ::= <Entier4>
+# <longueurDonnejes>      ::= <Entier3>
 # <donnejesDoc>           ::= { <donnejesTerme> }
 # <donnejesTerme>         ::= <identTermeRelatif> <catejgorie> <nbreLocalisations> <localisations>
-# <identTermeRelatif>     ::= <IntegerSLat>
-# <catejgorie>            ::= <Integer1>
-# <nbreLocalisations>     ::= <Integer1>
+# <identTermeRelatif>     ::= <EntierSLat>
+# <catejgorie>            ::= <Entier1>
+# <nbreLocalisations>     ::= <Entier1>
 # <localisations>         ::= { <localisationRelatif> <longueur> }
-# <localisationRelatif>   ::= <IntegerSLat>
-# <longueur>              ::= <Integer1>
+# <localisationRelatif>   ::= <EntierSLat>
+# <longueur>              ::= <Entier1>
 ##############################
 # <spejcifique>           ::= <maxIdentifiantInterne> <nombreDocuments>
-# <maxIdentifiantInterne> ::= <Integer4>
-# <nombreDocuments>       ::= <Integer4>
+# <maxIdentifiantInterne> ::= <Entier4>
+# <nombreDocuments>       ::= <Entier4>
 ############################################################
 
 FLAG_DEJFINITION = 19
@@ -273,8 +281,36 @@ class NindLocalindex(NindIndex):
 
     #######################################################################
     def donneidentifiantsExternes(self):
-        return list(self.docIdTradExtInt.keys())
+        return list(self.docIdTradExtInt.items())
 
+    #######################################################################
+    #dejcode les donnejes associejes ah un terme
+    def afficheDocument(self, noDocExterne):
+        rejsultat = StringIO()
+        #trouve l'identifiant interne
+        if noDocExterne not in self.docIdTradExtInt: return '%d : inconnu'%(noDocExterne)
+        noDocInterne = self.docIdTradExtInt[noDocExterne]
+        rejsultat.write('%07d/%07d:: '%(noDocInterne, noDocExterne))
+        #trouve les donnejes 
+        trouvej, longueurDonnejes, tailleExtension, identifiantExterne = self.__donneDonnejes(noDocInterne)
+        if not trouvej: longueurDonnejes = 0                #identifiant pas trouvej, document effacej
+        #examine les données
+        noTerme = localisationAbsolue = 0
+        finDonnejes = self.tell() + longueurDonnejes
+        while self.tell() < finDonnejes:
+            #<identTermeRelatif> <catejgorie> <nbreLocalisations> <localisations>
+            noTerme += self.litNombreSLat()
+            catejgorie = self.litNombre1()
+            nbreLocalisations = self.litNombre1()
+            rejsultat.write('[%d](%d)'%(noTerme, catejgorie))
+            localisationsList = []
+            for i in range (nbreLocalisations):
+                #<localisationRelatif> <longueur>
+                localisationAbsolue += self.litNombreSLat()
+                longueur = self.litNombre1()
+                localisationsList.append('%d(%d)'%(localisationAbsolue, longueur))
+            rejsultat.write('<%s> '%(','.join(localisationsList)))
+        return rejsultat.getvalue()
     #######################################################################
         
 if __name__ == '__main__':

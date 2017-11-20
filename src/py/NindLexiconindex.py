@@ -15,9 +15,8 @@ __version__ = "2.0.1"
 # GNU Less General Public License for more details.
 import sys
 from os import getenv, path
-from time import ctime
 import codecs
-import NindLateconFile
+import NindFile
 from NindPadFile import calculeRejpartition
 from NindIndex import NindIndex
 
@@ -25,11 +24,13 @@ def usage():
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
     else: script = sys.argv[0]
     print ("""© l'ATEJCON.
-Analyse un fichier nindlexiconindex du système nind et affiche les stats. 
-Peut dumper nindlexiconindex sur <fichier>-dump.txt
-Peut donner les identifiants de mots composés avec le maximum de composants
-Peut donner l'identifiant du mot spécifié
-Peut donner les mots simples qui "collisionnent" sur la même indirection
+o Analyse un fichier nindlexiconindex du système nind et donne les statistiques
+o Peut dumper nindlexiconindex sur <fichier>-dump.txt
+  Il s'agit de la structure interne du lexique
+o Peut donner les identifiants de mots composés avec le maximum de composants
+  et les clefs (les index) avec le maximum de collisions de haschage.
+o Peut donner l'identifiant du mot spécifié
+o Peut donner les mots simples qui "collisionnent" sur la même indirection
 Le format du fichier est défini dans le document LAT2017.JYS.470.
 
 usage   : %s <fichier> [ <analyse> | <dumpe> | <max> | <ident> <mot> | <collision> <index> ]
@@ -59,9 +60,12 @@ def main():
             outFile.close()
             print ('%d lignes écrites dans %s'%(nbLignes, outFilename))
         elif action.startswith('max'):
-            maximums = nindLexiconindex.donneMax(5)
-            for (nbreComposejs, identifiantS, index) in maximums:
+            composejs, collisions = nindLexiconindex.donneMax(5)
+            print ("   ident     index  nombre")
+            for (nbreComposejs, identifiantS, index) in composejs:
                 print ('%8d  %8d  (%d)'%(identifiantS, index, nbreComposejs))
+            for (nbreCollisions, index) in collisions:
+                print ("          %8d : %d"  %(index, nbreCollisions))
         elif action.startswith('id'):
             motsSimples = mot.split('_')
             print ('identifiant : ', nindLexiconindex.donneIdentifiant(motsSimples))
@@ -82,20 +86,18 @@ def main():
 
 ############################################################
 # <dejfinition>           ::= <flagDejfinition=13> <identifiantHash> <longueurDonnejes> <donnejesHash>
-# <flagDejfinition=13>    ::= <Integer1>
-# <identifiantHash>       ::= <Integer3>
-# <longueurDonnejes>      ::= <Integer3>
+# <flagDejfinition=13>    ::= <Entier1>
+# <identifiantHash>       ::= <Entier3>
+# <longueurDonnejes>      ::= <Entier3>
 # <donnejesHash>          ::= { <mot> }
 # <mot>                   ::= <motSimple> <identifiantS> <nbreComposejs> <composejs>
-# <motSimple>             ::= <longueurMot> <motUtf8>
-# <longueurMot>           ::= <Integer1>
-# <motUtf8>               ::= { <Octet> }
-# <identifiantS>          ::= <Integer4>
-# <nbreComposejs>         ::= <IntegerULat>
+# <motSimple>             ::= <MotUtf8>
+# <identifiantS>          ::= <Entier3>
+# <nbreComposejs>         ::= <EntierULat>
 # <composejs>             ::= { <composej> } 
 # <composej>              ::= <identifiantA> <identifiantRelC>
-# <identifiantA>          ::= <Integer4>
-# <identifiantRelC>       ::= <IntegerSLat>
+# <identifiantA>          ::= <Entier3>
+# <identifiantRelC>       ::= <EntierSLat>
 ##############################
 # <spejcifique>           ::= <vide>
 ############################################################
@@ -129,7 +131,7 @@ class NindLexiconindex(NindIndex):
         
     #trouve l'identifiant du mot
     def __donneIdentifiantIntermejdiaire(self, mot, sousMotId):
-        clefB = NindLateconFile.clefB(mot)
+        clefB = NindFile.clefB(mot)
         index = clefB % self.nombreIndirection
         #trouve les donnejes 
         trouvej, longueurDonnejes, tailleExtension = self.__donneDonnejes(index)
@@ -293,13 +295,16 @@ class NindLexiconindex(NindIndex):
         #trouve le max des identifiants
         maxIdent = self.donneMaxIdentifiant()
         composejs = []
+        collisions = []
         for index in range(maxIdent):
             #trouve les donnejes 
             trouvej, longueurDonnejes, tailleExtension = self.__donneDonnejes(index)
             if not trouvej: continue      #index pas trouve
             #examine les données
             finDonnejes = self.tell() + longueurDonnejes
+            nbreCollisions = 0
             while self.tell() < finDonnejes:
+                nbreCollisions +=1
                 #<motSimple> <identifiantS> <nbreComposejs> <composejs>
                 motSimple = self.litString()
                 identifiantS = self.litNombre4()
@@ -312,12 +317,16 @@ class NindLexiconindex(NindIndex):
                     #<identifiantA> <identifiantRelC>
                     self.litNombre4()
                     self.litNombreSLat()
-        return composejs
+            collisions.append((nbreCollisions, index))
+            collisions.sort()
+            collisions.reverse()
+            if len(collisions) > taille: collisions.pop()
+        return composejs, collisions
     
     #######################################################################
     #donne la clef d'accehs (pour deboguer)
     def donneClef(self, mot):
-        clefB = NindLateconFile.clefB(mot)
+        clefB = NindFile.clefB(mot)
         return clefB % self.nombreIndirection
         
     #######################################################################

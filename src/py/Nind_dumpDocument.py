@@ -15,37 +15,45 @@ __version__ = "2.0.1"
 # GNU Less General Public License for more details.
 import sys
 from os import getenv, path
-import NindLateconFile
 from NindRetrolexicon import NindRetrolexicon
 from NindLocalindex import NindLocalindex
-import NindLateconFile
+import NindFile
 
 def usage():
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
     else: script = sys.argv[0]
     print ("""© l'ATEJCON.
-Dumpe en clair un document préalablement indexé dans une base nind.
+Dumpe en clair un document préalablement indexé dans une base nind spécifiée
+par un de ses fichiers.
 Les termes apparaissent dans l'ordre, les localisations ne sont pas affichées.
 Le système nind est expliqué dans le document LAT2017.JYS.470.
 
-usage   : %s <fichier lexiconindex> <n° doc>
+usage   : %s <fichier nind> <n° doc>
 exemple : %s FRE.lexiconindex 9546
 """%(script, script))
 
 def main():
-    if len(sys.argv) < 3 :
-        usage()
+    try:
+        if len(sys.argv) < 3 : raise Exception()
+        lexiconindexFileName = path.abspath(sys.argv[1])
+        noDoc = int(sys.argv[2])
+        
+        #calcul des noms de fichiers (remplace l'extension)
+        nn = lexiconindexFileName.split('.')
+        nindlocalindexName = '.'.join(nn[:-1]) + '.nindlocalindex'
+        nindretrolexiconName = '.'.join(nn[:-1]) + '.nindretrolexicon'
+        
+        #les classes
+        nindLocalindex = NindLocalindex(nindlocalindexName)
+        nindRetrolexicon = NindRetrolexicon(nindretrolexiconName)
+    except Exception as exc:
+        if len(exc.args) == 0: usage()
+        else:
+            print ("******************************")
+            print (exc.args[0])
+            print ("******************************")
+            raise
         sys.exit()
-    lexiconindexFileName = path.abspath(sys.argv[1])
-    noDoc = int(sys.argv[2])
-    
-    #calcul des noms de fichiers (remplace l'extension)
-    nn = lexiconindexFileName.split('.')
-    localindexFileName = '.'.join(nn[:-1])+'.nindlocalindex'
-    
-    #ouvre les classes
-    nindRetrolexiconindex = NindRetrolexicon(lexiconindexFileName)
-    nindLocalindex = NindLocalindex(localindexFileName)
 
     #trouve l'identifiant interne
     if noDoc not in nindLocalindex.docIdTradExtInt: 
@@ -57,8 +65,11 @@ def main():
     termList = nindLocalindex.donneListeTermes(noDoc)
     resultat = []
     for (noTerme, categorie, localisationsList) in termList:
-        terme = nindRetrolexiconindex.donneMot(noTerme)
-        resultat.append('%s [%s]'%(terme, NindLateconFile.catNb2Str(categorie)))
+        terme = nindRetrolexicon.donneMot(noTerme)[0]
+        if categorie == 0:
+            resultat.append('%s'%(terme))
+        else:
+            resultat.append('%s [%s]'%(terme, NindFile.catNb2Str(categorie)))
     print (', '.join(resultat))
    
 

@@ -23,22 +23,24 @@
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
-// <dejfinition>           ::= <flagDejfinition=17> <identifiantTerme> <longueurDonnejes> <donnejesTerme>
-// <flagDejfinition=17>    ::= <Integer1>
-// <identifiantTerme>      ::= <Integer4>
-// <longueurDonnejes>      ::= <Integer3>
+// <dejfinition>           ::= <flagDejfinition=17> <identifiantTerme>
+//                             <longueurDonnejes> <donnejesTerme>
+// <flagDejfinition=17>    ::= <Entier1>
+// <identifiantTerme>      ::= <Entier3>
+// <longueurDonnejes>      ::= <Entier3>
 // <donnejesTerme>         ::= { <donnejesCG> }
-// <donnejesCG>            ::= <flagCg=61> <catejgorie> <frejquenceTerme> <nbreDocs> <listeDocuments>
-// <flagCg=61>             ::= <Integer1>
-// <catejgorie>            ::= <Integer1>
-// <frejquenceTerme>       ::= <IntegerULat>
-// <nbreDocs>              ::= <IntegerULat>
+// <donnejesCG>            ::= <flagCg=61> <catejgorie> <frejquenceTerme>
+//                             <nbreDocs> <listeDocuments>
+// <flagCg=61>             ::= <Entier1>
+// <catejgorie>            ::= <Entier1>
+// <frejquenceTerme>       ::= <EntierULat>
+// <nbreDocs>              ::= <EntierULat>
 // <listeDocuments>        ::= { <identDocRelatif> <frejquenceDoc> }
-// <identDocRelatif>       ::= <IntegerULat>
-// <frejquenceDoc>         ::= <IntegerULat>
+// <identDocRelatif>       ::= <EntierULat>
+// <frejquenceDoc>         ::= <EntierULat>
 ////////////////////////////////////////////////////////////
 // <spejcifique>           ::= { <valeur> }
-// <valeur>                ::= <Integer4>
+// <valeur>                ::= <Entier4>
 ////////////////////////////////////////////////////////////
 #define FLAG_DEJFINITION 17
 #define FLAG_CG 61

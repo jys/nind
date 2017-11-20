@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
         //vejrifie que le systehme de fichiers est cohejrent
         if (!NindFichiers::fichiersCohejrents(incompleteFileName, false, false)) {
             cout<<"Des anciens fichiers existent et sont incohérents!"<<endl;
-            cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".nind*"<<endl;
+            cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".nind{*index,retrolexicon}"<<endl;
             return false;
         }
         //pour calculer le temps consomme

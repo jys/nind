@@ -27,26 +27,26 @@ using namespace std;
 // <fichier>               ::= <tailleEntreje> <tailleSpejcifiques> { <blocIndexej> <blocEnVrac> } 
 //                             <blocSpejcifique> <blocIdentification> 
 //
-// <tailleEntreje>         ::= <Integer1>
-// <tailleSpejcifiques>    ::= <Integer3>
+// <tailleEntreje>         ::= <Entier1>
+// <tailleSpejcifiques>    ::= <Entier3>
 //
 // <blocIndexej>           ::= <flagIndexej=47> <addrBlocSuivant> <nombreIndex> { <donnejesIndexejes> }
-// <flagIndexej=47>        ::= <Integer1>
-// <addrBlocSuivant>       ::= <Integer5>
-// <nombreIndex>           ::= <Integer3>
+// <flagIndexej=47>        ::= <Entier1>
+// <addrBlocSuivant>       ::= <Entier5>
+// <nombreIndex>           ::= <Entier3>
 //
 // <donnejesIndexejes>     ::= { <Octet> }
 // <blocEnVrac>            ::= { <Octet> }
 //
 // <blocSpejcifique>       ::= <flagSpecifique=57> <spejcifiques> 
-// <flagSpecifique=57>     ::= <Integer1>
+// <flagSpecifique=57>     ::= <Entier1>
 // <spejcifique>           ::= { <Octet> }
 //
 // <blocIdentification>    ::= <flagIdentification=53> <maxIdentifiant> <identifieurUnique> 
-// <flagIdentification=53> ::= <Integer1>
-// <maxIdentifiant>        ::= <Integer4>
+// <flagIdentification=53> ::= <Entier1>
+// <maxIdentifiant>        ::= <Entier3>
 // <identifieurUnique>     ::= <dateHeure>
-// <dateHeure >            ::= <Integer4>
+// <dateHeure >            ::= <Entier4>
 ////////////////////////////////////////////////////////////
 #define FLAG_INDEXEJ 47
 #define FLAG_SPEJCIFIQUE 57

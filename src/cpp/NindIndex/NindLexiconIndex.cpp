@@ -25,20 +25,18 @@ using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
 // <dejfinition>           ::= <flagDejfinition=13> <identifiantHash> <longueurDonnejes> <donnejesHash>
-// <flagDejfinition=13>    ::= <Integer1>
-// <identifiantHash>       ::= <Integer3>
-// <longueurDonnejes>      ::= <Integer3>
+// <flagDejfinition=13>    ::= <Entier1>
+// <identifiantHash>       ::= <Entier3>
+// <longueurDonnejes>      ::= <Entier3>
 // <donnejesHash>          ::= { <mot> }
 // <mot>                   ::= <motSimple> <identifiantS> <nbreComposejs> <composejs>
-// <motSimple>             ::= <longueurMot> <motUtf8>
-// <longueurMot>           ::= <Integer1>
-// <motUtf8>               ::= { <Octet> }
-// <identifiantS>          ::= <Integer4>
-// <nbreComposejs>         ::= <IntegerULat>
+// <motSimple>             ::= <MotUtf8>
+// <identifiantS>          ::= <Entier3>
+// <nbreComposejs>         ::= <EntierULat>
 // <composejs>             ::= { <composej> } 
 // <composej>              ::= <identifiantA> <identifiantRelC>
-// <identifiantA>          ::= <Integer4>
-// <identifiantRelC>       ::= <IntegerSLat>
+// <identifiantA>          ::= <Entier3>
+// <identifiantRelC>       ::= <EntierSLat>
 ////////////////////////////////////////////////////////////
 // <spejcifique>           ::= <vide>
 ////////////////////////////////////////////////////////////
