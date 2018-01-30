@@ -15,6 +15,7 @@ Options default values are in parentheses.
                 some machines.
   -v version    <(val)|rev> version number is set either to the value set by  
                 config files or to the short git sha1
+  -G Generator  <(Ninja)|Unix|MSYS|NMake|VS> which cmake generator to use.
 EOF
 exit 1
 }
@@ -26,7 +27,7 @@ version="val"
 buildtype="all"
 resources="build"
 parallel="true"
-CMAKE_GENERATOR="Unix"
+CMAKE_GENERATOR="Ninja"
 
 while getopts ":a:m:n:p:v:G:" o; do
     case "${o}" in
@@ -53,7 +54,8 @@ while getopts ":a:m:n:p:v:G:" o; do
         G)
           CMAKE_GENERATOR=${OPTARG}
           echo "CMAKE_GENERATOR=$CMAKE_GENERATOR"
-          [[     "$CMAKE_GENERATOR" == "Unix"  || 
+          [[     "$CMAKE_GENERATOR" == "Ninja"  || 
+                 "$CMAKE_GENERATOR" == "Unix"  ||
                  "$CMAKE_GENERATOR" == "MSYS"  ||
                  "$CMAKE_GENERATOR" == "NMake" ||
                  "$CMAKE_GENERATOR" == "VS"
@@ -116,7 +118,12 @@ else
 fi
 
 
-if [[ $CMAKE_GENERATOR == "Unix" ]]; then
+if [[ $CMAKE_GENERATOR == "Ninja" ]]; then
+  make_cmd="ninja"
+  make_test=""
+  make_install="ninja install"
+  generator="Ninja"
+elif [[ $CMAKE_GENERATOR == "Unix" ]]; then
   make_cmd="make -j$j"
   make_test="make test"
   make_install="make install"
