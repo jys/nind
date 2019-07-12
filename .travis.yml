@@ -1,0 +1,69 @@
+sudo: required
+language: cpp
+cache: ccache
+branches:
+  except:
+  - /^\d\d\d\d\d\d\d\d\d\d\d\d\d\d-[\da-f]+$/
+
+services:
+- docker
+
+jobs:
+  include:
+    - stage: test
+      script: docker build --tag ubuntu18.04 --build-arg JOB_NUMBER=$TRAVIS_JOB_NUMBER -f ./Dockerfile-ubuntu18.04 . && docker run -t -d ubuntu18.04 && docker cp $(docker ps -n 1 -q):/usr/share/apps/nind/packages/ $HOME && ls $HOME/packages/
+      before_deploy:
+        git config --local user.name "Gael de Chalendar"
+        git config --local user.email "kleagg@gmail.com"
+        git tag "$(git log --date=iso  -1 | grep Date | sed -e 's/Date:\ *//' -e 's/\+.*//' -e 's/[- :]//g')-$(git log --format=%h --abbrev=8 -1)" || true
+      deploy:
+        provider: releases
+        api_key:
+          secure: F16J7J9a+VNEBwSiAksWxnF7c1M8Zg0+Tg8WGRRYy2p5aqR83Gj8/3M+SIPNw/Dzxj8+Sid1QkIZ42jISzoDKO3bJ0cX7ymqGy3bwqMMsue6l2TAa/heJKpaGroyLtjZRgD2pGtHigC8W1BOEz+5KhVBwWAYDF92TpluvyklGoA=
+        file_glob: true
+        file: $HOME/packages/*.deb
+        skip_cleanup: true
+        on:
+          repo: aymara/nind
+          tags: false
+          branches:
+            except:
+            - /^\d\d\d\d\d\d\d\d\d\d\d\d\d\d-[\da-f]+$/
+    -
+      script: docker build --tag ubuntu16.04 --build-arg JOB_NUMBER=$TRAVIS_JOB_NUMBER -f ./Dockerfile-ubuntu16.04 . && docker run -t -d ubuntu16.04 && docker cp $(docker ps -n 1 -q):/usr/share/apps/nind/packages/ $HOME && ls $HOME/packages/
+      before_deploy:
+        git config --local user.name "Gael de Chalendar"
+        git config --local user.email "kleagg@gmail.com"
+        git tag "$(git log --date=iso  -1 | grep Date | sed -e 's/Date:\ *//' -e 's/\+.*//' -e 's/[- :]//g')-$(git log --format=%h --abbrev=8 -1)" || true
+      deploy:
+        provider: releases
+        api_key:
+          secure: F16J7J9a+VNEBwSiAksWxnF7c1M8Zg0+Tg8WGRRYy2p5aqR83Gj8/3M+SIPNw/Dzxj8+Sid1QkIZ42jISzoDKO3bJ0cX7ymqGy3bwqMMsue6l2TAa/heJKpaGroyLtjZRgD2pGtHigC8W1BOEz+5KhVBwWAYDF92TpluvyklGoA=
+        file_glob: true
+        file: $HOME/packages/*.deb
+        skip_cleanup: true
+        on:
+          repo: aymara/nind
+          tags: false
+          branches:
+            except:
+            - /^\d\d\d\d\d\d\d\d\d\d\d\d\d\d-[\da-f]+$/
+    -
+      script: docker build --tag debian9.4 --build-arg JOB_NUMBER=$TRAVIS_JOB_NUMBER -f ./Dockerfile-debian9.4 . && docker run -t -d debian9.4 && docker cp $(docker ps -n 1 -q):/usr/share/apps/nind/packages/ $HOME && ls $HOME/packages/
+      before_deploy:
+        git config --local user.name "Gael de Chalendar"
+        git config --local user.email "kleagg@gmail.com"
+        git tag "$(git log --date=iso  -1 | grep Date | sed -e 's/Date:\ *//' -e 's/\+.*//' -e 's/[- :]//g')-$(git log --format=%h --abbrev=8 -1)" || true
+      deploy:
+        provider: releases
+        api_key:
+          secure: F16J7J9a+VNEBwSiAksWxnF7c1M8Zg0+Tg8WGRRYy2p5aqR83Gj8/3M+SIPNw/Dzxj8+Sid1QkIZ42jISzoDKO3bJ0cX7ymqGy3bwqMMsue6l2TAa/heJKpaGroyLtjZRgD2pGtHigC8W1BOEz+5KhVBwWAYDF92TpluvyklGoA=
+        file_glob: true
+        file: $HOME/packages/*.deb
+        skip_cleanup: true
+        on:
+          repo: aymara/nind
+          tags: false
+          branches:
+            except:
+            - /^\d\d\d\d\d\d\d\d\d\d\d\d\d\d-[\da-f]+$/
