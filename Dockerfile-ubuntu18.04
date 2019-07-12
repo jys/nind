@@ -2,7 +2,7 @@ FROM ubuntu:18.04
 
 # Setup
 RUN apt-get update -y -qq
-RUN apt-get install -y apt-utils file wget bzip2 git cmake cmake-data ninja-build lsb-release llvm build-essential clang clang-tidy clang-tools -qq
+RUN apt-get install -y locales bash coreutils apt-utils file wget bzip2 git cmake cmake-data ninja-build lsb-release llvm build-essential clang clang-tidy clang-tools -qq
 
 RUN update-alternatives --set cc /usr/bin/clang
 RUN update-alternatives --set c++ /usr/bin/clang++
