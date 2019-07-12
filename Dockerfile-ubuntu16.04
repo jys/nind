@@ -16,6 +16,5 @@ RUN cmake -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release ..
 RUN ninja package
 RUN install -D /src/nind/build/nind-0.1.0-Linux.deb /usr/share/apps/nind/packages/nind-0.1.0-ubuntu16.04.deb
 
-## install github-release to be able to deploy packages
-#RUN wget https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2 && tar xjf linux-amd64-github-release.tar.bz2 && cp bin/linux/amd64/github-release /usr/bin
-
+# install github-release to be able to deploy packages
+RUN /usr/bin/wget https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2 && /bin/tar xjf linux-amd64-github-release.tar.bz2 && /bin/cp bin/linux/amd64/github-release /usr/bin
