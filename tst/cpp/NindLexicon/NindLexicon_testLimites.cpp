@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
         end = clock();
         cpuTimeUsed = ((double) (end - start)) / CLOCKS_PER_SEC;
         cout<<cpuTimeUsed<<" secondes"<<endl;
-        bool isOk = nindLexicon.integrityAndCounts(lexiconChar);
+        nindLexicon.integrityAndCounts(lexiconChar);
         displayChar(lexiconChar, "VIDE ");
         cout<<"taper <RC> pour continuer"<<endl;
         string dummy;
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
             wordsNb++;
             list<string> componants;
             componants.push_back(string(charBuff));
-            const unsigned int id = nindLexicon.addWord(componants);
+            nindLexicon.addWord(componants);
             //memorise
             last10.push_back(string(charBuff));
             //tous les 10 mots simples, fabrique 10 000 mots composes
@@ -93,10 +93,10 @@ int main(int argc, char *argv[]) {
                     comps.push_back(*it1);
                     for (list<string>::const_iterator it2 = last10.begin(); it2 != last10.end(); it2++) {
                         comps.push_back(*it2);
-                        const unsigned int id = nindLexicon.addWord(comps); //100 mots de 2
+                        nindLexicon.addWord(comps); //100 mots de 2
                         for (list<string>::const_iterator it3 = last10.begin(); it3 != last10.end(); it3++) {
                             comps.push_back(*it3);
-                            const unsigned int id = nindLexicon.addWord(comps); //1000 mots de 3
+                            nindLexicon.addWord(comps); //1000 mots de 3
                         }
                     }
                 }
@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
             }
         }
         cout<<wordsNb<<" mots lus"<<endl;
-        isOk = nindLexicon.integrityAndCounts(lexiconChar);
+        nindLexicon.integrityAndCounts(lexiconChar);
         displayChar(lexiconChar, "PLEIN");
         cout<<"taper <RC> pour continuer"<<endl;
         cin>>dummy;

@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
         //vejrifie que le systehme de fichiers est cohejrent
         if (!NindFichiers::fichiersCohejrents(incompleteFileName, true, false)) {
             cout<<"Des anciens fichiers existent et sont incohérents!"<<endl;
-            cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".nind*"<<endl;
+            cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".nind{*index,retrolexicon}"<<endl;
             return false;
         }
         cout<<"Les termes sont bufferisés par paquets de "<<TERMS_BUFFER_SIZE<<" avant écriture."<<endl;

@@ -23,23 +23,24 @@
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
-// <dejfinition>           ::= <flagDejfinition=19> <identifiantDoc> <identifiantExterne> <longueurDonnejes> <donnejesDoc>
-// <flagDejfinition=19>    ::= <Integer1>
-// <identifiantDoc>        ::= <Integer3>
-// <identifiantExterne>    ::= <Integer4>
-// <longueurDonnejes>      ::= <Integer3>
+// <dejfinition>           ::= <flagDejfinition=19> <identifiantDoc> <identifiantExterne> 
+//                             <longueurDonnejes> <donnejesDoc>
+// <flagDejfinition=19>    ::= <Entier1>
+// <identifiantDoc>        ::= <Entier3>
+// <identifiantExterne>    ::= <Entier4>
+// <longueurDonnejes>      ::= <Entier3>
 // <donnejesDoc>           ::= { <donnejesTerme> }
 // <donnejesTerme>         ::= <identTermeRelatif> <catejgorie> <nbreLocalisations> <localisations>
-// <identTermeRelatif>     ::= <IntegerSLat>
-// <catejgorie>            ::= <Integer1>
-// <nbreLocalisations>     ::= <Integer1>
+// <identTermeRelatif>     ::= <EntierSLat>
+// <catejgorie>            ::= <Entier1>
+// <nbreLocalisations>     ::= <Entier1>
 // <localisations>         ::= { <localisationRelatif> <longueur> }
-// <localisationRelatif>   ::= <IntegerSLat>
-// <longueur>              ::= <Integer1>
+// <localisationRelatif>   ::= <EntierSLat>
+// <longueur>              ::= <Entier1>
 ////////////////////////////////////////////////////////////
 // <spejcifique>           ::= <maxIdentifiantInterne> <nombreDocuments>
-// <maxIdentifiantInterne> ::= <Integer4>
-// <nombreDocuments>       ::= <Integer4>
+// <maxIdentifiantInterne> ::= <Entier4>
+// <nombreDocuments>       ::= <Entier4>
 ////////////////////////////////////////////////////////////
 #define FLAG_DEJFINITION 19
 //<flagDejfinition=19>(1) <identifiantDoc>(3) <identifiantExterne>(4) = 8

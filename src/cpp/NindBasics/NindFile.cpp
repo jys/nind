@@ -21,6 +21,20 @@
 using namespace latecon::nindex;
 using namespace std;
 ////////////////////////////////////////////////////////////
+// <fichier>               ::= { <Entier1> | <Entier2> | <Entier3> | <Entier4> | <Entier5> | 
+//                              <EntierULat> | <EntierULat> |
+//                              <MotUtf8> | <Utf8> | <Octet> }
+// <MotUtf8>               ::= <longueur> <Utf8>
+// <longueur>              ::= <Entier1>
+// <Utf8>                  ::= { <Octet> }
+// <Entier1>               ::= <Octet>
+// <Entier2>               ::= <Octet> <Octet>
+// <Entier3>               ::= <Octet> <Octet> <Octet>
+// <Entier4>               ::= <Octet> <Octet> <Octet> <Octet>
+// <Entier5>               ::= <Octet> <Octet> <Octet> <Octet> <Octet>
+// <EntierULat>            ::= { <Octet> }
+// <EntierSLat>            ::= { <Octet> }
+////////////////////////////////////////////////////////////
 //brief Creates NindFile with a specified name associated with.
 //param fileName absolute path file name
 //param bufferSize size of writing buffer (0 if just reader) */

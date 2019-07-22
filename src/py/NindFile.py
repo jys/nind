@@ -22,10 +22,10 @@ import sys
 import os
 
 def usage():
-    print(sys.version)
+    #print(sys.version)
     print ("""© l'ATEJCON.
-Programme de test de la classe NindLateconFile.
-Cette classe permet l'accès aux fichiers binaires avec codages Latecon.
+Programme de test de la classe NindFile.
+Cette classe permet l'accès aux fichiers binaires avec codages Latejcon.
 Nind_testLateconNumber a écrit dans /tmp/Nind_testLateconNumber.lat la
 taille des données sur un entier 3 bits puis un nombre N sous 4 formes : 
 1) N en non signé, 2) N en signé, 3) -N en signé, 4) -N en non signé.
@@ -42,7 +42,7 @@ def main():
         sys.exit()
     latFileName = os.path.abspath(sys.argv[1])
     
-    latFile = NindLateconFile(latFileName)
+    latFile = NindFile(latFileName)
     #taille du fichier
     latFile.seek(0, 2)
     taille = latFile.tell()
@@ -86,9 +86,21 @@ def catNb2Str(cat):
     catList = ["", "ADJ", "ADV", "CONJ", "DET", "DETERMINEUR", "DIVERS", "DIVERS_DATE", "EXCLAMATION", "INTERJ", "NC", "NOMBRE", "NP", "PART", "PONCTU", "PREP", "PRON", "V", "DIVERS_PARTICULE", "CLASS", "AFFIX"]
     if cat >= len(catList): return ''
     return catList[cat]
-
 ######################################################################################
-class NindLateconFile:
+# <fichier>               ::= { <Entier1> | <Entier2> | <Entier3> | <Entier4> | <Entier5> | <EntierULat> | <EntierULat> |
+#                              <MotUtf8> | <Utf8> | <Octet> }
+# <MotUtf8>               ::= <longueur> <Utf8>
+# <longueur>              ::= <Entier1>
+# <Utf8>                  ::= { <Octet> }
+# <Entier1>               ::= <Octet>
+# <Entier2>               ::= <Octet> <Octet>
+# <Entier3>               ::= <Octet> <Octet> <Octet>
+# <Entier4>               ::= <Octet> <Octet> <Octet> <Octet>
+# <Entier5>               ::= <Octet> <Octet> <Octet> <Octet> <Octet>
+# <EntierULat>            ::= { <Octet> }
+# <EntierSLat>            ::= { <Octet> }
+######################################################################################
+class NindFile:
     def __init__(self, latFileName, enEjcriture = False):
         self.latFileName = latFileName
         if not enEjcriture:

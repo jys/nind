@@ -21,19 +21,20 @@ from NindPadFile import chercheVides
 from NindPadFile import calculeRejpartition
 
 def usage():
-    print(sys.version)
+    #print(sys.version)
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
     else: script = sys.argv[0]
     print ("""© l'ATEJCON.
-Analyse un fichier NindIndex du système nind et affiche les stats. 
-Peut donner l'offset dans le fichier et la longueur des données d'un index
-Les types de fichiers : lexiconindex, termindex, localindex
+o Analyse un fichier NindIndex du système nind et affiche les statistiques. 
+o Peut donner l'offset dans le fichier et la longueur des données 
+  correspondant à un identifiant.
+Les types de fichiers : nindlexiconindex, nindtermindex, nindlocalindex
 Le format du fichier est défini dans le document LAT2017.JYS.470.
 
 usage   : %s <fichier> [ <analyse> | <indirection> <index> ]
 exemple : %s FRE.termindex
 exemple : %s FRE.termindex indir 398892
-"""%(script, script))
+"""%(script, script, script))
 
 def main():
     try:
@@ -66,8 +67,8 @@ def main():
 # <blocEnVrac>            ::= <blocDejfinition>
 #
 # <indirection>           ::= <offsetDejfinition> <longueurDejfinition> 
-# <offsetDejfinition>     ::= <Integer5>
-# <longueurDejfinition>   ::= <Integer3>
+# <offsetDejfinition>     ::= <Entier5>
+# <longueurDejfinition>   ::= <Entier3>
 #
 # <blocDejfinition>       ::= { <dejfinition> | <vide> }
 # <dejfinition>           ::= { <Octet> }
@@ -133,8 +134,8 @@ class NindIndex(NindPadFile):
                 typesNonVidesList = list(typesNonVides.items())
                 typesVidesList.sort()
                 typesNonVidesList.sort()
-                print ("VIDES     de ", typesVidesList[:3], " à ", typesVidesList[-3:])
-                print ("NON VIDES de ", typesNonVidesList[:3], " à ", typesNonVidesList[-3:])
+                print ("VIDES     de ", typesVidesList[:3], " à ", typesVidesList[-1:])
+                print ("NON VIDES de ", typesNonVidesList[:3], " à ", typesNonVidesList[-1:])
         except Exception as exc: 
             cestBon = False
             if trace: print ('ERREUR :', exc.args[0])

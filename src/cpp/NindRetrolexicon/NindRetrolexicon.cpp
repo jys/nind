@@ -28,18 +28,15 @@ using namespace std;
 //
 // <dejfinitionMot>        ::= <motComposej> | <motSimple>
 // <motComposej>           ::= <flagComposej=31> <identifiantA> <identifiantS>
-// <flagComposej=31>       ::= <Integer1>
-// <identifiantA>          ::= <Integer4>
-// <identifiantS>          ::= <Integer4>
+// <flagComposej=31>       ::= <Entier1>
+// <identifiantA>          ::= <Entier3>
+// <identifiantS>          ::= <Entier3>
 // <motSimple>             ::= <flagSimple=37> <longueurMotUtf8> <adresseMotUtf8>
-// <flagSimple=37>         ::= <Integer1>
-// <longueurMotUtf8>       ::= <Integer1>
-// <adresseMotUtf8>        ::= <Integer5>
+// <flagSimple=37>         ::= <Entier1>
+// <longueurMotUtf8>       ::= <Entier1>
+// <adresseMotUtf8>        ::= <Entier5>
 //
-// <blocUtf8>              ::= { <motUtf8> }
-// <motUtf8>               ::= { <Octet> }
-//
-// <blocEnVrac>            ::= { <Octet> }
+// <blocUtf8>              ::= { <Utf8> }
 ////////////////////////////////////////////////////////////
 // <spejcifique>           ::= <vide>
 ////////////////////////////////////////////////////////////

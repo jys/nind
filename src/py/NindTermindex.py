@@ -15,7 +15,7 @@ __version__ = "2.0.1"
 # GNU Less General Public License for more details.
 import sys
 from os import getenv, path
-from time import ctime
+from io import StringIO
 import codecs
 from NindPadFile import calculeRejpartition
 from NindIndex import NindIndex
@@ -24,12 +24,16 @@ def usage():
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
     else: script = sys.argv[0]
     print ("""© l'ATEJCON.
-Analyse ou dumpe un fichier nindtermindex du système nind et affiche les stats. 
+o Analyse un fichier nindtermindex du système nind et affiche les statistiques. 
+o Peut dumper nindtermindex sur <fichier>-dump.txt
+o Peut afficher les données correspondant à un terme spécifié par son identifiant
 Le format du fichier est défini dans le document LAT2017.JYS.470.
 
-usage   : %s <fichier> [ <analyse> | <dumpe> ]
+usage   : %s <fichier> [ <analyse> | <dumpe> | <affiche> <ident> ]
+exemple : %s FRE.nindtermindex 
 exemple : %s FRE.nindtermindex dumpe
-"""%(script, script))
+exemple : %s FRE.nindtermindex affi 186201
+"""%(script, script, script, script))
 
 OFF = "\033[m"
 RED = "\033[1;31m"
@@ -40,6 +44,8 @@ def main():
         termindexFileName = path.abspath(sys.argv[1])
         action = 'analyse' 
         if len(sys.argv) > 2 : action = sys.argv[2]
+        terme = 0
+        if len(sys.argv) > 3 : terme = int(sys.argv[3])
         
         #la classe
         nindTermindex = NindTermindex(termindexFileName)
@@ -50,6 +56,8 @@ def main():
             nbLignes = nindTermindex.dumpeFichier(outFile)
             outFile.close()
             print ('%d lignes écrites dans %s'%(nbLignes, outFilename))
+        elif action.startswith('affi'):
+            print (nindTermindex.afficheTerme(terme))
         else: raise Exception()
     except Exception as exc:
         if len(exc.args) == 0: usage()
@@ -61,22 +69,24 @@ def main():
         sys.exit()
     
 ############################################################
-# <dejfinition>           ::= <flagDejfinition=17> <identifiantTerme> <longueurDonnejes> <donnejesTerme>
-# <flagDejfinition=17>    ::= <Integer1>
-# <identifiantTerme>      ::= <Integer4>
-# <longueurDonnejes>      ::= <Integer3>
+# <dejfinition>           ::= <flagDejfinition=17> <identifiantTerme>
+#                             <longueurDonnejes> <donnejesTerme>
+# <flagDejfinition=17>    ::= <Entier1>
+# <identifiantTerme>      ::= <Entier3>
+# <longueurDonnejes>      ::= <Entier3>
 # <donnejesTerme>         ::= { <donnejesCG> }
-# <donnejesCG>            ::= <flagCg=61> <catejgorie> <frejquenceTerme> <nbreDocs> <listeDocuments>
-# <flagCg=61>             ::= <Integer1>
-# <catejgorie>            ::= <Integer1>
-# <frejquenceTerme>       ::= <IntegerULat>
-# <nbreDocs>              ::= <IntegerULat>
+# <donnejesCG>            ::= <flagCg=61> <catejgorie> <frejquenceTerme>
+#                             <nbreDocs> <listeDocuments>
+# <flagCg=61>             ::= <Entier1>
+# <catejgorie>            ::= <Entier1>
+# <frejquenceTerme>       ::= <EntierULat>
+# <nbreDocs>              ::= <EntierULat>
 # <listeDocuments>        ::= { <identDocRelatif> <frejquenceDoc> }
-# <identDocRelatif>       ::= <IntegerULat>
-# <frejquenceDoc>         ::= <IntegerULat>
+# <identDocRelatif>       ::= <EntierULat>
+# <frejquenceDoc>         ::= <EntierULat>
 ##############################
 # <spejcifique>           ::= { <valeur> }
-# <valeur>                ::= <Integer4>
+# <valeur>                ::= <Entier4>
 ############################################################
 FLAG_DEJFINITION = 17
 FLAG_CG = 61
@@ -252,11 +262,45 @@ class NindTermindex(NindIndex):
                     noDoc += incrementIdentDoc
                     docList.append('%05d (%d)'%(noDoc, frejquenceDoc))
                 outFile.write(' :: %s\n'%(', '.join(docList)))
-                if totalFrequences != frejquenceTerme: raise Exception('fréquences incompatibles sur terme %d'%(noTerm))
+                if totalFrequences != frejquenceTerme: raise Exception('fréquences incompatibles sur terme %d'%(identifiant))
             outFile.write('frequence totale de %06d : %d\n'%(identifiant, frejquenceGlobale))
             outFile.write('\n')
         return nbLignes
-       
+
+    #######################################################################
+    #dejcode les donnejes associejes ah un terme
+    def afficheTerme(self, identifiant):
+        rejsultat = StringIO()
+        rejsultat.write('%06d:  '%(identifiant))
+        #trouve les donnejes 
+        trouvej, longueurDonnejes, tailleExtension = self.__donneDonnejes(identifiant)
+        if not trouvej: return '%d : inconnu'%(identifiant)
+        frejquenceGlobale = 0
+        #examine les données
+        finDonnejes = self.tell() + longueurDonnejes
+        while self.tell() < finDonnejes:
+            #<flagCg=61> <catejgorie> <frejquenceTerme> <nbreDocs> <listeDocuments>
+            if self.litNombre1() != FLAG_CG: 
+                raise Exception('NindTermindex.afficheTerme %s : pas FLAG_CG'%(self.latFileName))
+            catejgorie = self.litNombre1()
+            frejquenceTerme = self.litNombreULat()
+            nbreDocs = self.litNombreULat()
+            rejsultat.write('[%d] (%d) <%d>'%(catejgorie, frejquenceTerme, nbreDocs))
+            frejquenceGlobale += frejquenceTerme
+            totalFrequences = 0
+            noDoc = 0
+            docList = []
+            for i in range(nbreDocs):
+                #<identDocRelatif> <frejquenceDoc>
+                incrementIdentDoc = self.litNombreULat()
+                frejquenceDoc = self.litNombreULat()
+                totalFrequences += frejquenceDoc
+                noDoc += incrementIdentDoc
+                docList.append('%05d (%d)'%(noDoc, frejquenceDoc))
+            rejsultat.write(' :: %s\n'%(', '.join(docList)))
+            if totalFrequences != frejquenceTerme: raise Exception('fréquences incompatibles sur terme %d'%(identifiant))
+        return rejsultat.getvalue()
+    #######################################################################
             
 if __name__ == '__main__':
     main()

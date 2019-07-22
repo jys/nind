@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
                 cout<<noDoc<<"\r"<<flush;
                 //recupere l'index local du doc             
                 list<NindLocalIndex::Term> localDef;
-                const bool trouvej = nindLocalAmose.getLocalDef(noDoc, localDef);
+                nindLocalAmose.getLocalDef(noDoc, localDef);
                 list<NindLocalIndex::Term>::const_iterator localDefIt = localDef.begin();
                 nbGetLocal++;
                 //lit tous les termes et leur localisation/taille

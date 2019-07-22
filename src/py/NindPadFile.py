@@ -19,18 +19,19 @@ import codecs
 import datetime
 import time
 import math
-from NindLateconFile import NindLateconFile
+from NindFile import NindFile
 
 def usage():
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
     else: script = sys.argv[0]
     print ("""© l'ATEJCON.
-Analyse un fichier plat du système nind et affiche les stats. 
-Les types de fichiers : lexiconindex, termindex, localindex, retrolexicon
+o Analyse un fichier plat du système nind et affiche les stats. 
+Les types de fichiers : nindlexiconindex, nindtermindex, nindlocalindex,
+nindretrolexicon
 Le format du fichier est défini dans le document LAT2017.JYS.470.
 
 usage   : %s <fichier>
-exemple : %s FRE.termindex
+exemple : %s fre.nindtermindex
 """%(script, script))
 
 
@@ -43,30 +44,30 @@ def main():
     nindPadFile = NindPadFile(padFileName)
     nindPadFile.analyseFichierPadFile(True)
 
-#############################################################""    
+#############################################################
 # <fichier>               ::= <tailleEntreje> <tailleSpejcifiques> { <blocIndexej> <blocEnVrac> } 
 #                             <blocSpejcifique> <blocIdentification> 
 #
-# <tailleEntreje>         ::= <Integer1>
-# <tailleSpejcifiques>    ::= <Integer3>
+# <tailleEntreje>         ::= <Entier1>
+# <tailleSpejcifiques>    ::= <Entier3>
 #
 # <blocIndexej>           ::= <flagIndexej=47> <addrBlocSuivant> <nombreIndex> { <donnejesIndexejes> }
-# <flagIndexej=47>        ::= <Integer1>
-# <addrBlocSuivant>       ::= <Integer5>
-# <nombreIndex>           ::= <Integer3>
+# <flagIndexej=47>        ::= <Entier1>
+# <addrBlocSuivant>       ::= <Entier5>
+# <nombreIndex>           ::= <Entier3>
 #
 # <donnejesIndexejes>     ::= { <Octet> }
 # <blocEnVrac>            ::= { <Octet> }
 #
 # <blocSpejcifique>       ::= <flagSpecifique=57> <spejcifiques> 
-# <flagSpecifique=57>     ::= <Integer1>
+# <flagSpecifique=57>     ::= <Entier1>
 # <spejcifique>           ::= { <Octet> }
 #
 # <blocIdentification>    ::= <flagIdentification=53> <maxIdentifiant> <identifieurUnique> 
-# <flagIdentification=53> ::= <Integer1>
-# <maxIdentifiant>        ::= <Integer4>
+# <flagIdentification=53> ::= <Entier1>
+# <maxIdentifiant>        ::= <Entier3>
 # <identifieurUnique>     ::= <dateHeure>
-# <dateHeure >            ::= <Integer4>
+# <dateHeure >            ::= <Entier4>
 #############################################################""    
 FLAG_INDEXEJ = 47
 FLAG_SPEJCIFIQUE = 57
@@ -83,11 +84,11 @@ TAILLE_FIXES = 4
 TAILLE_ENTETE_SPEJCIFIQUE = 1
     
 #############################################################
-class NindPadFile(NindLateconFile):
+class NindPadFile(NindFile):
     
     def __init__(self, padFileName, enEjcriture = False, tailleEntreje = 0, tailleSpejcifiques = 0):
         #en lecture uniquement
-        NindLateconFile.__init__(self, padFileName, enEjcriture)
+        NindFile.__init__(self, padFileName, enEjcriture)
         self.entriesBlocksMap = []
         if enEjcriture:
             self.tailleEntreje = tailleEntreje
@@ -250,7 +251,7 @@ class NindPadFile(NindLateconFile):
                     for j in range(tailleEntreje): somme += self.litNombre1()
                     if somme != 0: entrejesUtilisejes +=1
                 if trace: 
-                    print ("%08X: Bloc indexé  n° % 2d : % 8d / %d entrées utilisées"%(addrIndex, blocIndex, entrejesUtilisejes, nombreIndex))
+                    print ("%08X: Bloc indexé  n° % 2d :    % 10d / %d entrées utilisées"%(addrIndex, blocIndex, entrejesUtilisejes, nombreIndex))
                 
                 addrEnVrac = self.tell()
                 if addrBlocSuivant != 0: tailleBloc = addrBlocSuivant - addrEnVrac
@@ -259,7 +260,7 @@ class NindPadFile(NindLateconFile):
                     tailleBloc = self.tell() - addrEnVrac
                 tailleEnVrac += tailleBloc
                 if trace: 
-                    print ("%08X: Bloc en vrac n° % 2d : % 8d octets"%(addrEnVrac, blocIndex, tailleBloc))
+                    print ("%08X: Bloc en vrac n° % 2d :    % 10d octets"%(addrEnVrac, blocIndex, tailleBloc))
 
                 if addrBlocSuivant == 0: break
                 addrIndex = addrBlocSuivant
@@ -268,8 +269,8 @@ class NindPadFile(NindLateconFile):
             if trace: print ('ERREUR :', exc.args[0])
             #raise
         if trace: 
-            print ("%d blocs indexés  de taille totale % 9d octets"%(blocIndex, tailleIndex))
-            print ("%d blocs en vrac  de taille totale % 9d octets"%(blocIndex, tailleEnVrac))
+            print ("%d blocs indexés  de taille totale % 10d octets"%(blocIndex, tailleIndex))
+            print ("%d blocs en vrac  de taille totale % 10d octets"%(blocIndex, tailleEnVrac))
         
             print ("=============")
         try:

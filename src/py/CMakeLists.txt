@@ -1,15 +1,15 @@
-
+add_subdirectory(amose)
 # ########### install files ###############
 install(PROGRAMS
+    NindFile.py
     NindPadFile.py
-    NindIndex.py
-    NindLateconFile.py
-    NindLexiconindex.py
     NindRetrolexicon.py
-    NindLocalindex.py
-    NindSearch.py
+    NindIndex.py
+    NindLexiconindex.py
     NindTermindex.py
+    NindLocalindex.py
+    Nind_search.py
     Nind_dumpDocument.py
-    Nind_dumpLexicon.py
+    Nind_trouveNombresPremiers.py
   DESTINATION bin)
 

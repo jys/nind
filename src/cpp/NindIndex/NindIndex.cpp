@@ -28,8 +28,8 @@ using namespace std;
 // <blocEnVrac>            ::= <blocDejfinition>
 //
 // <indirection>           ::= <offsetDejfinition> <longueurDejfinition> 
-// <offsetDejfinition>     ::= <Integer5>
-// <longueurDejfinition>   ::= <Integer3>
+// <offsetDejfinition>     ::= <Entier5>
+// <longueurDejfinition>   ::= <Entier3>
 //
 // <blocDejfinition>       ::= { <dejfinition> | <vide> }
 // <dejfinition>           ::= { <Octet> }
@@ -232,7 +232,7 @@ void NindIndex::mapEmptySpaces()
     unsigned int longueurPrec = 0;
     for (list<pair<unsigned long int, unsigned int> >::const_iterator it = nonVidesList.begin();
         it != nonVidesList.end(); it++) {
-        const unsigned int longueurVide = (*it).first - addressePrec - longueurPrec;
+        const int longueurVide = (*it).first - addressePrec - longueurPrec;
         if (longueurVide < 0) throw NindIndexException("NindIndex::mapEmptySpaces " + m_fileName);
         if (longueurVide > 0) {
             const pair<unsigned long int, unsigned int> emptyArea(addressePrec + longueurPrec, longueurVide);

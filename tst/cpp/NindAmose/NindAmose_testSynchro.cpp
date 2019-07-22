@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
         //vejrifie que le systehme de fichiers est cohejrent
         if (!NindFichiers::fichiersCohejrents(incompleteFileName, true, true)) {
             cout<<"Des anciens fichiers existent!"<<endl;
-            cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".nind*"<<endl;
+            cout<<"Veuillez les effacer par la commande : rm "<<incompleteFileName + ".nind{*index,retrolexicon}"<<endl;
             return false;
         }
         //pour calculer le temps consomme
@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
             //vejrifie que tout est bien ejcrit et immejdiatement disponible
             //recupere l'index local du doc             
             list<NindLocalIndex::Term> localDefLect;
-            const bool trouvej = nindLocalAmoseLect.getLocalDef(noDoc, localDefLect);
+            nindLocalAmoseLect.getLocalDef(noDoc, localDefLect);
             if (localDef.size() == localDefLect.size()) nbLocalOk++;
             else nbLocalNok++;
             if (nindLocalAmose.getDocCount() == nindLocalAmoseLect.getDocCount()) nbNbdocOk++;
