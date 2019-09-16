@@ -1,30 +1,32 @@
 #!/bin/bash
 set -e
-usage() 
-{ 
-cat << EOF 1>&2; exit 1; 
+usage()
+{
+cat << EOF 1>&2; exit 1;
 Synopsis: $0 [OPTIONS]
 
 Options default values are in parentheses.
 
   -a asanmode   <(OFF)|ON> address sanitizer support
-  -m mode       <(debug)|release> compile mode
+  -m mode       <(Debug)|Release|RelWithDebInfo> compile mode
   -n arch       <(generic)|native> target architecture mode
-  -p boolean    <(true)|false> will build in parallel (make -jn) if true. 
-                Necessary to be able to build with no parallelism as  it currently fail on 
-                some machines.
-  -v version    <(val)|rev> version number is set either to the value set by  
+  -p boolean    <(true)|false> will build in parallel (make -jn) if true.
+                Necessary to be able to build with no parallelism as it
+                 currently fails on some machines.
+  -v version    <(val)|rev> version number is set either to the value set by
                 config files or to the short git sha1
   -G Generator  <(Ninja)|Unix|MSYS|NMake|VS> which cmake generator to use.
 EOF
 exit 1
 }
 
+[ -z "$NIND_DIST" ] && echo "Need to set NIND_DIST" && exit 1;
+
 asan="OFF"
 arch="generic"
-mode="debug"
+cmake_mode="Debug"
+j="0"
 version="val"
-buildtype="all"
 resources="build"
 parallel="true"
 CMAKE_GENERATOR="Ninja"
@@ -36,8 +38,8 @@ while getopts ":a:m:n:p:v:G:" o; do
             [[ "x$asan" == "xON" || "x$asan" == "xOFF" ]] || usage
             ;;
         m)
-            mode=${OPTARG}
-            [[ "$mode" == "debug" || "$mode" == "release" ]] || usage
+            cmake_mode=${OPTARG}
+            [[ "x$cmake_mode" == "xDebug" || "x$cmake_mode" == "xRelease" || "x$cmake_mode" == "xRelWithDebInfo" ]] || usage
             ;;
         n)
             arch=${OPTARG}
@@ -78,38 +80,35 @@ else
     current_revision="default"
     current_timestamp=1
 fi
-
 current_project=`basename $PWD`
 current_project_name="`head -n1 CMakeLists.txt`"
-
 build_prefix=build/$current_branch
 source_dir=$PWD
 
 if [[ $version = "rev" ]]; then
-release="$current_timestamp-$current_revision"
+  release="$current_timestamp-$current_revision"
 else
-release="1"
+  release="1"
 fi
 
-if [[ $parallel = "true" ]]; then
-  j=
-  if [[ $CMAKE_GENERATOR == "VS" ]]; then
-    j=`WMIC CPU Get NumberOfCores | head -n 2 | tail -n 1 | sed -n "s/\s//gp"`
-  else
-  j=`grep -c ^processor /proc/cpuinfo`
-  fi
-  echo "Parallel build on $j processors"
-else
-  echo "Linear build"
+if [[ $parallel == "false" ]]; then
   j="1"
 fi
 
-# export VERBOSE=1
-if [[ $mode == "release" ]]; then
-cmake_mode="Release"
-else
-cmake_mode="Debug"
+if [[ "$j" == "0" ]]; then
+  if [[ $CMAKE_GENERATOR == "VS" ]]; then
+    j=`WMIC CPU Get NumberOfCores | head -n 2 | tail -n 1 | sed -n "s/\s//gp"`
+  elif [[ $CMAKE_GENERATOR == "Unix" || $CMAKE_GENERATOR == "Ninja" ]]; then
+    j=`grep -c ^processor /proc/cpuinfo`
+  fi
 fi
+if [[ "$j" == "1" ]]; then
+  echo "Linear build"
+else
+  echo "Parallel build on $j processors"
+fi
+
+# export VERBOSE=1
 
 if [[ $arch == "native" ]]; then
   WITH_ARCH="ON"
@@ -117,17 +116,16 @@ else
   WITH_ARCH="OFF"
 fi
 
-
-if [[ $CMAKE_GENERATOR == "Ninja" ]]; then
-  make_cmd="ninja"
-  make_test=""
-  make_install="ninja install"
-  generator="Ninja"
-elif [[ $CMAKE_GENERATOR == "Unix" ]]; then
+if [[ $CMAKE_GENERATOR == "Unix" ]]; then
   make_cmd="make -j$j"
   make_test="make test"
   make_install="make install"
   generator="Unix Makefiles"
+elif [[ $CMAKE_GENERATOR == "Ninja" ]]; then
+  make_cmd="ninja -j $j"
+  make_test=""
+  make_install="ninja install"
+  generator="Ninja"
 elif [[ $CMAKE_GENERATOR == "MSYS" ]]; then
   make_cmd="make -j$j"
   make_test="make test"
@@ -165,9 +163,24 @@ then
   fi
 fi
 
-cmake -G "$generator"  -DWITH_ARCH=$WITH_ARCH -DWITH_ASAN=$asan -DCMAKE_BUILD_TYPE:STRING=$cmake_mode $source_dir
+echo "Launching cmake from $PWD"
+cmake -G "$generator"  \
+  -DCMAKE_BUILD_TYPE:STRING=$cmake_mode \
+  -DCMAKE_INSTALL_PREFIX:PATH=$NIND_DIST \
+  -DWITH_ARCH=$WITH_ARCH \
+  -DWITH_ASAN=$asan \
+  $source_dir
 
+echo "Running command:"
 eval $make_cmd
+result=$?
+
+if [ "$result" != "0" ]; then
+  popd
+  exit $result
+fi
+
+eval $make_test && eval $make_install
 result=$?
 
 popd
