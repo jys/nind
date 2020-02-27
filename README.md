@@ -1,4 +1,4 @@
-nind
-====
+# NIND, as "nouvelle indexation"
 
-indexation post-S2
+New Indexation method in the Amose SearchEngine since the former ``S2`` is deprecated.
+

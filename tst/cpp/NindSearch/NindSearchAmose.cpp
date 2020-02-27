@@ -7,10 +7,10 @@
 //
 // Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
-// NIND is free software: you can redistribute it and/or modify it under the terms of the 
-// GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
+// NIND is free software: you can redistribute it and/or modify it under the terms of the
+// GNU Less General Public License (LGPL) as published by the Free Software Foundation,
 // (see <http://www.gnu.org/licenses/>), either version 3 of the License, or any later version.
-// NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
+// NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
 // even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
@@ -24,7 +24,7 @@
 #include <list>
 #include <set>
 #include <iostream>
-#include <iomanip> 
+#include <iomanip>
 #include <fstream>
 using namespace latecon::nindex;
 using namespace std;
@@ -50,9 +50,9 @@ static void displayHelp(char* arg0) {
 #define BLUE "\33[0;34m"
 #define BOLD "\033[1;31m"
 ////////////////////////////////////////////////////////////
-static void analyzeWord(const string &word, 
-                        string &lemma, 
-                        AmoseTypes &type, 
+static void analyzeWord(const string &word,
+                        string &lemma,
+                        AmoseTypes &type,
                         string &entitejNommeje);
 ////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
         cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(NAMED_ENTITY)<<" occurrences de NAMED_ENTITY"<<endl;
         cout<<setw(8)<<setfill(' ')<<nindTermAmose.getTermOccurrences(ALL)<<" occurrences"<<endl;
         cout<<setw(8)<<setfill(' ')<<nindLocalAmose.getDocCount()<<" documents indexés"<<endl;                          //3.8 getDocCount()
-       
+
         while (true) {
             char str [80];
             cout<<endl<<BLUE<<"Entrez le terme à rechercher (ex \"bleu\") : "<<OFF;
@@ -102,6 +102,7 @@ int main(int argc, char *argv[]) {
                 cout<<"INCONNU"<<endl;
                 continue;
             }
+            cout<<"identifiant pour le terme '" <<word<<"' : "<<ident<<endl;
             //recupere le nombre d'occurences pour ce terme
             //const unsigned int nbOcc = nindTermAmose.getTermFreq(ident);
             //cout<<nbOcc<<" occurences trouvées"<<endl;
@@ -121,7 +122,7 @@ int main(int argc, char *argv[]) {
             //recupere la taille du doc en nombre d'occurences de termes
             const unsigned int nbTerms = nindLocalAmose.getDocLength(noDoc);                    //3.4 getDocLength()
             cout<<nbTerms<<" termes indexés dans ce document"<<endl;
-            //recupere l'index local du doc             
+            //recupere l'index local du doc
             list<NindLocalIndex::Term> localDef;
             nindLocalAmose.getLocalDef(noDoc, localDef);
             for (list<NindLocalIndex::Term>::const_iterator it3 = localDef.begin();
@@ -147,9 +148,9 @@ int main(int argc, char *argv[]) {
     catch (...) {cerr<<"EXCEPTION unknown"<< endl; return false; }
 }
 ////////////////////////////////////////////////////////////
-static void analyzeWord(const string &word, 
-                        string &lemma, 
-                        AmoseTypes &type, 
+static void analyzeWord(const string &word,
+                        string &lemma,
+                        AmoseTypes &type,
                         string &entitejNommeje)
 {
     //si c'est une entitej nommeje, la sejpare en 2
