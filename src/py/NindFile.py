@@ -199,38 +199,45 @@ class NindFile:
     
     def litString(self):
         longueur = ord(self.latFile.read(1))
-        return self.latFile.read(longueur).decode('utf-8')
+        #return self.latFile.read(longueur).decode('utf-8')
+        return bytes(self.latFile.read(longueur)).decode()
     
     def litChaine(self, longueur):
-        return self.latFile.read(longueur).decode('utf-8')
+        #return self.latFile.read(longueur).decode('utf-8')
+        return bytes(self.latFile.read(longueur)).decode()
+    
+    def litOctets(self, longueur):
+        return bytes(self.latFile.read(longueur))
     
     def ejcritNombre1(self, entier):
-        self.latFile.write(chr(entier&0xFF))
+        ba = bytearray(1)
+        ba[0] = entier&0xFF
+        self.latFile.write(ba)
 
     def ejcritNombre3(self, entier):
         ba = bytearray(3)
         #petit-boutiste
         ba[0] = entier&0xFF
-        ba[1] = (entier/0x100)&0xFF
-        ba[2] = (entier/0x10000)&0xFF
+        ba[1] = (entier//0x100)&0xFF
+        ba[2] = (entier//0x10000)&0xFF
         self.latFile.write(ba)
         
     def ejcritNombre4(self, entier):
         ba = bytearray(4)
         #petit-boutiste
         ba[0] = entier&0xFF
-        ba[1] = (entier/0x100)&0xFF
-        ba[2] = (entier/0x10000)&0xFF
-        ba[3] = (entier/0x1000000)&0xFF
+        ba[1] = (entier//0x100)&0xFF
+        ba[2] = (entier//0x10000)&0xFF
+        ba[3] = (entier//0x1000000)&0xFF
         self.latFile.write(ba)
         
     def ejcritNombre5(self, entier):
         ba = bytearray(5)
         #gros-boutiste
-        ba[0] = (entier/0x100000000)&0xFF
-        ba[1] = (entier/0x1000000)&0xFF
-        ba[2] = (entier/0x10000)&0xFF
-        ba[3] = (entier/0x100)&0xFF
+        ba[0] = (entier//0x100000000)&0xFF
+        ba[1] = (entier//0x1000000)&0xFF
+        ba[2] = (entier//0x10000)&0xFF
+        ba[3] = (entier//0x100)&0xFF
         ba[4] = entier&0xFF
         self.latFile.write(ba)
 

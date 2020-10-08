@@ -152,6 +152,7 @@ unsigned long int NindPadFile::getEntryPos(const unsigned int ident)
 {
     //trouve l'entreje
     unsigned long int position = getJustEntryPos(ident);
+    //return position;  //SANS SYNCHRONISATION !!!! ESSAI
     if (m_isWriter) return position; //le processus ejcrivain n'a pas besoin de synchronisation
     //synchronisation des lecteurs
     if (position == 0) {

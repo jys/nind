@@ -80,8 +80,6 @@ TAILLE_IDENTIFICATION = 9
 TAILLE_ENTETE_SPEJCIFIQUE = 1
 #<tailleEntreje>(1) <tailleSpejcifiques>(3) = 4
 TAILLE_FIXES = 4
-#<flagSpecifique=57>
-TAILLE_ENTETE_SPEJCIFIQUE = 1
     
 #############################################################
 class NindPadFile(NindFile):
@@ -112,7 +110,7 @@ class NindPadFile(NindFile):
         #<flagIdentification=53> <maxIdentifiant> <identifieurUnique>
         self.seek(-TAILLE_IDENTIFICATION, 2)
         if self.litNombre1() != FLAG_IDENTIFICATION: 
-            raise Exception('NindPadFile.donneIdentificationFichier %s'%(self.latFileName))
+            raise Exception('%s : pas FLAG_IDENTIFICATION à %08X'%(self.latFileName, self.tell() -1))
         maxIdentifiant = self.litNombre4()
         identifieurUnique = self.litNombre4()
         return (maxIdentifiant, identifieurUnique)
@@ -223,7 +221,7 @@ class NindPadFile(NindFile):
     #analyse complehtement le fichier et retourne True si ok
     def analyseFichierPadFile(self, trace):
         cestBon = True
-        if trace: print ("=============")
+        if trace: print ("======PADFILE=======")
         blocIndex = 0
         tailleIndex = 0 
         tailleEnVrac = 0
@@ -231,6 +229,10 @@ class NindPadFile(NindFile):
             self.seek(0, 0)
             tailleEntreje = self.litNombre1()
             tailleSpejcifique = self.litNombre3()
+            if trace: 
+                print('TAILLE ENTRÉES             : ', tailleEntreje)
+                print('TAILLE DONNÉES SPÉCIFIQUES : ', tailleSpejcifique)
+                print ("=============")
             addrIndex = TAILLE_FIXES
             while True:
                 self.seek(addrIndex, 0)
@@ -271,7 +273,6 @@ class NindPadFile(NindFile):
         if trace: 
             print ("%d blocs indexés  de taille totale % 10d octets"%(blocIndex, tailleIndex))
             print ("%d blocs en vrac  de taille totale % 10d octets"%(blocIndex, tailleEnVrac))
-        
             print ("=============")
         try:
             self.seek(-TAILLE_IDENTIFICATION -TAILLE_ENTETE_SPEJCIFIQUE -tailleSpejcifique, 2)
@@ -285,10 +286,6 @@ class NindPadFile(NindFile):
         except Exception as exc: 
             cestBon = False
             if trace: print ('ERREUR :', exc.args[0])
-        if trace: 
-            print ("%d octets de données spécifiques"%(tailleSpejcifique))
-        
-            print ("=============")
         tailleSpejcifique += TAILLE_ENTETE_SPEJCIFIQUE
         try:
             #<flagIdentification_1> <maxIdentifiant_3> <identifieurUnique_4> <identifieurSpecifique_4>
