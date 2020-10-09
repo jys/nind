@@ -97,27 +97,31 @@ class NindIndex(NindPadFile):
     #analyse complehtement le fichier et retourne True si ok
     def analyseFichierIndex(self, trace):
         cestbon = self.analyseFichierPadFile(trace)
-        if trace:
-            print ("=============")
+        if not cestbon: return False
+        if trace: print ("======INDEX=======")
         try:
             #met en place la carte des non-vides
             maxIdent, nonVidesList = self.donneCarteNonVides()
             #chaque indirection utiliséeje est mise dans la carte
             dejfinitions = []
             for identifiant in range(maxIdent):
-                position = self.donnePositionEntreje(identifiant)
-                if position == 0: 
-                    raise Exception('%s : identifiant %d sans indirection '%(self.latFileName, identifiant))
-                self.seek(position, 0)
-                #<offsetDejfinition> <longueurDejfinition>
-                offsetDejfinition = self.litNombre5()
-                longueurDejfinition = self.litNombre3()
-                if offsetDejfinition != 0:
-                    nonVidesList.append((offsetDejfinition, longueurDejfinition))
-                    dejfinitions.append(longueurDejfinition)
+                try:
+                    position = self.donnePositionEntreje(identifiant)
+                    if position == 0: 
+                        raise Exception('%s : identifiant %d sans indirection '%(self.latFileName, identifiant))
+                    self.seek(position, 0)
+                    #<offsetDejfinition> <longueurDejfinition>
+                    offsetDejfinition = self.litNombre5()
+                    longueurDejfinition = self.litNombre3()
+                    if offsetDejfinition != 0:
+                        nonVidesList.append((offsetDejfinition, longueurDejfinition))
+                        dejfinitions.append(longueurDejfinition)
+                except:
+                    if trace: print ('*******ERREUR SUR IDENTIFIANT :', identifiant)
+                    raise
         except Exception as exc: 
-            cestBon = False
-            if trace: print ('ERREUR :', exc.args[0])
+            cestbon = False
+            if trace: print ('*******ERREUR :', exc.args[0])
         if trace:
             indirectionsUtilisejes, tailleMin, tailleMax, tailleDejfinitions, moyenne, ejcartType = calculeRejpartition(dejfinitions)
             print ("%d / %d indirections utilisées"%(indirectionsUtilisejes, maxIdent))
@@ -137,7 +141,7 @@ class NindIndex(NindPadFile):
                 print ("VIDES     de ", typesVidesList[:3], " à ", typesVidesList[-1:])
                 print ("NON VIDES de ", typesNonVidesList[:3], " à ", typesNonVidesList[-1:])
         except Exception as exc: 
-            cestBon = False
+            cestbon = False
             if trace: print ('ERREUR :', exc.args[0])
         if trace:
             print ("=============")
@@ -145,8 +149,7 @@ class NindIndex(NindPadFile):
             print ("DÉFINITIONS MIN% 10d octets"%(tailleMin))
             print ("MOYENNE        % 10d octets"%(moyenne))
             print ("ÉCART-TYPE     % 10d octets"%(ejcartType))
-           
-       
+        return cestbon
         
 if __name__ == '__main__':
     main()

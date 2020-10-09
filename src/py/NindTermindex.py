@@ -145,6 +145,8 @@ class NindTermindex(NindIndex):
     #analyse du fichier
     def analyseFichierTermindex(self, trace):
         cestbon = self.analyseFichierIndex(trace)
+        if not cestbon: return False
+        if trace: print ("======TERMINDEX=======")
         try:
             #trouve le max des identifiants
             maxIdent = self.donneMaxIdentifiant()
@@ -152,42 +154,46 @@ class NindTermindex(NindIndex):
             occurrencesDoc = 0
             nbDonnejes = nbExtensions = 0
             nbHapax = 0
+            noDocSet = set()
             frejquences = []
             for identifiant in range(maxIdent):
-                #print ("identifiant=", identifiant)
-                #trouve les donnejes 
-                trouvej, longueurDonnejes, tailleExtension = self.__donneDonnejes(identifiant)
-                if not trouvej: continue      #identifiant pas trouve
-                nbDonnejes +=1
-                totalDonnejes += longueurDonnejes + TAILLE_TESTE_DEJFINITION
-                if tailleExtension > 0: nbExtensions += 1
-                totalExtensions += tailleExtension
-                #examine les données
-                finDonnejes = self.tell() + longueurDonnejes
-                while self.tell() < finDonnejes:
-                    #<flagCg=61> <catejgorie> <frejquenceTerme> <nbreDocs> <listeDocuments>
-                    if self.litNombre1() != FLAG_CG: 
-                        raise Exception('NindTermindex.analyseFichierTermindex %s : pas FLAG_CG'%(self.latFileName))
-                    catejgorie = self.litNombre1()
-                    frejquenceTerme = self.litNombreULat()
-                    nbreDocs = self.litNombreULat()
-                    totalFrejquences = 0
-                    noDoc = 0
-                    for i in range(nbreDocs):
-                        #<identDocRelatif> <frejquenceDoc>
-                        identDocRelatif = self.litNombreULat()
-                        frejquenceDoc = self.litNombreULat()
-                        totalFrejquences += frejquenceDoc
-                        noDoc += identDocRelatif
-                    if totalFrejquences != frejquenceTerme: 
-                        raise Exception('%s : fréquences incompatibles sur terme %d'%(self.latFileName, identifiant))
-                    frejquences.append(frejquenceTerme)
-                    occurrencesDoc += nbreDocs 
-                    if totalFrejquences == 1: nbHapax +=1
-                    
+                try:
+                    #print ("identifiant=", identifiant)
+                    #trouve les donnejes 
+                    trouvej, longueurDonnejes, tailleExtension = self.__donneDonnejes(identifiant)
+                    if not trouvej: continue      #identifiant pas trouve
+                    nbDonnejes +=1
+                    totalDonnejes += longueurDonnejes + TAILLE_TESTE_DEJFINITION
+                    if tailleExtension > 0: nbExtensions += 1
+                    totalExtensions += tailleExtension
+                    #examine les données
+                    finDonnejes = self.tell() + longueurDonnejes
+                    while self.tell() < finDonnejes:
+                        #<flagCg=61> <catejgorie> <frejquenceTerme> <nbreDocs> <listeDocuments>
+                        if self.litNombre1() != FLAG_CG: 
+                            raise Exception('NindTermindex.analyseFichierTermindex %s : pas FLAG_CG'%(self.latFileName))
+                        catejgorie = self.litNombre1()
+                        frejquenceTerme = self.litNombreULat()
+                        nbreDocs = self.litNombreULat()
+                        totalFrejquences = 0
+                        noDoc = 0
+                        for i in range(nbreDocs):
+                            #<identDocRelatif> <frejquenceDoc>
+                            identDocRelatif = self.litNombreULat()
+                            frejquenceDoc = self.litNombreULat()
+                            totalFrejquences += frejquenceDoc
+                            noDoc += identDocRelatif
+                            noDocSet.add(noDoc)
+                        if totalFrejquences != frejquenceTerme: 
+                            raise Exception('%s : fréquences incompatibles sur terme %d'%(self.latFileName, identifiant))
+                        frejquences.append(frejquenceTerme)
+                        occurrencesDoc += nbreDocs 
+                        if totalFrejquences == 1: nbHapax +=1
+                except:
+                    if trace: print ('*******ERREUR SUR IDENTIFIANT :', identifiant)
+                    raise                    
             if trace:
                 nbTermesCG, frejquenceMin, frejquenceMax, totalFrejquences, moyenne, ejcartType = calculeRejpartition(frejquences)
-                print ("=============")
                 total = totalDonnejes + totalExtensions
                 print ("DONNÉES        % 10d (%6.2f %%) % 9d occurrences"%(totalDonnejes, float(100)*totalDonnejes/total, nbDonnejes))
                 print ("EXTENSIONS     % 10d (%6.2f %%) % 9d occurrences"%(totalExtensions, float(100)*totalExtensions/total, nbExtensions))
@@ -200,6 +206,7 @@ class NindTermindex(NindIndex):
                 print ("MOYENNE        % 10d"%(moyenne))
                 print ("ÉCART TYPE     % 10d"%(ejcartType))
                 print ("=============")
+                print ("DOCUMENTS      % 10d "%(len(noDocSet)))
                 print ("TERMES-DOCS    % 10d occurrences"%(occurrencesDoc))
                 print ("TERMES         % 10d occurrences"%(totalFrejquences))
                 print ("HAPAX          % 10d (%6.2f %%)"%(nbHapax, float(100)*nbHapax/nbDonnejes))

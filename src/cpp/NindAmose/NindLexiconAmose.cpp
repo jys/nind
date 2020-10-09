@@ -103,10 +103,12 @@ bool NindLexiconAmose::getWord(const unsigned int wordId,
     string component = (*itcomp++);
     namedEntity = "";
     if (component == "§") {
-        if (components.size() < 3) throw NindLexiconException("named entity error");
+//         if (components.size() < 3) throw NindLexiconException("named entity error");
         type = NAMED_ENTITY;
         namedEntity = (*itcomp++);
-        component = (*itcomp++);
+        //tolejrance des EN ah lemme vide
+        if (components.size() == 2) component = "";
+        else component = (*itcomp++);
     }
     while (itcomp != components.end()) component += '_' + (*itcomp++);
     lemma = component;

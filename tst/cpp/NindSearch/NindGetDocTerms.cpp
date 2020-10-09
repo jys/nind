@@ -89,7 +89,7 @@ static void afficheTermesUniques(NindLocalAmose &nindLocalAmose,
 {
     //rejcupehre la liste des termes uniques
     set<string> termsSet;
-    bool trouvej = nindLocalAmose.getDocTerms(docNo, termType, termsSet);                             //3.3 getDocTerms()
+    bool trouvej = nindLocalAmose.getDocTerms(docNo, termType, termsSet);           //3.3 getDocTerms()
     if (!trouvej) cout<<"document "<<docNo<<" INCONNU !"<<endl;
     cout<<BOLD<<termsSet.size()<<" "<<titre<<" uniques"<<OFF<<endl;
     string sep = "";

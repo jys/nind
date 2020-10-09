@@ -50,10 +50,11 @@ def main():
         elif action.startswith('lexi'):
             outFilename = retrolexiconFileName + '-lexique.txt'
             outFile = codecs.open(outFilename, 'w', 'utf-8')
-            (nbLignes, rejpartition) = nindRetrolexicon.dumpeFichier(outFile)
+            (nbLignes, nbErreurs, rejpartition) = nindRetrolexicon.dumpeFichier(outFile)
             outFile.close()
             rejpartition.sort()
             for (tailleMot, nombre) in rejpartition: print ('% 3d : % 9d'%(tailleMot, nombre))
+            print('      % 9d lignes en erreur'%(nbErreurs))
             print('        -------')
             print('      % 9d lignes écrites dans %s'%(nbLignes, path.basename(outFilename)))
         elif action.startswith('mot'): print (nindRetrolexicon.donneMot(ident)[0])
@@ -107,6 +108,7 @@ class NindRetrolexicon(NindPadFile):
         if not trouvej: return ('', 0)
         tailleMot = 0
         while True:
+            #print(mot)
             tailleMot +=1
             #si c'est un mot simple, c'est la fin 
             if identifiantA == 0:
@@ -125,6 +127,7 @@ class NindRetrolexicon(NindPadFile):
                 raise Exception("%d bouclage dans %s"%(ident, self.latFileName))
         #retourne la chaisne
         return ('_'.join(mot), tailleMot)
+        #return (b'_'.join(mot), tailleMot)
 
     def __donneDefMot(self, ident):
         #trouve l'adresse des donnees dans le fichier
@@ -142,6 +145,7 @@ class NindRetrolexicon(NindPadFile):
             #lit la chaisne
             self.seek(adresseMotUtf8, 0)
             return (True, self.litChaine(longueurMotUtf8), 0, 0)
+            #return (True, self.litOctets(longueurMotUtf8), 0, 0)
         if flag == FLAG_COMPOSEJ:
             #<flagComposej=31> <identifiantA> <identifiantS>
             identifiantA = self.litNombre4()
@@ -210,18 +214,23 @@ class NindRetrolexicon(NindPadFile):
     #######################################################################
     #dumpe le fichier lexique sur un fichier texte
     def dumpeFichier(self, outFile):
-        nbLignes = 0
+        nbLignes = nbErreurs = 0
         rejpartition = {}
         #trouve le max des identifiants
         maxIdent = self.donneMaxIdentifiant()
         for index in range(maxIdent):
-            (mot, tailleMot) = self.donneMot(index)
-            if tailleMot == 0: continue
-            outFile.write('%06d  %s\n'%(index, mot))
+            try:
+                (mot, tailleMot) = self.donneMot(index)
+                if tailleMot == 0: continue
+                outFile.write('%06d  %s\n'%(index, mot))
+                if tailleMot not in rejpartition: rejpartition[tailleMot] = 0
+                rejpartition[tailleMot] +=1
+            except Exception as exc: 
+                outFile.write('%06d  *******ERREUR: %s\n'%(index, exc.args[0]))
+                nbErreurs +=1
+                raise
             nbLignes +=1
-            if tailleMot not in rejpartition: rejpartition[tailleMot] = 0
-            rejpartition[tailleMot] +=1
-        return (nbLignes, list(rejpartition.items()))
+        return (nbLignes, nbErreurs, list(rejpartition.items()))
     #######################################################################
 
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = "jys"
 __copyright__ = "Copyright (C) 2017 LATEJCON"
@@ -178,45 +178,54 @@ class NindLocalindex(NindIndex):
     #analyse du fichier
     def analyseFichierLocalindex(self, trace):
         cestbon = self.analyseFichierIndex(trace)
+        if not cestbon: return False
+        if trace: print ("======LOCALINDEX=======")
         try:
             #trouve le max des identifiants
             maxIdent = self.donneMaxIdentifiant()
             totalExtensions = nbExtensions = 0
             totalDonnejes = 0
             totalLocalisations = 0
+            totalTermDoc = 0
             occurrences = []
             for identifiant in range(maxIdent):
-                trouvej, longueurDonnejes, tailleExtension, identifiantExterne = self.__donneDonnejes(identifiant)
-                if not trouvej: continue
-                if tailleExtension > 0: nbExtensions += 1
-                totalExtensions += tailleExtension
-                totalDonnejes += longueurDonnejes + TAILLE_TESTE_DEJFINITION
-                #examine les données
-                noTerme = localisationAbsolue = 0
-                nbOccurrences = 0
-                finDonnejes = self.tell() + longueurDonnejes
-                while self.tell() < finDonnejes:
-                    #<identTermeRelatif> <catejgorie> <nbreLocalisations> <localisations>
-                    nbOccurrences +=1
-                    noTerme += self.litNombreSLat()
-                    catejgorie = self.litNombre1()
-                    nbreLocalisations = self.litNombre1()
-                    totalLocalisations += nbreLocalisations
-                    for i in range (nbreLocalisations):
-                        #<localisationRelatif> <longueur>
-                        localisationAbsolue += self.litNombreSLat()
-                        longueur = self.litNombre1()
-                occurrences.append(nbOccurrences)
-                
+                try:
+                    trouvej, longueurDonnejes, tailleExtension, identifiantExterne = self.__donneDonnejes(identifiant)
+                    if not trouvej: continue
+                    if tailleExtension > 0: nbExtensions += 1
+                    totalExtensions += tailleExtension
+                    totalDonnejes += longueurDonnejes + TAILLE_TESTE_DEJFINITION
+                    #examine les données
+                    noTerme = localisationAbsolue = 0
+                    nbOccurrences = 0
+                    noTermSet = set()
+                    finDonnejes = self.tell() + longueurDonnejes
+                    while self.tell() < finDonnejes:
+                        #<identTermeRelatif> <catejgorie> <nbreLocalisations> <localisations>
+                        nbOccurrences +=1
+                        noTerme += self.litNombreSLat()
+                        noTermSet.add(noTerme)
+                        catejgorie = self.litNombre1()
+                        nbreLocalisations = self.litNombre1()
+                        totalLocalisations += nbreLocalisations
+                        for i in range (nbreLocalisations):
+                            #<localisationRelatif> <longueur>
+                            localisationAbsolue += self.litNombreSLat()
+                            longueur = self.litNombre1()
+                    occurrences.append(nbOccurrences)
+                    totalTermDoc += len(noTermSet)
+                except:
+                    if trace: print ('*******ERREUR SUR IDENTIFIANT :', identifiant)
+                    raise                                   
             if trace:
                 nbDonnejes, occurrencesMin, occurrencesMax, totalOccurrences, moyenne, ejcartType = calculeRejpartition(occurrences)
                 total = totalDonnejes + totalExtensions
-                print ("=============")
                 print ("DONNÉES        % 10d (%6.2f %%) % 9d occurrences"%(totalDonnejes, float(100)*totalDonnejes/total, nbDonnejes))
                 print ("EXTENSIONS     % 10d (%6.2f %%) % 9d occurrences"%(totalExtensions, float(100)*totalExtensions/total, nbExtensions))
                 print ("TOTAL          % 10d %08X"%(total, total))
                 print ("=============")
                 print ("DOCUMENTS      % 10d "%(nbDonnejes))
+                print ("TERMES-DOCS    % 10d occurrences"%(totalTermDoc))
                 print ("TERMES         % 10d occurrences"%(totalOccurrences))
                 print ("LOCALISATIONS  % 10d occurrences"%(totalLocalisations))
                 print ("=============")
