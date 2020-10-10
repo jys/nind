@@ -16,6 +16,7 @@ __version__ = "2.0.1"
 import sys
 from os import getenv, path
 import codecs
+import math
 from NindPadFile import NindPadFile
 from NindPadFile import chercheVides
 
@@ -53,7 +54,21 @@ def main():
             (nbLignes, nbErreurs, rejpartition) = nindRetrolexicon.dumpeFichier(outFile)
             outFile.close()
             rejpartition.sort()
-            for (tailleMot, nombre) in rejpartition: print ('% 3d : % 9d'%(tailleMot, nombre))
+            somme = somme2 = nbMots = 0
+            for (tailleMot, nombre) in rejpartition: 
+                print ('% 3d : % 9d'%(tailleMot, nombre))
+                somme += tailleMot * nombre
+                somme2 += (tailleMot**2) * nombre
+                nbMots += nombre
+            moyenne = float(somme) / nbMots
+            variance = float(somme2) / nbMots - moyenne**2
+            ejcartType = math.sqrt(variance)
+            print ("=============")
+            print ("COMPOSÉS MAX   {:3d} composants".format(rejpartition[-1][0]))
+            print ("COMPOSÉS MIN   {:3d} composant".format(rejpartition[0][0]))
+            print ("MOYENNE        {:6.2f} composants".format(moyenne))
+            print ("ÉCART-TYPE     {:6.2f}".format(ejcartType))
+            print ("=============")
             print('      % 9d lignes en erreur'%(nbErreurs))
             print('        -------')
             print('      % 9d lignes écrites dans %s'%(nbLignes, path.basename(outFilename)))
@@ -67,7 +82,7 @@ def main():
             print ("******************************")
             raise
         sys.exit()
-
+        
 #####################################################
 # <donnejesIndexejes>     ::= <dejfinitionMot>
 # <blocEnVrac>            ::= <blocUtf8>
