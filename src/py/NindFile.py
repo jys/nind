@@ -126,13 +126,13 @@ class NindFile:
     def litNombre2(self):
         #gros-boutiste
         ba = bytes(self.latFile.read(2))
-        return ba[0]*0x100 + ba[1]
+        return int( ba[0]*0x100 + ba[1] )
         #return (ba[0] <<8) + ba[1]
 
     def litNombre3(self):
         #petit-boutiste
         ba = bytes(self.latFile.read(3))
-        return (ba[2]*0x100 + ba[1])*0x100 + ba[0]
+        return int( (ba[2]*0x100 + ba[1])*0x100 + ba[0] )
         #return (((ba[2] <<8) + ba[1]) <<8) + ba[0]
         #return (ba[2] <<16) + (ba[1] <<8) + ba[0]
 
@@ -142,13 +142,13 @@ class NindFile:
         res = (ba[2]*0x100 + ba[1])*0x100 + ba[0]
         #res = (((ba[2] <<8) + ba[1]) <<8) + ba[0]
         #res = (ba[2] <<16) + (ba[1] <<8) + ba[0]
-        if res < 0x800000: return res 
-        return res - 0x1000000
+        if res < 0x800000: return int(res) 
+        return int( res - 0x1000000 )
 
     def litNombre4(self):
         #petit-boutiste
         ba = bytes(self.latFile.read(4))
-        return ((ba[3]*0x100 + ba[2])*0x100 + ba[1])*0x100 + ba[0]
+        return int( ((ba[3]*0x100 + ba[2])*0x100 + ba[1])*0x100 + ba[0] )
         #return (((((ba[3] <<8) + ba[2]) <<8) + ba[1]) <<8) + ba[0]
         #return (ba[3] <<24) + (ba[2] <<16) + (ba[1] <<8) + ba[0]
 
@@ -156,13 +156,13 @@ class NindFile:
         #petit-boutiste
         ba = bytes(self.latFile.read(4))
         res = ((ba[3]*0x100 + ba[2])*0x100 + ba[1])*0x100 + ba[0]
-        if res < 0x80000000: return res 
-        return res - 0x100000000
+        if res < 0x80000000: return int(res) 
+        return int(res - 0x100000000)
 
     def litNombre5(self):
         #gros-boutiste
         ba = bytes(self.latFile.read(5))
-        return (((ba[0]*0x100 + ba[1])*0x100 + ba[2])*0x100 + ba[3])*0x100 + ba[4]
+        return int( (((ba[0]*0x100 + ba[1])*0x100 + ba[2])*0x100 + ba[3])*0x100 + ba[4] )
         #return (((((((ba[0] <<8) + ba[1]) <<8) + ba[2]) <<8) + ba[3]) <<8) + ba[4]
         #return (ba[0] <<32) + (ba[1] <<24) + (ba[2] <<16) + (ba[3] <<8) + ba[4]
 
