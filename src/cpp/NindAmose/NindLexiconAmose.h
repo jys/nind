@@ -10,10 +10,10 @@
 // Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 ////////////////////////////////////////////////////////////
 // This file is part of NIND (as "nouvelle indexation").
-// NIND is free software: you can redistribute it and/or modify it under the terms of the 
-// GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
+// NIND is free software: you can redistribute it and/or modify it under the terms of the
+// GNU Less General Public License (LGPL) as published by the Free Software Foundation,
 // (see <http://www.gnu.org/licenses/>), either version 3 of the License, or any later version.
-// NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
+// NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
 // even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
@@ -29,7 +29,7 @@ namespace latecon {
     namespace nindex {
 ////////////////////////////////////////////////////////////
 /**\brief various types of Amose words */
-enum AmoseTypes { ALL = 0, SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY }; 
+enum AmoseTypes { ALL = 0, SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY };
 
 ////////////////////////////////////////////////////////////
 class DLLExportLexicon NindLexiconAmose : public NindLexiconIndex {
@@ -37,7 +37,7 @@ public:
 
     /**\brief Creates NindLexiconIndex.
     *\param fileNameExtensionLess absolute path file name without extension
-    *\param isLexiconWriter true if lexicon writer, false if lexicon reader  
+    *\param isLexiconWriter true if lexicon writer, false if lexicon reader
     *\param indirectionBlocSize number of entries in a lexicon single indirection block (for first writer only)
     *\param retroIndirectionBlocSize number of entries in a retro lexicon single indirection block (for first writer only)*/
     NindLexiconAmose(const std::string &fileNameExtensionLess,
@@ -46,7 +46,7 @@ public:
                      const unsigned int retroIndirectionBlocSize = 0);
 
     virtual ~NindLexiconAmose();
-    
+
     /**\brief add specified word in lexicon if it doesn't still exist in,
     * In all cases, word ident is returned.
     * \param lemma word to be lexiced. Compound word is structured with "_"
@@ -68,7 +68,7 @@ public:
                            const AmoseTypes type,
                            const std::string &namedEntity = "");
 
-    /**\brief get word components from a specified word id 
+    /**\brief get word components from a specified word id
     * \param lemma word corresponding to word id. Compound word is structured with "_"
     * \param type type of the words (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY)
     * \param namedEntity type of named entity, eventually
@@ -77,7 +77,7 @@ public:
                  std::string &lemma,
                  AmoseTypes &type,
                  std::string &namedEntity);
-    
+
 private:
     unsigned int m_semicolonIdent;
 };

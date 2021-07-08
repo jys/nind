@@ -7,10 +7,10 @@
 //
 // Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
-// NIND is free software: you can redistribute it and/or modify it under the terms of the 
-// GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
+// NIND is free software: you can redistribute it and/or modify it under the terms of the
+// GNU Less General Public License (LGPL) as published by the Free Software Foundation,
 // (see <http://www.gnu.org/licenses/>), either version 3 of the License, or any later version.
-// NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
+// NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
 // even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
         NindIndex_litDumpS2 nindIndex_litDumpS2;
         cout<<"identification : "<<identification.lexiconWordsNb<<" termes, "<<identification.lexiconTime;
         cout<<" ("<<NindDate::date(identification.lexiconTime)<<")"<<endl;
-        
+
         while (true) {
             char str [80];
             cout<<endl<<BLUE<<"Entrez le terme à rechercher : "<<OFF;
@@ -86,17 +86,18 @@ int main(int argc, char *argv[]) {
                 cout<<"INCONNU"<<endl;
                 continue;
             }
+            cout<<"identifiant pour le terme '" <<word<<"' : "<<ident<<endl;
             //recupere l'index inverse pour ce terme
             list<NindTermIndex::TermCG> termDef;
             nindTermIndex.getTermDef(ident, termDef);
             //affiche les documents dans lesquels est indexe ce terme
-            for (list<NindTermIndex::TermCG>::const_iterator it1 = termDef.begin(); 
+            for (list<NindTermIndex::TermCG>::const_iterator it1 = termDef.begin();
                  it1 != termDef.end(); it1++) {
                 const NindTermIndex::TermCG &termCG = (*it1);
                 cout<<BOLD<<"["<<ident<<"] "<<nindIndex_litDumpS2.getCgStr(termCG.cg)<<OFF,
                 cout<<" "<<termCG.frequency<<" fois dans ";
                 const list<NindTermIndex::Document> &documents = termCG.documents;
-                for (list<NindTermIndex::Document>::const_iterator it2 = documents.begin(); 
+                for (list<NindTermIndex::Document>::const_iterator it2 = documents.begin();
                      it2 != documents.end(); it2++) {
                     const NindTermIndex::Document &doc = (*it2);
                     cout<<doc.ident<<"("<<doc.frequency<<") ";
@@ -106,7 +107,7 @@ int main(int argc, char *argv[]) {
             cout<<BLUE<<"Entrez le n° de doc à afficher : "<<OFF;
             cin.getline(str, 80, '\n');
             const unsigned int noDoc = atoi(str);
-            //recupere l'index local du doc             
+            //recupere l'index local du doc
             list<NindLocalIndex::Term> localDef;
             nindLocalIndex.getLocalDef(noDoc, localDef);
             cerr<<"localDef.size()="<<localDef.size()<<endl;

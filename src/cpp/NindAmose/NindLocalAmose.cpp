@@ -10,10 +10,10 @@
 //
 // Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
-// NIND is free software: you can redistribute it and/or modify it under the terms of the 
-// GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
+// NIND is free software: you can redistribute it and/or modify it under the terms of the
+// GNU Less General Public License (LGPL) as published by the Free Software Foundation,
 // (see <http://www.gnu.org/licenses/>), either version 3 of the License, or any later version.
-// NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
+// NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
 // even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
@@ -25,15 +25,15 @@ using namespace std;
 ////////////////////////////////////////////////////////////
 //brief Creates NindLocalAmose with a specified name associated with.
 //param fileNameExtensionLess absolute path file name without extension
-//param isLocalIndexWriter true if localIndex writer, false if localIndex reader  
-//param lexiconIdentification unique identification of lexicon 
+//param isLocalIndexWriter true if localIndex writer, false if localIndex reader
+//param lexiconIdentification unique identification of lexicon
 //param indirectionEntryNb number of entries in a single indirection block */
 NindLocalAmose::NindLocalAmose(const string &fileNameExtensionLess,
                                const bool isLocalIndexWriter,
                                const Identification &lexiconIdentification,
                                const unsigned int indirectionBlocSize):
-    NindLocalIndex(fileNameExtensionLess, 
-                   isLocalIndexWriter, 
+    NindLocalIndex(fileNameExtensionLess,
+                   isLocalIndexWriter,
                    lexiconIdentification,
                    indirectionBlocSize),
     m_nindLexicon(fileNameExtensionLess, false)
@@ -44,15 +44,15 @@ NindLocalAmose::~NindLocalAmose()
 {
 }
 ////////////////////////////////////////////////////////////
-//brief Fill the data structure positions with position of occurrences 
+//brief Fill the data structure positions with position of occurrences
 //of terms (from @ref termIds) in documents (from @ref documents)
 //param termIds vector of identifier of terms
-//param documents vector of documents where to search for position of terms. 
-//param positions position of occurrences of terms in documents. One element foreach content  id in @ref documents. 
+//param documents vector of documents where to search for position of terms.
+//param positions position of occurrences of terms in documents. One element foreach content id in @ref documents.
 //Each element is a vector containing one element for each term in termIds.
 //And each of these elements is the list of positions and lengths of the occurrences of this term in this document.  */
-void NindLocalAmose::getTermPositionIndocs(const vector<unsigned int>& termIds, 
-                                           const vector<unsigned int>& documents, 
+void NindLocalAmose::getTermPositionIndocs(const vector<unsigned int>& termIds,
+                                           const vector<unsigned int>& documents,
                                            vector<vector<list<Localisation> > >& positions)
 {
     //raz rejsultat
@@ -73,11 +73,11 @@ void NindLocalAmose::getTermPositionIndocs(const vector<unsigned int>& termIds,
         list<NindLocalIndex::Term> localDef;
         const bool trouvej = NindLocalIndex::getLocalDef((*itdoc), localDef);
         //si le doc n'existe pas, laisse son rejsultat vide et passe au suivant
-        if (!trouvej) continue; 
+        if (!trouvej) continue;
         //examine chaque occurrence de terme
         for (list<struct Term>::const_iterator itoccur = localDef.begin(); itoccur != localDef.end(); itoccur++) {
             const struct Term &termOccur = (*itoccur);
-            //si ce terme n'est cherchej, son occurrence n'est pas prise en compte 
+            //si ce terme n'est cherchej, son occurrence n'est pas prise en compte
             const map<unsigned int, unsigned int>::const_iterator ittermIdsMap = termIdsMap.find(termOccur.term);
             if (ittermIdsMap == termIdsMap.end()) continue;
             //occurrence ah prendre en compte
@@ -91,9 +91,9 @@ void NindLocalAmose::getTermPositionIndocs(const vector<unsigned int>& termIds,
     }
 }
 ////////////////////////////////////////////////////////////
-//brief get the set of unique term in a document 
+//brief get the set of unique term in a document
 //param docId identifier of the document
-//param termType type of terms (0: simple term, 1: multi-term, 2: named entity) 
+//param termType type of terms (0: simple term, 1: multi-term, 2: named entity)
 //param termsSet set de termes uniques dans le document */
 bool NindLocalAmose::getDocTerms(const unsigned int docId,
                                  const AmoseTypes termType,
@@ -118,8 +118,9 @@ bool NindLocalAmose::getDocTerms(const unsigned int docId,
         if (type == termType)
         {
             if (type == NAMED_ENTITY)
-                termsSet.insert(namedEntity + ":" + lemma);
-            else termsSet.insert(lemma);
+              termsSet.insert(namedEntity + ":" + lemma);
+            else
+              termsSet.insert(lemma);
         }
     }
     return true;
