@@ -1,0 +1,76 @@
+sudo: required
+language: cpp
+cache: ccache
+branches:
+  except:
+  - "/^\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d-[\\da-f]+$/"
+env:
+  global:
+  - secure: FlsmywHiGR6VKejCGcEd59rhvk5YI1f+FUAWfBLVxzqG4haLGT0MQwyxDr2EPS3Iu+v16nsMxHT2dwMCotC8zTPSmHUr6evE4jpNcqs+vIOAz7VLjdqwD0jweeguOR4JxL1XcgFZMAPTnoQFBFZlEOFu8OxaDjOoG7Oj0iGH+Fo=
+  - secure: 89MWEONx9hRT4aMMxqTcwHVfErXx7lYuL2jirVk5qhdZhJ7GzuOgd/FjDNhyJmZxy77BcYe60vvvPsRwjst1XOUKLQ35QnIaGcN29GVhZksyW1K0qSqRr/gjf+2yDLuqZZ/OmCHDEzoNaKD3BC+weKA5J2j4qmeBEB05HKOAVZQ=
+  - USE_TENSORFLOW=false
+services:
+- docker
+jobs:
+  include:
+  - stage: test
+    script: docker build --tag ubuntu18.04 --build-arg JOB_NUMBER=$TRAVIS_JOB_NUMBER
+      -f ./Dockerfile-ubuntu18.04 . && docker run -t -d ubuntu18.04 && docker cp $(docker
+      ps -n 1 -q):/usr/share/apps/nind/packages/ $HOME && ls $HOME/packages/
+    before_deploy: git config --local user.name "Gael de Chalendar" git config --local
+      user.email "kleagg@gmail.com" git tag "$(git log --date=iso  -1 | grep Date
+      | sed -e 's/Date:\ *//' -e 's/\+.*//' -e 's/[- :]//g')-$(git log --format=%h
+      --abbrev=8 -1)" || true
+    deploy:
+      provider: releases
+      api_key:
+        secure: YBHi+kyNbnpWb4/P1apH06nwvUWhe9mnu1E08jN898DaKSCXhuss7JiLuaP5ogWAlRcGVHAO/9ntC91WWryfYp+qSDudrOZu7AQFvIpHAfE8WX8G6bGov74+sjA5YptdKaQ1QyAg2D2JfsghdPwR9JSqYaeSqVRYSs0P/GlnZw0cNgCWVIOMgv4wJZ8IpTMItSlHu4CVqgDMfcCivylhyUP9kccqD7itPaxUgOhD2ftAjdPf8eJoPdr7jpvWwGDiv0kwDoDGBUR1HPc3XT8/Vr5CX7Yy0AhTEgPzWcTbp6+Njw5MzttfEQaUXpdVKlJnmgBYJ8Fn/8tXpnySsGvcozwD29O7mHWB68f91m5ZKMQFDWwXpJ95m45MLIi4UzSYqUNUSTREnAI0o75+vcPNodETwpFPYvWgwQzgQIIsuw+svIvjtBYNKVLsJCoBuxCjFcwMXXD7Hug4vkx9v2RIjK4zn9AU/P8605uh03Ht/gKfJ8WGY5iND0+aVm7M6vPPuK1iCoWpOsI8Rayw5NP1Sj+AbK5ysrcO0ytnKfKFhzuZLq/0t6yDcsKjQeWxPNSbiIDIpYDigqJYHcA8yWJREGe3biFq/+T+He1BcATV1+FSMPMojnJ4xEvnvIYUTwsULwh7jCTTuevdcWVqiTcE5kP9V9Jn9ZEmXuHbDXPJ7tA=
+      file_glob: true
+      file: "$HOME/packages/*.deb"
+      skip_cleanup: true
+      on:
+        repo: aymara/nind
+        tags: false
+        branches:
+          except:
+          - "/^\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d-[\\da-f]+$/"
+  - script: docker build --tag ubuntu16.04 --build-arg JOB_NUMBER=$TRAVIS_JOB_NUMBER
+      -f ./Dockerfile-ubuntu16.04 . && docker run -t -d ubuntu16.04 && docker cp $(docker
+      ps -n 1 -q):/usr/share/apps/nind/packages/ $HOME && ls $HOME/packages/
+    before_deploy: git config --local user.name "Gael de Chalendar" git config --local
+      user.email "kleagg@gmail.com" git tag "$(git log --date=iso  -1 | grep Date
+      | sed -e 's/Date:\ *//' -e 's/\+.*//' -e 's/[- :]//g')-$(git log --format=%h
+      --abbrev=8 -1)" || true
+    deploy:
+      provider: releases
+      api_key:
+        secure: YBHi+kyNbnpWb4/P1apH06nwvUWhe9mnu1E08jN898DaKSCXhuss7JiLuaP5ogWAlRcGVHAO/9ntC91WWryfYp+qSDudrOZu7AQFvIpHAfE8WX8G6bGov74+sjA5YptdKaQ1QyAg2D2JfsghdPwR9JSqYaeSqVRYSs0P/GlnZw0cNgCWVIOMgv4wJZ8IpTMItSlHu4CVqgDMfcCivylhyUP9kccqD7itPaxUgOhD2ftAjdPf8eJoPdr7jpvWwGDiv0kwDoDGBUR1HPc3XT8/Vr5CX7Yy0AhTEgPzWcTbp6+Njw5MzttfEQaUXpdVKlJnmgBYJ8Fn/8tXpnySsGvcozwD29O7mHWB68f91m5ZKMQFDWwXpJ95m45MLIi4UzSYqUNUSTREnAI0o75+vcPNodETwpFPYvWgwQzgQIIsuw+svIvjtBYNKVLsJCoBuxCjFcwMXXD7Hug4vkx9v2RIjK4zn9AU/P8605uh03Ht/gKfJ8WGY5iND0+aVm7M6vPPuK1iCoWpOsI8Rayw5NP1Sj+AbK5ysrcO0ytnKfKFhzuZLq/0t6yDcsKjQeWxPNSbiIDIpYDigqJYHcA8yWJREGe3biFq/+T+He1BcATV1+FSMPMojnJ4xEvnvIYUTwsULwh7jCTTuevdcWVqiTcE5kP9V9Jn9ZEmXuHbDXPJ7tA=
+      file_glob: true
+      file: "$HOME/packages/*.deb"
+      skip_cleanup: true
+      on:
+        repo: aymara/nind
+        tags: false
+        branches:
+          except:
+          - "/^\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d-[\\da-f]+$/"
+  - script: docker build --tag debian9.4 --build-arg JOB_NUMBER=$TRAVIS_JOB_NUMBER
+      -f ./Dockerfile-debian9.4 . && docker run -t -d debian9.4 && docker cp $(docker
+      ps -n 1 -q):/usr/share/apps/nind/packages/ $HOME && ls $HOME/packages/
+    before_deploy: git config --local user.name "Gael de Chalendar" git config --local
+      user.email "kleagg@gmail.com" git tag "$(git log --date=iso  -1 | grep Date
+      | sed -e 's/Date:\ *//' -e 's/\+.*//' -e 's/[- :]//g')-$(git log --format=%h
+      --abbrev=8 -1)" || true
+    deploy:
+      provider: releases
+      api_key:
+        secure: YBHi+kyNbnpWb4/P1apH06nwvUWhe9mnu1E08jN898DaKSCXhuss7JiLuaP5ogWAlRcGVHAO/9ntC91WWryfYp+qSDudrOZu7AQFvIpHAfE8WX8G6bGov74+sjA5YptdKaQ1QyAg2D2JfsghdPwR9JSqYaeSqVRYSs0P/GlnZw0cNgCWVIOMgv4wJZ8IpTMItSlHu4CVqgDMfcCivylhyUP9kccqD7itPaxUgOhD2ftAjdPf8eJoPdr7jpvWwGDiv0kwDoDGBUR1HPc3XT8/Vr5CX7Yy0AhTEgPzWcTbp6+Njw5MzttfEQaUXpdVKlJnmgBYJ8Fn/8tXpnySsGvcozwD29O7mHWB68f91m5ZKMQFDWwXpJ95m45MLIi4UzSYqUNUSTREnAI0o75+vcPNodETwpFPYvWgwQzgQIIsuw+svIvjtBYNKVLsJCoBuxCjFcwMXXD7Hug4vkx9v2RIjK4zn9AU/P8605uh03Ht/gKfJ8WGY5iND0+aVm7M6vPPuK1iCoWpOsI8Rayw5NP1Sj+AbK5ysrcO0ytnKfKFhzuZLq/0t6yDcsKjQeWxPNSbiIDIpYDigqJYHcA8yWJREGe3biFq/+T+He1BcATV1+FSMPMojnJ4xEvnvIYUTwsULwh7jCTTuevdcWVqiTcE5kP9V9Jn9ZEmXuHbDXPJ7tA=
+      file_glob: true
+      file: "$HOME/packages/*.deb"
+      skip_cleanup: true
+      on:
+        repo: aymara/nind
+        tags: false
+        branches:
+          except:
+          - "/^\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d-[\\da-f]+$/"

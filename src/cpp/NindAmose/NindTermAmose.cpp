@@ -10,10 +10,10 @@
 //
 // Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
-// NIND is free software: you can redistribute it and/or modify it under the terms of the 
-// GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
+// NIND is free software: you can redistribute it and/or modify it under the terms of the
+// GNU Less General Public License (LGPL) as published by the Free Software Foundation,
 // (see <http://www.gnu.org/licenses/>), either version 3 of the License, or any later version.
-// NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
+// NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
 // even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
@@ -33,8 +33,8 @@ NindTermAmose::NindTermAmose(const string &fileNameExtensionLess,
                              const bool isTermIndexWriter,
                              const Identification &lexiconIdentification,
                              const unsigned int indirectionBlocSize):
-    NindTermIndex(fileNameExtensionLess, 
-                  isTermIndexWriter, 
+    NindTermIndex(fileNameExtensionLess,
+                  isTermIndexWriter,
                   lexiconIdentification,
                   NOMBRE_COMPTEURS,
                   indirectionBlocSize),
@@ -51,8 +51,8 @@ NindTermAmose::~NindTermAmose()
 ////////////////////////////////////////////////////////////
 //brief Add doc references to the specified term
 //param ident ident of term
-//param type type of term (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY) 
-//param newDocuments list of documents ids + frequencies where term is in 
+//param type type of term (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY)
+//param newDocuments list of documents ids + frequencies where term is in
 //param fileIdentification unique identification of file */
 void NindTermAmose::addDocsToTerm(const unsigned int ident,
                                   const AmoseTypes type,
@@ -78,7 +78,7 @@ void NindTermAmose::addDocsToTerm(const unsigned int ident,
         const Document &document = (*itdoc);            //document ah ajouter
         unsigned int frequency = document.frequency;    //sa frejquence
         //trouve la place dans la liste ordonnee
-        list<NindTermIndex::Document>::iterator it2 = documents.begin(); 
+        list<NindTermIndex::Document>::iterator it2 = documents.begin();
         while (it2 != documents.end()) {
             //deja dans la liste, met ah jour la frejquence
             if ((*it2).ident == document.ident) {
@@ -101,12 +101,12 @@ void NindTermAmose::addDocsToTerm(const unsigned int ident,
         termcg.frequency += frequency;
     }
     //ejcrit le rejsultat sur le fichier
-    setTermDef(ident, termDef, fileIdentification, setCountsAsList());  
+    setTermDef(ident, termDef, fileIdentification, setCountsAsList());
 }
 ////////////////////////////////////////////////////////////
 //brief remove doc reference from the specified term
 //param ident ident of term
-//param type type of term (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY) 
+//param type type of term (SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY)
 //param documentId id of document to remove
 //param fileIdentification unique identification of file */
 void NindTermAmose::removeDocFromTerm(const unsigned int ident,
@@ -138,14 +138,14 @@ void NindTermAmose::removeDocFromTerm(const unsigned int ident,
             //dejcrejmente le nombre de termes pour ce type
             m_uniqueTermCount[type] -=1;
             m_uniqueTermCount[ALL] -=1;
-            termDef.clear();        
+            termDef.clear();
         }
         //terminej, ejcrit la nouvelle dejfinition
-        setTermDef(ident, termDef, fileIdentification, setCountsAsList());  
+        setTermDef(ident, termDef, fileIdentification, setCountsAsList());
         break;
     }
     //si document pas trouvej, rien n'est fait
-}   
+}
 ////////////////////////////////////////////////////////////
 //brief Read the list of documents where term is indexed
 //frequencies are not returned
@@ -163,7 +163,7 @@ bool NindTermAmose::getDocList(const unsigned int termId,
     if (!trouvej) return false;
     const TermCG &termCG = termDef.front();
     const list<Document> &documents = termCG.documents;
-    for (list<Document>::const_iterator it = documents.begin(); it != documents.end(); it++) { 
+    for (list<Document>::const_iterator it = documents.begin(); it != documents.end(); it++) {
         documentIds.push_back((*it).ident);
     }
     return true;
@@ -171,7 +171,7 @@ bool NindTermAmose::getDocList(const unsigned int termId,
 ////////////////////////////////////////////////////////////
 //brief Number of documents in index that contain the given term
 //param termId: identifier of the term
-//return number  of documents in index that contain the given term
+//return number of documents in index that contain the given term
 unsigned int NindTermAmose::getDocFreq(const unsigned int termId)
 {
     list<struct TermCG> termDef;
@@ -182,8 +182,8 @@ unsigned int NindTermAmose::getDocFreq(const unsigned int termId)
     return termCG.documents.size();
 }
 ////////////////////////////////////////////////////////////
-//brief number of unique terms  
-//param type: type of the terms (ALL, SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY) 
+//brief number of unique terms
+//param type: type of the terms (ALL, SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY)
 //return number of unique terms of specified type into the base */
 unsigned int NindTermAmose::getUniqueTermCount(const AmoseTypes type)
 {
@@ -191,8 +191,8 @@ unsigned int NindTermAmose::getUniqueTermCount(const AmoseTypes type)
     return m_uniqueTermCount[type];
 }
 ////////////////////////////////////////////////////////////
-//brief number of terms occurrences 
-//param type: type of the terms (ALL, SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY) 
+//brief number of terms occurrences
+//param type: type of the terms (ALL, SIMPLE_TERM, MULTI_TERM, NAMED_ENTITY)
 //return number  of terms of specified type into the base */
 unsigned int NindTermAmose::getTermOccurrences(const AmoseTypes type)
 {
@@ -200,7 +200,7 @@ unsigned int NindTermAmose::getTermOccurrences(const AmoseTypes type)
     return m_termOccurrences[type];
 }
 ////////////////////////////////////////////////////////////
-//brief read specific counts from termindex file if needed. 
+//brief read specific counts from termindex file if needed.
     void NindTermAmose::synchronizeCounts()
 {
     //l'ejcrivain est par dejfinition dejjah synchronisej
@@ -210,7 +210,7 @@ unsigned int NindTermAmose::getTermOccurrences(const AmoseTypes type)
 }
 
 ////////////////////////////////////////////////////////////
-//brief read specific counts from termindex file. 
+//brief read specific counts from termindex file.
     void NindTermAmose::readCounts()
 {
     //rejcupehre la liste des spejcifiques
@@ -228,7 +228,7 @@ unsigned int NindTermAmose::getTermOccurrences(const AmoseTypes type)
     m_termOccurrences[NAMED_ENTITY] = *specIt++;
 }
 ////////////////////////////////////////////////////////////
-//brief set specific counts as list 
+//brief set specific counts as list
 //return counts as a list of words */
     list<unsigned int> NindTermAmose::setCountsAsList()
 {
@@ -244,5 +244,5 @@ unsigned int NindTermAmose::getTermOccurrences(const AmoseTypes type)
     return result;
 }
 ////////////////////////////////////////////////////////////
-    
-    
+
+
