@@ -25,12 +25,15 @@ def usage():
     print ("""© l'ATEJCON.
 Dumpe en clair un document préalablement indexé dans une base nind spécifiée
 par un de ses fichiers.
-Les termes apparaissent dans l'ordre, les localisations ne sont pas affichées.
+Les termes apparaissent dans l'ordre par paquets de 10 sur une ligne.
+Les localisations ne sont pas affichées.
+Le nombre de termes trouvés est affiché à la fin.
 Le système nind est expliqué dans le document LAT2017.JYS.470.
 
 usage   : %s <fichier nind> <n° doc>
 exemple : %s FRE.lexiconindex 9546
-"""%(script, script))
+exemple : %s FRE.lexiconindex 9546 > 9546-dump.txt
+"""%(script, script, script))
 
 def main():
     try:
@@ -64,15 +67,19 @@ def main():
     #trouve les termes dans le fichier des index locaux et les affiche sans leurs localisations
     termList = nindLocalindex.donneListeTermes(noDoc)
     resultat = []
+    cmptTermes = 0
     for (noTerme, categorie, localisationsList) in termList:
         terme = nindRetrolexicon.donneMot(noTerme)[0]
         if categorie == 0:
             resultat.append('%s'%(terme))
         else:
             resultat.append('%s [%s]'%(terme, NindFile.catNb2Str(categorie)))
-    print ('nbTerms : %d'%(len(resultat)))
-    print ('Terms :')
+        cmptTermes +=1
+        if cmptTermes %10 == 0: 
+            print (', '.join(resultat) + ',')
+            resultat.clear()
     print (', '.join(resultat))
+    print ('\n {} occurrences de termes trouvées'.format(cmptTermes))
    
 
 if __name__ == '__main__':
