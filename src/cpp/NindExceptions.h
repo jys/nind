@@ -7,10 +7,10 @@
 //
 // Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
 // This file is part of NIND (as "nouvelle indexation").
-// NIND is free software: you can redistribute it and/or modify it under the terms of the 
-// GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
+// NIND is free software: you can redistribute it and/or modify it under the terms of the
+// GNU Less General Public License (LGPL) as published by the Free Software Foundation,
 // (see <http://www.gnu.org/licenses/>), either version 3 of the License, or any later version.
-// NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
+// NIND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
 // even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Less General Public License for more details.
 ////////////////////////////////////////////////////////////
@@ -28,7 +28,7 @@ class FileException : public std::runtime_error {
 public:
     std::string m_fileName;
     FileException(const char * name, const std::string fileName) :
-        runtime_error(name),
+        std::runtime_error( (std::string(name)+": "+fileName).c_str() ),
         m_fileName(fileName) {}
     virtual ~FileException() throw() {}
 };
@@ -96,7 +96,7 @@ class WriteFileException : public FileException {
     WriteFileException(const std::string fileName) :
         FileException("Write file error", fileName) {}
 };
-/**\brief when attemp to read over buffer  */
+/**\brief when attempt to read over buffer  */
 class OutReadBufferException : public FileException {
     public:
     OutReadBufferException() :
@@ -104,7 +104,7 @@ class OutReadBufferException : public FileException {
     OutReadBufferException(const std::string fileName) :
         FileException("Out read buffer error", fileName) {}
 };
-/**\brief when attemp to write over buffer  */
+/**\brief when attempt to write over buffer  */
 class OutWriteBufferException : public FileException {
     public:
     OutWriteBufferException() :
