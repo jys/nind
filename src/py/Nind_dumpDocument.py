@@ -63,7 +63,7 @@ def main():
         print ("doc inconnu")
         sys.exit()
     identInterne = nindLocalindex.docIdTradExtInt[noDoc]
-    print ('%d -> %d'%(noDoc, identInterne))
+    print ('noDoc -> identInterne : %d -> %d'%(noDoc, identInterne))
     #trouve les termes dans le fichier des index locaux et les affiche sans leurs localisations
     termList = nindLocalindex.donneListeTermes(noDoc)
     resultat = []
