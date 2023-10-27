@@ -101,15 +101,19 @@ def catNb2Str(cat):
 # <EntierSLat>            ::= { <Octet> }
 ######################################################################################
 class NindFile:
-    def __init__(self, latFileName, enEjcriture = False):
+    def __init__(self, latFileName, enEjcriture = False, enModification = False):
         self.latFileName = latFileName
         if not enEjcriture:
             #ouvre le fichier en lecture
             self.latFile = open(self.latFileName, 'rb')
             self.latFile.seek(0, 0)
-        else:
+        elif not enModification:
             #ejcrit le fichier completement
             self.latFile = open(self.latFileName, 'wb')
+        else:
+            #ouvre pour modifications
+            self.latFile = open(self.latFileName, 'r+b')
+            self.latFile.seek(0, 0)
         
     def seek(self, offset, from_what):
         self.latFile.seek(offset, from_what)

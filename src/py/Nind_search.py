@@ -65,10 +65,10 @@ def main():
     print ("max=%d dateheure=%d (%s)"%(maxIdentifiant, dateHeure, ctime(int(dateHeure))))
     (maxIdentifiant2, dateHeure2) = nindTermindex.donneIdentificationFichier()
     if maxIdentifiant2 != maxIdentifiant or dateHeure2 != dateHeure:
-        print ("%s NON APAIRÉ : max=%d dateheure=%d (%s)"%(termindexFileName, maxIdentifiant2, dateHeure2, ctime(int(dateHeure2))))
+        print ("%s NON APPAIRÉ : max=%d dateheure=%d (%s)"%(nindtermindexName, maxIdentifiant2, dateHeure2, ctime(int(dateHeure2))))
     (maxIdentifiant2, dateHeure2) = nindLocalindex.donneIdentificationFichier()
     if maxIdentifiant2 != maxIdentifiant or dateHeure2 != dateHeure:
-        print ("%s NON APAIRÉ : max=%d dateheure=%d (%s)"%(localindexFileName, maxIdentifiant2, dateHeure2, ctime(int(dateHeure2))))  
+        print ("%s NON APPAIRÉ : max=%d dateheure=%d (%s)"%(nindlocalindexName, maxIdentifiant2, dateHeure2, ctime(int(dateHeure2))))  
     
     #2) trouve l'identifiant du terme
     motsSimples = terme.split('_')
