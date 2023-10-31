@@ -5,7 +5,7 @@ __copyright__ = "Copyright (C) 2023 LATEJCON"
 __license__ = "GNU LGPL"
 __version__ = "2.0.1"
 # Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
-# Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
+# Copyright: 2014-2023 LATEJCON. See LICENCE.md file that comes with this distribution
 # This file is part of NIND (as "nouvelle indexation").
 # NIND is free software: you can redistribute it and/or modify it under the terms of the 
 # GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -29,12 +29,17 @@ def usage():
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
     else: script = sys.argv[0]
     print (f"""© l'ATEJCON.
-Programme de test et de réparation d'une base nind préalablement indexée et
-spécifiée par un de ses fichiers.
-En cas de réparation les fichiers modifiés sont sauvegardés en ajoutant la
-date et l'heure derrière l'extension.
+Programme de diagnostic et de réparation d'une base nind préalablement 
+indexée et spécifiée par un de ses fichiers.
+En cas de réparation les fichiers modifiés sont préalablement sauvegardés
+en ajoutant la date et l'heure derrière l'extension.
 
-usage   : {script} <fichier index> 
+Pour le moment, la réparation est possible si tous les fichiers ont une 
+structure cohérente et reconnue. Sont réparés :
+o *.nindtermindex si son identification est antérieure à celle du lexique
+o *.nindlocalindex si son identification est antérieure à celle du lexique
+
+usage   : {script} <un des fichiers> 
 usage   : {script} NindFre.nindlexiconindex
 """)
     
@@ -52,6 +57,7 @@ def main():
             raise
         sys.exit()
 
+################################
 def checkAndRepair(nindFileName):
     #calcul des noms de fichiers (remplace l'extension)
     nn = nindFileName.split('.')
@@ -64,119 +70,123 @@ def checkAndRepair(nindFileName):
     nindtermindexName = path.basename(nindtermindexFullname)
     nindlocalindexName = path.basename(nindlocalindexFullname)
     
-    ######################## Diagnostic
-    print('DIAGNOSTIC\n')
-    # ejtat des lieux
-    lexiqueOk = rejtroOk = termOk = localOk = False
-    rejtroAjour = termAjour = localAjour = False
-    
-    # 1) le lexique
-    maxLexicon = dateHeureLexicon = 0
-    print(f'Ouvre {nindlexiconindexName}')
-    try:
-        nindLexiconindex = NindLexiconindex(nindlexiconindexFullname)
-        (maxLexicon, dateHeureLexicon) = nindLexiconindex.donneIdentificationFichier()
-        nindLexiconindex.close()
-        lexiqueOk = True
-        print(f'OK    {nindlexiconindexName}')
-        print (f'max={maxLexicon} dateheure={dateHeureLexicon} ({ctime(int(dateHeureLexicon))})')
-    except Exception as exc:
-        print(f'NOK!! {nindlexiconindexName}')
-        print (exc)
-    print()
-    
-    # 2) le rejtrolexique
-    maxRejtro = dateHeureRejtro = 0
-    print(f'Ouvre {nindretrolexiconName}')
-    try:
-        nindretrolexicon = NindRetrolexicon(nindretrolexiconFullname)
-        (maxRejtro, dateHeureRejtro) = nindretrolexicon.donneIdentificationFichier()
-        nindretrolexicon.close()
-        rejtroOk = True
-        print(f'OK    {nindretrolexiconName}')
-        rejtroAjour = maxRejtro == maxLexicon and dateHeureRejtro == dateHeureLexicon
+    # pour repasser le diagnostic aprhes la rejparation
+    while True:
+        ######################## Diagnostic
+        print('DIAGNOSTIC\n')
+        # ejtat des lieux
+        lexiqueOk = rejtroOk = termOk = localOk = False
+        rejtroAjour = termAjour = localAjour = False
+        
+        # 1) le lexique
+        maxLexicon = dateHeureLexicon = 0
+        print(f'Ouvre {nindlexiconindexName}')
+        try:
+            nindLexiconindex = NindLexiconindex(nindlexiconindexFullname)
+            (maxLexicon, dateHeureLexicon) = nindLexiconindex.donneIdentificationFichier()
+            nindLexiconindex.close()
+            lexiqueOk = True
+            print(f'OK    {nindlexiconindexName}')
+            print (f'max={maxLexicon} dateheure={dateHeureLexicon} ({ctime(int(dateHeureLexicon))})')
+        except Exception as exc:
+            print(f'NOK!! {nindlexiconindexName}')
+            print (exc)
+        print()
+        
+        # 2) le rejtrolexique
+        maxRejtro = dateHeureRejtro = 0
+        print(f'Ouvre {nindretrolexiconName}')
+        try:
+            nindRetrolexicon = NindRetrolexicon(nindretrolexiconFullname)
+            (maxRejtro, dateHeureRejtro) = nindRetrolexicon.donneIdentificationFichier()
+            nindRetrolexicon.close()
+            rejtroOk = True
+            print(f'OK    {nindretrolexiconName}')
+            rejtroAjour = maxRejtro == maxLexicon and dateHeureRejtro == dateHeureLexicon
+            if not rejtroAjour:
+                print('!!!!  PROBLÈME DE COHÉRENCE AVEC LE LEXIQUE')
+                print (f'!!!!  max={maxRejtro} dateheure={dateHeureRejtro} ({ctime(int(dateHeureRejtro))})')
+        except Exception as exc:
+            print(f'NOK!! {nindretrolexiconName}')
+            print (exc)
+        print()
+        
+        # 3) le fichier des termes
+        maxTerm = dateHeureTerm = 0
+        print(f'Ouvre {nindtermindexName}')
+        try:
+            nindTermindex = NindTermindex(nindtermindexFullname)
+            (maxTerm, dateHeureTerm) = nindTermindex.donneIdentificationFichier()
+            nindTermindex.close()
+            termOk = True
+            print(f'OK    {nindtermindexName}')
+            termAjour = maxTerm == maxLexicon and dateHeureTerm == dateHeureLexicon
+            if not termAjour:
+                print('!!!!  PROBLÈME DE COHÉRENCE AVEC LE LEXIQUE')
+                print (f'!!!!  max={maxTerm} dateheure={dateHeureTerm} ({ctime(int(dateHeureTerm))})')
+        except Exception as exc:
+            print(f'NOK!! {nindtermindexName}')
+            print (exc)
+        print()
+
+        # 4) le fichier des index locaux
+        maxLocal = dateHeureLocal = 0
+        print(f'Ouvre {nindlocalindexName}')
+        try:
+            nindLocalindex = NindTermindex(nindlocalindexFullname)
+            (maxLocal, dateHeureLocal) = nindLocalindex.donneIdentificationFichier()
+            nindLocalindex.close()
+            localOk = True
+            print(f'OK    {nindlocalindexName}')
+            localAjour = maxLocal == maxLexicon and dateHeureLocal == dateHeureLexicon
+            if not localAjour:
+                print('!!!!  PROBLÈME DE COHÉRENCE AVEC LE LEXIQUE')
+                print (f'!!!!  max={maxLocal} dateheure={dateHeureLocal} ({ctime(int(dateHeureLocal))})')
+        except Exception as exc:
+            print(f'NOK!! {nindlocalindexName}')
+            print (exc)
+        print()
+
+        # si tout est ok, terminej
+        if lexiqueOk and rejtroOk and termOk and localOk and rejtroAjour and termAjour and localAjour: 
+            print('TOUT EST OK')
+            return
+
+        ######################## Rejparation
+        print('RÉPARATION\n')
+        # pour le moment, on ne rejpare que si les fichiers sont cohejrents en interne
+        if not (lexiqueOk and rejtroOk and termOk and localOk):
+            print('AU MOINS UN FICHIER NOK!!, RÉPARATION IMPOSSIBLE POUR LE MOMENT')
+            return
+        
+        # le lexique et le rejtrolexique doivent estre cohejrents
         if not rejtroAjour:
-            print('!!!!  PROBLÈME DE COHÉRENCE AVEC LE LEXIQUE')
-            print (f'!!!!  max={maxRejtro} dateheure={dateHeureRejtro} ({ctime(int(dateHeureRejtro))})')
-    except Exception as exc:
-        print(f'NOK!! {nindretrolexiconName}')
-        print (exc)
-    print()
-    
-    # 3) le fichier des termes
-    maxTerm = dateHeureTerm = 0
-    print(f'Ouvre {nindtermindexName}')
-    try:
-        nindtermindex = NindTermindex(nindtermindexFullname)
-        (maxTerm, dateHeureTerm) = nindtermindex.donneIdentificationFichier()
-        nindtermindex.close()
-        termOk = True
-        print(f'OK    {nindtermindexName}')
-        termAjour = maxTerm == maxLexicon and dateHeureTerm == dateHeureLexicon
+            print(f'{nindretrolexiconName} PAS ALIGNÉ, RÉPARATION IMPOSSIBLE POUR LE MOMENT')
+            return
+        
+        # le fichier des termes 
         if not termAjour:
-            print('!!!!  PROBLÈME DE COHÉRENCE AVEC LE LEXIQUE')
-            print (f'!!!!  max={maxTerm} dateheure={dateHeureTerm} ({ctime(int(dateHeureTerm))})')
-    except Exception as exc:
-        print(f'NOK!! {nindtermindexName}')
-        print (exc)
-    print()
+            # il doit estre antejrieur au lexique
+            if maxTerm > maxLexicon or dateHeureTerm > dateHeureLexicon:
+                print(f'{nindtermindexName} POSTÉRIEUR AU LEXIQUE, RÉPARATION IMPOSSIBLE POUR LE MOMENT')
+            elif okToRepair(nindtermindexName):
+                # sauvegarde du fichier ah modifier
+                saveFile(nindtermindexFullname)
+                # ejcrit l'identification du lexique
+                writeIdentification(nindtermindexFullname, maxLexicon, dateHeureLexicon)
 
-    # 4) le fichier des index locaux
-    maxLocal = dateHeureLocal = 0
-    print(f'Ouvre {nindlocalindexName}')
-    try:
-        nindlocalindex = NindTermindex(nindlocalindexFullname)
-        (maxLocal, dateHeureLocal) = nindlocalindex.donneIdentificationFichier()
-        nindlocalindex.close()
-        localOk = True
-        print(f'OK    {nindlocalindexName}')
-        localAjour = maxLocal == maxLexicon and dateHeureLocal == dateHeureLexicon
+        # le fichier des index locaux 
         if not localAjour:
-            print('!!!!  PROBLÈME DE COHÉRENCE AVEC LE LEXIQUE')
-            print (f'!!!!  max={maxLocal} dateheure={dateHeureLocal} ({ctime(int(dateHeureLocal))})')
-    except Exception as exc:
-        print(f'NOK!! {nindlocalindexName}')
-        print (exc)
-    print()
-
-    # si tout est ok, terminej
-    if lexiqueOk and rejtroOk and termOk and localOk and rejtroAjour and termAjour and localAjour: 
-        print('TOUT EST OK')
-        return
-
-    ######################## Rejparation
-    print('RÉPARATION\n')
-    # pour le moment, on ne rejpare que si les fichiers sont cohejrents en interne
-    if not (lexiqueOk and rejtroOk and termOk and localOk):
-        print('AU MOINS UN FICHIER NOK!!, RÉPARATION IMPOSSIBLE POUR LE MOMENT')
-        return
-    
-    # le lexique et le rejtrolexique doivent estre cohejrents
-    if not rejtroAjour:
-        print(f'{nindretrolexiconName} PAS ALIGNÉ, RÉPARATION IMPOSSIBLE POUR LE MOMENT')
-        return
-    
-    # le fichier des termes 
-    if not termAjour:
-        # il doit estre antejrieur au lexique
-        if maxTerm > maxLexicon or dateHeureTerm > dateHeureLexicon:
-            print(f'{nindtermindexName} POSTÉRIEUR AU LEXIQUE, RÉPARATION IMPOSSIBLE POUR LE MOMENT')
-        elif okToRepair(nindtermindexName):
-            # sauvegarde du fichier ah modifier
-            saveFile(nindtermindexFullname)
-            # ejcrit l'identification du lexique
-            writeIdentification(nindtermindexFullname, maxLexicon, dateHeureLexicon)
-
-    # le fichier des index locaux 
-    if not localAjour:
-        # il doit estre antejrieur au lexique
-        if maxLocal > maxLexicon or dateHeureLocal > dateHeureLexicon:
-            print(f'{nindlocalindexName} POSTÉRIEUR AU LEXIQUE, RÉPARATION IMPOSSIBLE POUR LE MOMENT')
-        elif okToRepair(nindlocalindexName):
-            # sauvegarde du fichier ah modifier
-            saveFile(nindlocalindexFullname)
-            # ejcrit l'identification du lexique
-            writeIdentification(nindlocalindexFullname, maxLexicon, dateHeureLexicon)
+            # il doit estre antejrieur au lexique
+            if maxLocal > maxLexicon or dateHeureLocal > dateHeureLexicon:
+                print(f'{nindlocalindexName} POSTÉRIEUR AU LEXIQUE, RÉPARATION IMPOSSIBLE POUR LE MOMENT')
+            elif okToRepair(nindlocalindexName):
+                # sauvegarde du fichier ah modifier
+                saveFile(nindlocalindexFullname)
+                # ejcrit l'identification du lexique
+                writeIdentification(nindlocalindexFullname, maxLexicon, dateHeureLexicon)
+                
+        print()
  
 # demande accord pour modifier
 def okToRepair(fileName):

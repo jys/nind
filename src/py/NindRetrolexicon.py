@@ -72,7 +72,8 @@ def main():
             print('      % 9d lignes en erreur'%(nbErreurs))
             print('        -------')
             print('      % 9d lignes écrites dans %s'%(nbLignes, path.basename(outFilename)))
-        elif action.startswith('mot'): print (nindRetrolexicon.donneMot(ident)[0])
+        elif action.startswith('mot'): 
+            print ('_'.join(nindRetrolexicon.donneMot(ident)))
         else: raise Exception()
     except Exception as exc:
         if len(exc.args) == 0: usage()
@@ -112,37 +113,37 @@ class NindRetrolexicon(NindPadFile):
         if not path.isfile(retrolexiconFileName): raise Exception("%s n'existe pas"%(retrolexiconFileName))
         #on initialise la classe mehre en lecture uniquement
         NindPadFile.__init__(self, retrolexiconFileName)
+        self.vejrifieFichier()
 
     def createFile(self):
         return
                
     def donneMot (self, ident):
-        mot = []
+        motsSimples = []
         (trouvej, motSimple, identifiantA, identifiantS) = self.__donneDefMot(ident)
         #si pas trouvej, retourne chaisne vide
-        if not trouvej: return ('', 0)
-        tailleMot = 0
+        if not trouvej: return []
+        #tailleMot = 0
         while True:
             #print(mot)
-            tailleMot +=1
+            #tailleMot +=1
             #si c'est un mot simple, c'est la fin 
             if identifiantA == 0:
-                mot.insert(0, motSimple)
+                motsSimples.insert(0, motSimple)
                 break
             #si c'est un mot composej, recupehre le mot simple du couple
             (trouvej, motSimple, identifiantA2, identifiantS2) = self.__donneDefMot(identifiantS)
             if not trouvej: raise Exception("%d pas trouvé A dans %s"%(identifiantS, self.latFileName))
             if identifiantA2 != 0: raise Exception("%d pas terminal %s"%(identifiantS, self.latFileName))
-            mot.insert(0, motSimple)
+            motsSimples.insert(0, motSimple)
             #recupere l'autre mot du couple
             (trouvej, motSimple, identifiantA, identifiantS) = self.__donneDefMot(identifiantA)
             if not trouvej: raise Exception("%d pas trouvé B dans %s"%(identifiantA, self.latFileName))
             #pour detecter les bouclages induits par un fichier bouclant
-            if len(mot) == TAILLE_COMPOSEJ_MAXIMUM: 
+            if len(motsSimples) == TAILLE_COMPOSEJ_MAXIMUM: 
                 raise Exception("%d bouclage dans %s"%(ident, self.latFileName))
-        #retourne la chaisne
-        return ('_'.join(mot), tailleMot)
-        #return (b'_'.join(mot), tailleMot)
+        #retourne la liste de mots simples
+        return (motsSimples)
 
     def __donneDefMot(self, ident):
         #trouve l'adresse des donnees dans le fichier
@@ -235,8 +236,10 @@ class NindRetrolexicon(NindPadFile):
         maxIdent = self.donneMaxIdentifiant()
         for index in range(maxIdent):
             try:
-                (mot, tailleMot) = self.donneMot(index)
+                motsSimples = self.donneMot(index)
+                tailleMot = len(motsSimples)
                 if tailleMot == 0: continue
+                mot = '_'.join(motsSimples)
                 outFile.write('%06d  %s\n'%(index, mot))
                 if tailleMot not in rejpartition: rejpartition[tailleMot] = 0
                 rejpartition[tailleMot] +=1

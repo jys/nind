@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = "jys"
-__copyright__ = "Copyright (C) 2017 LATEJCON"
+__copyright__ = "Copyright (C) 2023 LATEJCON"
 __license__ = "GNU LGPL"
 __version__ = "2.0.1"
 # Author: jys <jy.sage@orange.fr>, (C) LATEJCON 2017
-# Copyright: 2014-2017 LATEJCON. See LICENCE.md file that comes with this distribution
+# Copyright: 2014-2023 LATEJCON. See LICENCE.md file that comes with this distribution
 # This file is part of NIND (as "nouvelle indexation").
 # NIND is free software: you can redistribute it and/or modify it under the terms of the 
 # GNU Less General Public License (LGPL) as published by the Free Software Foundation, 
@@ -15,23 +15,23 @@ __version__ = "2.0.1"
 # GNU Less General Public License for more details.
 import sys
 from os import getenv, path
-from codecs import open
+from NindLexiconindex import NindLexiconindex
 from NindRetrolexicon import NindRetrolexicon
+from NindTermindex import NindTermindex
 from NindLocalindex import NindLocalindex
-import NindFile
 
 def usage():
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
     else: script = sys.argv[0]
     print (f"""© l'ATEJCON.
-Dans une base nind spécifiée par un de ses fichiers, dumpe en clair un 
-document préalablement indexé.
-Le document est spécifié par son identifiant externe ou "last" pour le
-dernier document indexé.
-Le résultat est sauvegardé dans le fichier <base>-dump-<noExterne>.txt.
-Les termes apparaissent dans l'ordre par paquets de 4 sur une ligne.
-"#" est le séparateur des mots simples dans les mots composés. 
-Les localisations ne sont pas affichées.
+Dans une base nind spécifiée par un de ses fichiers, vérifie l'indexation 
+d'un document spécifié par son identifiant externe (ou "last" pour le 
+dernier document indexé).
+Chaque terme du document est recréé en clair par le rétrolexique puis cherché
+via le lexique et le fichier de termes. Ce test valide la cohérence des 4 
+fichiers nind sur le document spécifié.
+Pour visualiser les termes indexés de ce document, utilisez le script
+Nind_dumpDocument.py
 Le système nind est expliqué dans le document LAT2017.JYS.470.
 
 usage   : {script} <fichier nind> <n° doc>
@@ -44,7 +44,7 @@ def main():
         if len(sys.argv) < 3 : raise Exception()
         nindFileName = path.abspath(sys.argv[1])
         noDoc = sys.argv[2]
-        dumpeDocument(nindFileName, noDoc)
+        checkDocument(nindFileName, noDoc)
         
     except Exception as exc:
         if len(exc.args) == 0: usage()
@@ -56,21 +56,23 @@ def main():
         sys.exit()
 
 ################################
-def dumpeDocument(nindFileName, noDoc):
+def checkDocument(nindFileName, noDoc):
     #calcul des noms de fichiers (remplace l'extension)
     nn = nindFileName.split('.')
-    nindlocalindexName = '.'.join(nn[:-1]) + '.nindlocalindex'
+    nindlexiconindexName = '.'.join(nn[:-1])+'.nindlexiconindex'
     nindretrolexiconName = '.'.join(nn[:-1]) + '.nindretrolexicon'
+    nindtermindexName = '.'.join(nn[:-1]) +'.nindtermindex'
+    nindlocalindexName = '.'.join(nn[:-1]) + '.nindlocalindex'
     #les classes
-    nindLocalindex = NindLocalindex(nindlocalindexName)
+    nindLexiconindex = NindLexiconindex(nindlexiconindexName)
     nindRetrolexicon = NindRetrolexicon(nindretrolexiconName)
+    nindTermindex = NindTermindex(nindtermindexName)
+    nindLocalindex = NindLocalindex(nindlocalindexName)
     #trouve l'identifiant interne
     if noDoc.startswith('las'):
         (noInterne, noExterne) = nindLocalindex.donneMaxIdentifiants()
-        last = 'last-'
     else:
         noExterne = int(noDoc)
-        last = ''
     if noExterne not in nindLocalindex.docIdTradExtInt: 
         print ("doc inconnu")
         sys.exit()
@@ -78,24 +80,34 @@ def dumpeDocument(nindFileName, noDoc):
     print (f'noExterne -> identInterne : {noExterne} -> {identInterne}')
     #trouve les termes dans le fichier des index locaux
     termList = nindLocalindex.donneListeTermes(noExterne)
-    resultat = []
     cmptTermes = 0
-    # ouvre le fichier de dump
-    fichierDumpName = '.'.join(nn[:-1]) + f'-dump-{last}{noExterne}.txt'
-    with open(fichierDumpName, 'w', 'utf8') as dump:
-        for (noTerme, categorie, localisationsList) in termList:
-            terme = '#'.join(nindRetrolexicon.donneMot(noTerme))
-            if categorie == 0:
-                resultat.append(terme)
-            else:
-                resultat.append(f'{terme} [{NindFile.catNb2Str(categorie)}]')
-            cmptTermes +=1
-            if cmptTermes %4 == 0: 
-                dump.write(', '.join(resultat) + ',\n')
-                resultat.clear()
-        dump.write(', '.join(resultat) + '\n')
-    print (f'{cmptTermes} occurrences de termes trouvées -> {fichierDumpName}')
-   
-
+    for (noTerme, catejgorie1, localisationsList) in termList:
+        cmptTermes +=1
+        # trouve le mot en clair par le rejtrolexique
+        motsSimples = nindRetrolexicon.donneMot(noTerme)
+        terme = '#'.join(motsSimples)
+        # et retrouve l'identifiant par le lexique
+        motId = nindLexiconindex.donneIdentifiant(motsSimples)
+        if motId != noTerme:
+            raise Exception(f'INCOHÉRENCE LEXIQUE-RÉTRO LEXIQUE #{terme}# {noTerme} <> {motId}')
+        # trouve les utilisations du terme dans le fichier inverse
+        termesCGList = nindTermindex.donneListeTermesCG(noTerme)
+        trouvej = False
+        for (catejgorie2, frequenceTerme, docs) in termesCGList:
+            if catejgorie1 != catejgorie2: continue
+            for (noDoc, frequenceDoc) in docs: 
+                trouvej = noDoc == noExterne
+                if trouvej: break
+            if trouvej: break
+        if not trouvej:
+            raise Exception(f'INCOHÉRENCE TERMES-LOCAL #{terme}# {noTerme}')
+    # terminej
+    nindLexiconindex.close()
+    nindRetrolexicon.close()
+    nindTermindex.close()
+    nindLocalindex.close()
+    print(f'{cmptTermes} termes du document n°{noExterne} correctement retrouvés par le système nind')
+    
 if __name__ == '__main__':
         main()
+    

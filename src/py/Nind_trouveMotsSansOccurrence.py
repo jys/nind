@@ -15,33 +15,38 @@ __version__ = "2.0.1"
 # GNU Less General Public License for more details.
 import sys
 from os import getenv, path
+from codecs import open
+from NindLexiconindex import NindLexiconindex
 from NindTermindex import NindTermindex
 from NindRetrolexicon import NindRetrolexicon
 
 def usage():
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
     else: script = sys.argv[0]
-    print ("""© l'ATEJCON.
-Trouve les mots du lexique qui n'ont aucune occurrence dans le corpus indexé
-et ne sont donc que des composants de mots composés ou alors une rémanence
-de documents effacés.
-Le corpus indexé est désigné par son fichier lexique.
+    print (f"""© l'ATEJCON.
+Dans une base nind spécifiée par un de ses fichiers, trouve les mots du 
+lexique qui n'ont aucune occurrence dans le corpus indexé et ne sont donc
+que des composants de mots composés ou une rémanence de documents tail effacés.
+Le résultat est sauvegardé dans le fichier <base>-dump-motsSansOccurrence.txt.
 
-usage   : %s <fichier>
-exemple : %s FRE.nindlexiconindex
-"""%(script, script))
+usage   : {script} <fichier>
+exemple : {script} FRE.nindlexiconindex
+""")
 
 def main():
     try:
         if len(sys.argv) < 2 : raise Exception()
-        lexiconindexFileName = path.abspath(sys.argv[1])
+        nindFileName = path.abspath(sys.argv[1])
         
         #calcul des noms de fichiers (remplace l'extension)
-        nn = lexiconindexFileName.split('.')
+        nn = nindFileName.split('.')
+        nindlexiconindexName = '.'.join(nn[:-1])+'.nindlexiconindex'
         nindtermindexName = '.'.join(nn[:-1]) + '.nindtermindex'
         nindretrolexiconName = '.'.join(nn[:-1]) + '.nindretrolexicon'
+        motsSansOccurrenceName = '.'.join(nn[:-1]) + '-motsSansOccurrence.txt'
         
         #les classes
+        nindLexiconindex = NindLexiconindex(nindlexiconindexName)
         nindTermindex = NindTermindex(nindtermindexName)
         nindRetrolexicon = NindRetrolexicon(nindretrolexiconName)
     except Exception as exc:
@@ -55,20 +60,26 @@ def main():
         
     mots = []
     #trouve le max des identifiants possibles
-    maxIdent = nindTermindex.donneMaxIdentifiant()
-    for ident in range(maxIdent):
+    (maxLexicon, dateHeureLexicon) = nindLexiconindex.donneIdentificationFichier()
+    print(f'{maxLexicon} mots testés')
+    for ident in range(1, maxLexicon+1):
+        if (ident%10000) == 0:
+            sys.stdout.write('%d\r'%(ident))
+            sys.stdout.flush()        
         #vejrifie que c'est bien un identifiant de mot 
-        mot, tailleMot = nindRetrolexicon.donneMot(ident)
-        if tailleMot == 0: continue
+        motsSimples = nindRetrolexicon.donneMot(ident)
+        if len(motsSimples) == 0: continue
         #lit la dejfinition du mot
         (offsetDejfinition, longueurDejfinition) = nindTermindex.donneAdresseDejfinition(ident)
         #si dejfinition existe, raf
         if offsetDejfinition != 0: continue
         #mejmorise le mot
-        mots.append(mot)
+        mots.append('{:06d} {:s}'.format(ident, '#'.join(motsSimples)))
     #affiche les résultats
-    print('%d mots sans occurrence dans le corpus'%(len(mots)))
-    print(', '.join(mots))
+    print(f'{len(mots)} mots du lexique sans occurrence dans le corpus')
+    print('-> ', motsSansOccurrenceName)
+    with open(motsSansOccurrenceName, 'w', 'utf8') as dump:
+        dump.write('\n'.join(mots) + '\n')
             
 if __name__ == '__main__':
         main()

@@ -278,7 +278,7 @@ class NindLexiconindex(NindIndex):
                     #motSimple = self.litOctets(longueur)
                     identifiantS = self.litNombre4()
                     nbreComposes = self.litNombreULat()
-                    outFile.write('[%s] %06d (%d) '%(motSimple, identifiantS, nbreComposes))
+                    outFile.write('%06d [%s] (%d) '%(identifiantS, motSimple, nbreComposes))
                     identifiantC = identifiantS
                     composes = []
                     for i in range(nbreComposes):

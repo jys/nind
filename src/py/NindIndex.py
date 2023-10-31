@@ -83,6 +83,7 @@ class NindIndex(NindPadFile):
     def __init__(self, indexFileName):
         #en lecture uniquement
         NindPadFile.__init__(self, indexFileName)
+        self.vejrifieFichier()
         
     #donne l'adresse et la longueur de la dejfinition
     def donneAdresseDejfinition(self, identifiant):

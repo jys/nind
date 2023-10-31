@@ -23,20 +23,22 @@ from NindIndex import NindIndex
 def usage():
     if getenv("PY") != None: script = sys.argv[0].replace(getenv("PY"), '$PY')
     else: script = sys.argv[0]
-    print ("""© l'ATEJCON.
+    print (f"""© l'ATEJCON.
 o Analyse un fichier nindlocalindex du système nind et affiche les statistiques 
+o Peut donner l'identifiant interne et externe du dernier document indexé 
 o Peut dumper nindlocalindex sur <fichier>-dump.txt
 o Peut donner la liste des identifiants externes de tous les documents indexés
 o Peut afficher les données correspondant à un document spécifié par son 
   identifiant externe
 Le format du fichier est défini dans le document LAT2017.JYS.470.
 
-usage   : %s <fichier> [ <analyse> | <dumpe> | <ident> | <affiche> <ident> ]
-exemple : %s FRE.nindlocalindex
-exemple : %s FRE.nindlocalindex dump
-exemple : %s FRE.nindlocalindex ident
-exemple : %s FRE.nindtermindex affi 3456
-"""%(script, script, script, script, script))
+usage   : {script} <fichier> [ <analyse> | <dernier> | <dumpe> | <ident> | <affiche> <ident> ]
+exemple : {script} FRE.nindlocalindex
+exemple : {script} FRE.nindlocalindex dern
+exemple : {script} FRE.nindlocalindex dump
+exemple : {script} FRE.nindlocalindex iden
+exemple : {script} FRE.nindlocalindex affi 3456
+""")
 
 
 def main():
@@ -51,12 +53,15 @@ def main():
         #la classe
         nindLocalindex = NindLocalindex(localindexFileName)
         if action.startswith('anal'): nindLocalindex.analyseFichierLocalindex(True)
+        elif action.startswith('der'):
+            (noInterne, noExterne) = nindLocalindex.donneMaxIdentifiants()
+            print (f'dernier document indexé : n° interne {noInterne}, n° externe : {noExterne}')
         elif action.startswith('dump'):
             outFilename = localindexFileName + '-dump.txt'
             outFile = codecs.open(outFilename, 'w', 'utf-8')
             nbLignes = nindLocalindex.dumpeFichier(outFile)
             outFile.close()
-            print ('%d lignes écrites dans %s'%(nbLignes, outFilename))
+            print (f'{nbLignes} lignes écrites dans {outFilename}')
         elif action.startswith('id'):
             listeIdentifiants = nindLocalindex.donneidentifiantsExternes()
             listeIdentifiants.sort()
@@ -109,11 +114,11 @@ class NindLocalindex(NindIndex):
             raise Exception('%s : taille incompatible des spécifiques'%(self.latFileName))
         self.seek(offsetSpejcifiques, 0)
         #<maxIdentifiantInterne> <nombreDocuments>
-        maxIdentifiantInterne = self.litNombre4()
+        self.maxIdentifiantInterne = self.litNombre4()
         nombreDocuments = self.litNombre4()
         #initialisation traduction identitiant externe -> identifiant interne
         self.docIdTradExtInt = {}
-        for noDocInterne in range(1, maxIdentifiantInterne +1):
+        for noDocInterne in range(1, self.maxIdentifiantInterne +1):
             (offsetDejfinition, longueurDejfinition) = self.donneAdresseDejfinition(noDocInterne)
             if offsetDejfinition == 0: continue
             self.seek(offsetDejfinition, 0)
@@ -174,6 +179,14 @@ class NindLocalindex(NindIndex):
             rejsultat.append((noTerme, catejgorie, localisationsList))
         return rejsultat
               
+    #######################################################################
+    #retourne les identifiants interne et externe du dernier document indexej
+    def donneMaxIdentifiants(self):
+        #trouve les donnejes du dernier doc indexej
+        trouvej, dummy, dummy, identifiantExterne = self.__donneDonnejes(self.maxIdentifiantInterne)
+        if not trouvej: return (0, 0)   # il a ejtej effacej
+        return (self.maxIdentifiantInterne, identifiantExterne)
+
     #######################################################################
     #analyse du fichier
     def analyseFichierLocalindex(self, trace):

@@ -105,6 +105,14 @@ class NindPadFile(NindFile):
             self.tailleSpejcifiques = self.litNombre3()
         
     #############################################################   
+    # vejrifie l'intejgritej du fichier (pour pouvoir analyser un fichier dejconnant)
+    def vejrifieFichier(self):
+        #ejtablit la carte des index sur les diffejrents blocs
+        self.__ejtablitCarteIndex()
+        # vejrifie les spejcifiques
+        self.donneSpejcifiques()
+        
+    #############################################################   
     #retourne l'identification du fichier
     def donneIdentificationFichier(self):
         #<flagIdentification=53> <maxIdentifiant> <identifieurUnique>
