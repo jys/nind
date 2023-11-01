@@ -60,6 +60,7 @@ unsigned int NindLexiconAmose::addWord(const string &lemma,
                                        const std::string &namedEntity)
 {
     if (type == ALL) return 0;
+    if (lemma.length() > 254) return 0;
     list<string> simpleWords;
     splitWord(lemma, type, namedEntity, simpleWords);
     return NindLexiconIndex::addWord(simpleWords);
