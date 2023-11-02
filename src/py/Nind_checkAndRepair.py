@@ -87,7 +87,7 @@ def checkAndRepair(nindFileName):
             nindLexiconindex.close()
             lexiqueOk = True
             print(f'OK    {nindlexiconindexName}')
-            print (f'max={maxLexicon} dateheure={dateHeureLexicon} ({ctime(int(dateHeureLexicon))})')
+            print (f'      max={maxLexicon} dateheure={dateHeureLexicon} ({ctime(int(dateHeureLexicon))})')
         except Exception as exc:
             print(f'NOK!! {nindlexiconindexName}')
             print (exc)
