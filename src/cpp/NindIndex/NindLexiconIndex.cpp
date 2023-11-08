@@ -99,6 +99,8 @@ NindLexiconIndex::~NindLexiconIndex()
 unsigned int NindLexiconIndex::addWord(const list<string> &components)
 {
     if (!m_isWriter) throw NindLexiconIndexException("NindLexiconIndex::addWord lexicon is not writable" + m_fileName);
+    //dejbut section critique ah protejger des control-C
+    m_file.beginCriticalSection();
     //identifiant du mot (simple ou composej) sous ensemble du mot examine
     unsigned int sousMotId = 0;
     //le compteur courant des identifiants du lexique
@@ -139,6 +141,8 @@ unsigned int NindLexiconIndex::addWord(const list<string> &components)
         if (m_withRetrolexicon and retroWords.size() != 0) 
             m_nindRetrolexicon->addRetroWords(retroWords, m_identification);
     }
+    //fin section critique ah protejger des control-C
+    m_file.endCriticalSection();
     //retourne l'id du mot specifie
     return sousMotId;
 }

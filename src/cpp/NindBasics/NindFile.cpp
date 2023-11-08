@@ -49,7 +49,8 @@ NindFile::NindFile(const string &fileName):
     m_rbufferEnd(0),
     m_rPtr(0),
     m_fileSize(0),
-    m_isLittleEndian(false)
+    m_isLittleEndian(false),
+    m_nindSignalCatcher(NindSignalCatcher::Instance())
 {
     //teste si la plateforme est little endian ou big endian
     const unsigned int testLittleEndian = 13;
@@ -68,6 +69,16 @@ NindFile::~NindFile()
         delete [] m_rbuffer;
         m_rbuffer = 0;
     }
+}
+////////////////////////////////////////////////////////////
+// Begin a critical section where control-C will be temporaly catched. */
+void NindFile::beginCriticalSection() {
+    m_nindSignalCatcher->setCatcher();
+}
+////////////////////////////////////////////////////////////
+// End a critical section where control-C have been temporaly catched. */
+void NindFile::endCriticalSection(){
+    m_nindSignalCatcher->resetCatcher();
 }
 ////////////////////////////////////////////////////////////
 //brief Open file associated with. No exceptions are raised.

@@ -1,4 +1,5 @@
 include_directories(${CMAKE_SOURCE_DIR}/src/cpp/ )
+include_directories(${CMAKE_SOURCE_DIR}/tst/cpp/)
 
 ########### next target ###############
 
@@ -23,5 +24,14 @@ add_executable(Nind_testSynchro ${Nind_testSynchro_SRCS})
 target_link_libraries(Nind_testSynchro NindBasics)
 
 install(TARGETS Nind_testSynchro DESTINATION bin)
-########### next target ###############
 
+########### next target ###############
+SET(NindTestControlC_SRCS
+   NindTestControlC.cpp
+)
+
+add_executable(NindTestControlC ${NindTestControlC_SRCS})
+
+target_link_libraries(NindTestControlC NindBasics)
+
+install(TARGETS NindTestControlC DESTINATION bin)

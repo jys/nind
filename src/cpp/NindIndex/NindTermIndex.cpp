@@ -145,6 +145,8 @@ void NindTermIndex::setTermDef(const unsigned int ident,
                                const Identification &fileIdentification,
                                const list<unsigned int> &specifics)
 {
+    //dejbut section critique ah protejger des control-C
+    m_file.beginCriticalSection();
     //1) verifie que le terme n'est pas en dehors du dernier bloc d'indirection
     //il faut le faire maintenant parce que le buffer d'ecriture est unique
     checkExtendIndirection(ident, fileIdentification);
@@ -200,6 +202,8 @@ void NindTermIndex::setTermDef(const unsigned int ident,
     //4) ejcrit les spejcifiques et l'identification
     writeSpecificsAndIdentification(specifics, fileIdentification);
     setDefinition(ident);
+    //fin section critique ah protejger des control-C
+    m_file.endCriticalSection();
 }
 ////////////////////////////////////////////////////////////
 //brief write specifics footer and identification into write buffer

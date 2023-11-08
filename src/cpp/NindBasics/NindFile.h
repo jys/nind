@@ -19,6 +19,7 @@
 ////////////////////////////////////////////////////////////
 #include "NindCommonExport.h"
 #include "NindExceptions.h"
+#include "NindSignalCatcher.h"
 #include <stdio.h>
 #include <string>
 ////////////////////////////////////////////////////////////
@@ -32,6 +33,12 @@ public:
     NindFile(const std::string &fileName);
 
     virtual ~NindFile();
+    
+    /**\brief Begin a critical section where control-C will be temporaly catched. */
+    void beginCriticalSection();
+    
+    /**\brief End a critical section where control-C have been temporaly catched. */
+    void endCriticalSection();
 
     /**\brief Open file associated with. No exceptions are raised.
     *\param accessMode authorized access modes are "rb", "wb", "ab", "r+b", "w+b", "a+b", "rb+", "wb+", "ab+"
@@ -244,6 +251,7 @@ private:
     unsigned char *m_rPtr;           //pointeur buffer de lecture
     long int m_fileSize;             //taille du fichier
     bool m_isLittleEndian;
+    NindSignalCatcher *m_nindSignalCatcher;
 };
 ////////////////////////////////////////////////////////////
 //brief get current position in file

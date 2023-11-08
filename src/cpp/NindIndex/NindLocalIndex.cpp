@@ -211,6 +211,8 @@ void NindLocalIndex::setLocalDef(const unsigned int ident,
                                  const std::list<struct Term> &localDef,
                                  const Identification &fileIdentification)
 {
+    //dejbut section critique ah protejger des control-C
+    m_file.beginCriticalSection();
     //est-ce que ce document est dejah connu ?
     map<unsigned int, unsigned int>::const_iterator itident = m_docIdTradExtInt.find(ident);
     //si non, on le creje
@@ -280,6 +282,8 @@ void NindLocalIndex::setLocalDef(const unsigned int ident,
     //4) ejcrit les spejcifiques et l'identification
     writeSpecificsAndIdentification(fileIdentification);
     setDefinition(identInt);
+    //fin section critique ah protejger des control-C
+    m_file.endCriticalSection();
 }
 ////////////////////////////////////////////////////////////
 //brief number of documents in the collection

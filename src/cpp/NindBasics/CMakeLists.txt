@@ -7,6 +7,8 @@ SET(NindBasics_LIB_SRCS
   NindFile.cpp
   NindPadFile.h
   NindPadFile.cpp
+  NindSignalCatcher.h
+  NindSignalCatcher.cpp
 )
 
 add_library(NindBasics SHARED ${NindBasics_LIB_SRCS})
@@ -17,4 +19,4 @@ set_target_properties(NindBasics PROPERTIES VERSION 1.1.0 SOVERSION 1)
 install(TARGETS NindBasics DESTINATION lib)
 
 ########### install files ###############
-install(FILES NindFile.h NindPadFile.h DESTINATION include/NindBasics)
+install(FILES NindFile.h NindPadFile.h NindSignalCatcher.h DESTINATION include/NindBasics)
